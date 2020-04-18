@@ -1,4 +1,5 @@
-﻿using NLog.Config;
+﻿using NLog;
+using NLog.Config;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
 using System.IO;
@@ -6,6 +7,25 @@ using System.Reflection;
 
 namespace PotatoBot.Managers
 {
+    [Target("Telegram")]
+    public sealed class TelegramTarget : TargetWithLayout
+    {
+        public TelegramTarget()
+        {
+
+        }
+
+        protected override async void Write(LogEventInfo logEvent)
+        {
+            var message = $"[{logEvent.Level}][{logEvent.TimeStamp}] {logEvent.Message}";
+            if(logEvent.HasStackTrace)
+            {
+                message += $"\n\n```{logEvent.StackTrace}```";
+            }
+            await Program.ServiceManager?.TelegramService?.SendToAdmin(message);
+        }
+    }
+
     internal class LogManager
     {
         private string _logDirectory;
@@ -70,6 +90,10 @@ namespace PotatoBot.Managers
                     );
                 }
             }
+
+            var telegramTarget = new TelegramTarget();
+            _configuration.AddTarget("Telegram", telegramTarget);
+            _configuration.AddRule(LogLevel.Error, LogLevel.Fatal, "Telegram");
 
             NLog.LogManager.Configuration = _configuration;
             NLog.LogManager.ReconfigExistingLoggers();

@@ -102,6 +102,19 @@ namespace PotatoBot.Services
             }
         }
 
+        internal async Task SendToAdmin(string message)
+        {
+            if(!_client?.IsReceiving ?? false)
+            {
+                return;
+            }
+
+            foreach(var chat in _settings.Admins)
+            {
+                await _client.SendTextMessageAsync(chat, message, ParseMode.MarkdownV2);
+            }
+        }
+
         internal async Task<Message> SimpleReplyToMessage(Message message, string text)
         {
             _logger.Trace($"Sending '{text}' to {message.From.Username}");
