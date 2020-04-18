@@ -8,7 +8,7 @@
   <p align="center">
     PotatoBot is a Telegram bot for the management of Radarr, Sonarr, Lidarr and Plex!
     <br />
-    <a href="https://github.com/TheToor/PotatoBot/issues">PotatoBotrt Bug</a>
+    <a href="https://github.com/TheToor/PotatoBot/issues">Report Bug</a>
     ·
     <a href="https://github.com/TheToor/PotatoBot/issues">Request Feature</a>
   </p>
