@@ -477,6 +477,7 @@ namespace PotatoBot.Services
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process message");
+                await _client.SendTextMessageAsync(e.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"), replyToMessageId: e.Message.MessageId);
             }
         }
 

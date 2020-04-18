@@ -116,6 +116,7 @@ namespace PotatoBot.Managers
                 if(!_commands.ContainsKey(command))
                 {
                     // Command not found
+                    await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("CommandNotFoundError"), replyToMessageId: message.MessageId);
                     return true;
                 }
 
@@ -129,6 +130,7 @@ namespace PotatoBot.Managers
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process message");
+                await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("CommandProcessingError"), replyToMessageId: message.MessageId);
                 return false;
             }
         }
