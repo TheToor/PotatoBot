@@ -1,6 +1,8 @@
 ﻿using PotatoBot.Modals.Commands.Data;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace PotatoBot.Modals.Commands
@@ -25,5 +27,6 @@ namespace PotatoBot.Modals.Commands
         public int Page { get; set; }
         public List<object> PageItemList { get; set; }
         public Func<object, string> PageFormatFunction { get; set; }
+        public Func<TelegramBotClient, Message, int, Task<bool>> PageSelectionFunction { get; set; }
     }
 }

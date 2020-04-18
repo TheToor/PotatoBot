@@ -8,5 +8,7 @@ namespace PotatoBot.Modals.Commands
         internal LanguageManager LanguageManager => Program.LanguageManager;
         internal TelegramService TelegramService => Program.ServiceManager.TelegramService;
         internal SonarrService SonarrService => Program.ServiceManager.Sonarr;
+        internal RadarrService RadarrService => Program.ServiceManager.Radarr;
+        internal LidarrService LidarrService => Program.ServiceManager.Lidarr;
     }
 }

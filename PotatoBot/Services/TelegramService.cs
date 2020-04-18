@@ -19,7 +19,9 @@ namespace PotatoBot.Services
     {
         const string PreviousData = "Previous";
         const string NextData = "Next";
+        const string SelectData = "Select";
         const string DisabledData = "Disabled";
+        const string CancelData = "Cancel";
 
         public string Name => "Telegram";
 
@@ -40,8 +42,11 @@ namespace PotatoBot.Services
         // Time until a message "expires" in hours
         private uint _cacheInvalidationTime = 24;
 
+        private List<int> _users;
+
         internal TelegramService()
         {
+            _users = _settings.Admins.Union(_settings.Users).ToList();
         }
 
         public bool Start()
@@ -89,6 +94,14 @@ namespace PotatoBot.Services
             return true;
         }
 
+        internal async Task SendToAll(string message)
+        {
+            foreach (var chat in _users)
+            {
+                await _client.SendTextMessageAsync(chat, message, ParseMode.Html);
+            }
+        }
+
         internal async Task<Message> SimpleReplyToMessage(Message message, string text)
         {
             _logger.Trace($"Sending '{text}' to {message.From.Username}");
@@ -127,7 +140,13 @@ namespace PotatoBot.Services
             return sentMessage;
         }
 
-        internal async Task ReplyWithPageination<T>(Message message, string title, List<T> list, Func<object, string> formatFunction)
+        internal async Task ReplyWithPageination<T>(
+            Message message,
+            string title,
+            List<T> list,
+            Func<object, string> formatFunction,
+            Func<TelegramBotClient, Message, int, Task<bool>> selectionFunction
+        )
         {
             _logger.Trace($"Starting pageination for message {message.MessageId} in chat {message.Chat.Id}");
 
@@ -138,8 +157,27 @@ namespace PotatoBot.Services
             cache.Page = 0;
             cache.PageItemList = list.Cast<object>().ToList();
             cache.PageFormatFunction = formatFunction;
+            cache.PageSelectionFunction = selectionFunction;
 
             await UpdatePageination(message.ReplyToMessage, true);
+        }
+
+        internal T GetPageinationResult<T>(Message message, int selectedIndex)
+        {
+            var cache = GetCache(message);
+
+            if(cache.PageItemList == null)
+            {
+                return default;
+            }
+
+            var page = cache.PageItemList.TakePaged(cache.Page, cache.PageSize);
+            if(selectedIndex < 0 || selectedIndex >= page.Items.Count)
+            {
+                return default;
+            }
+
+            return (T)page.Items[selectedIndex];
         }
 
         internal async Task UpdatePageination(Message message, bool create = false)
@@ -150,36 +188,59 @@ namespace PotatoBot.Services
             var text = string.Empty;
 
             var page = cache.PageItemList.TakePaged(cache.Page, cache.PageSize);
-            foreach (var item in page.Items)
+            for(var i = 0; i < page.Items.Count; i++)
             {
-                text += cache.PageFormatFunction(item);
+                text += $"<b>{i + 1}:</b> " + cache.PageFormatFunction(page.Items[i]);
             }
 
             _logger.Trace("Building button layout ...");
-            var buttons = new List<InlineKeyboardButton>();
+
+            // Selection buttons
+            var firstRow = new List<InlineKeyboardButton>();
+            for (var i = 0; i < page.Items.Count; i++)
+            {
+                firstRow.Add(InlineKeyboardButton.WithCallbackData($"{i + 1}", $"{SelectData}{i}"));
+            }
+
+            if (page.Items.Count != cache.PageSize)
+            {
+                // Add filler buttons if required
+                for (var i = page.Items.Count; i < cache.PageSize; i++)
+                {
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData($" ", $"{DisabledData}"));
+                }
+            }
+
+            // Prev/Next buttons
+            var secondRow = new List<InlineKeyboardButton>();
             if (page.PreviousPossible)
             {
-                buttons.Add(InlineKeyboardButton.WithCallbackData("<<", PreviousData));
+                secondRow.Add(InlineKeyboardButton.WithCallbackData("<<", PreviousData));
             }
             else if(page.NextPossible)
             {
                 // If next is possible add a spacing button
-                buttons.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
             }
 
             if (page.NextPossible)
             {
-                buttons.Add(InlineKeyboardButton.WithCallbackData(">>", NextData));
+                secondRow.Add(InlineKeyboardButton.WithCallbackData(">>", NextData));
             }
             else if(page.PreviousPossible)
             {
                 // if previous is possbile add a spacing button
-                buttons.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
             }
+
+            var thirdRow = new List<InlineKeyboardButton>();
+            thirdRow.Add(InlineKeyboardButton.WithCallbackData("Cancel", CancelData));
 
             var keyboardMarkup = new InlineKeyboardMarkup(new List<List<InlineKeyboardButton>>()
             {
-                buttons
+                firstRow,
+                secondRow,
+                thirdRow
             });
 
             var messageText = $"{cache.PageTitle}\n\n{text}";
@@ -432,27 +493,8 @@ namespace PotatoBot.Services
                 {
                     var cache = _cache[message.Chat.Id];
 
-                    if(data == DisabledData)
+                    if(HandlePagination(message, cache, data))
                     {
-                        _logger.Trace("Stupid user clicked on disabled button ... Ignoring the twat");
-                        return;
-                    }
-
-                    if(data == NextData || data == PreviousData)
-                    {
-                        if(data == NextData)
-                        {
-                            cache.Page++;
-                        }
-                        else
-                        {
-                            cache.Page--;
-                        }
-
-                        var updateTask = UpdatePageination(message);
-                        updateTask.Wait();
-
-                        // Do not invoke any further tasks
                         return;
                     }
 
@@ -470,6 +512,74 @@ namespace PotatoBot.Services
                     _client.DeleteMessageAsync(message.Chat, message.MessageId);
                 }
             }
+        }
+
+        private bool HandlePagination(Message message, Cache cache, string data)
+        {
+            if (data == DisabledData)
+            {
+                _logger.Trace("Stupid user clicked on disabled button ... Ignoring the twat");
+                return true;
+            }
+
+            if (data == NextData || data == PreviousData)
+            {
+                if (data == NextData)
+                {
+                    cache.Page++;
+                }
+                else
+                {
+                    cache.Page--;
+                }
+
+                var updateTask = UpdatePageination(message);
+                updateTask.Wait();
+
+                // Do not invoke any further tasks
+                return true;
+            }
+
+            if(data == CancelData)
+            {
+                // Cancel Pagination
+                _logger.Trace("Cancellation requested");
+
+                _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+
+                return true;
+            }
+
+            if(data.StartsWith(SelectData))
+            {
+                var selection = data.Substring(SelectData.Length, data.Length - SelectData.Length);
+                if(!int.TryParse(selection, out var selectedIndex))
+                {
+                    // How ?
+                    _logger.Warn($"Failed to parse '{selection}' to int");
+                    _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+                }
+
+                try
+                {
+                    var task = cache.PageSelectionFunction(_client, message, selectedIndex);
+                    task.Wait();
+                    
+                    if(!task.Result)
+                    {
+                        _logger.Warn("Failed to process selection");
+                    }
+                }
+                catch(Exception ex)
+                {
+                    _logger.Error(ex, "Failed to execute selection function");
+                    _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         private void OnReceiveError(object sender, ReceiveErrorEventArgs e)

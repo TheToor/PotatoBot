@@ -19,6 +19,45 @@ namespace PotatoBot.Managers
             }
         }
 
+        private RadarrService _radarr;
+        internal RadarrService Radarr
+        {
+            get
+            {
+                if(!Program.Settings.Radarr.Enabled)
+                {
+                    throw new Exception("Radarr Service is not enabled");
+                }
+                return _radarr;
+            }
+        }
+
+        private LidarrService _lidarr;
+        internal LidarrService Lidarr
+        {
+            get
+            {
+                if(!Program.Settings.Lidarr.Enabled)
+                {
+                    throw new Exception("Lidarr Service is not enabled");
+                }
+                return _lidarr;
+            }
+        }
+
+        private PlexService _plex;
+        internal PlexService Plex
+        {
+            get
+            {
+                if(!Program.Settings.Plex.Enabled)
+                {
+                    throw new Exception("Plex Service is not enabled");
+                }
+                return _plex;
+            }
+        }
+
         internal TelegramService TelegramService { get; } = new TelegramService();
 
         private List<IService> _services = new List<IService>()
@@ -35,11 +74,47 @@ namespace PotatoBot.Managers
             _services.Add(TelegramService);
 
             var settings = Program.Settings;
+            
             if(settings.Sonarr.Enabled)
             {
                 _logger.Info("Enabling Sonarr Service ...");
                 _sonarr = new SonarrService(settings.Sonarr, "api/v3");
                 _services.Add(_sonarr);
+
+                API.Calendar.Calendars.Add(_sonarr);
+            }
+
+            if(settings.Radarr.Enabled)
+            {
+                _logger.Info("Enabling Radarr Service ...");
+                _radarr = new RadarrService(settings.Radarr, "api");
+                _services.Add(_radarr);
+
+                API.Calendar.Calendars.Add(_radarr);
+            }
+
+            if(settings.Lidarr.Enabled)
+            {
+                _logger.Info("Enalbing Lidarr Service ...");
+                _lidarr = new LidarrService(settings.Lidarr, "api/v1");
+                _services.Add(_lidarr);
+
+                API.Calendar.Calendars.Add(_lidarr);
+            }
+
+            if(settings.Plex.Enabled)
+            {
+                _logger.Info("Enalbing Plex Service ...");
+                _plex = new PlexService();
+                _services.Add(_plex);
+            }
+            else
+            {
+                _logger.Info("Plex not enabled. Disabling RescanAfterDownload feature");
+
+                Program.Settings.Radarr.RescanAfterDownload = false;
+                Program.Settings.Sonarr.RescanAfterDownload = false;
+                Program.Settings.Lidarr.RescanAfterDownload = false;
             }
 
             StartAllServices();
@@ -50,7 +125,7 @@ namespace PotatoBot.Managers
             StopAllServices();
         }
 
-        private void StartAllServices()
+        internal void StartAllServices()
         {
             _logger.Info($"Starting {_services.Count} services ...");
             foreach(var service in _services)
@@ -68,7 +143,7 @@ namespace PotatoBot.Managers
             }
         }
 
-        private void StopAllServices()
+        internal void StopAllServices()
         {
             _logger.Info($"Stopping {_services.Count} services ...");
             foreach (var service in _services)

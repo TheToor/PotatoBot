@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using PotatoBot.Managers;
 using PotatoBot.Modals.Settings;
 using System;
@@ -46,6 +45,9 @@ namespace PotatoBot
         private const string _settingsFileName = "settings.json";
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private static volatile bool _exit = false;
+        private static volatile bool _exited = false;
+
         static int Main(string[] args)
         {
             try
@@ -71,11 +73,38 @@ namespace PotatoBot
             _logger.Trace("Starting ServiceManager ...");
             ServiceManager = new ServiceManager();
 
-            Console.ReadLine();
+            AppDomain.CurrentDomain.ProcessExit += ProcessExit;
+            Console.CancelKeyPress += ProcessExit;
 
-            _logger.Info("Stop requested");
+            do
+            {
+                Thread.Sleep(10);
+            }
+            while (!_exit);
+            _logger.Trace("Stop request received");
+
+            _logger.Trace("Stopping all services ...");
+            ServiceManager.StopAllServices();
+
+            _exited = true;
 
             return 0;
+        }
+
+        private static void ProcessExit(object sender, EventArgs e)
+        {
+            _exit = true;
+            _logger.Info("Stop requested");
+
+            do
+            {
+                Thread.Sleep(10);
+            }
+            while (!_exited);
+
+            _logger.Trace("Stop request processed");
+
+            Environment.Exit(0);
         }
 
         private static bool ReadSettings()
@@ -117,7 +146,7 @@ namespace PotatoBot
             return true;
         }
 
-        private static bool SaveSettings()
+        internal static bool SaveSettings()
         {
             _logger.Trace($"Saving Settings to file {_settingsFileName}");
 

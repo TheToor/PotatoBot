@@ -1,0 +1,97 @@
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Net;
+using Microsoft.AspNetCore.Mvc;
+using NLog;
+using PotatoBot.Webhook.Modals.Plex;
+
+namespace PotatoBot.Webhook.Controllers
+{
+    [Route("webhook/[controller]", Name = "Plex")]
+    public class PlexController : Controller
+    {
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
+
+        private bool ValidateRequest()
+        {
+            var userAgent = Request.Headers.FirstOrDefault(h => h.Key == "User-Agent").Value.First();
+            var split = Request.ContentType.Split(';');
+            if(split.Length == 0)
+            {
+                _logger.Trace($"Invalid content type ({Request.ContentType})");
+                return false;
+            }
+
+            var contentType = split[0];
+            var method = Request.Method;
+
+            _logger.Trace($"Request from {Request.Host} ( '{userAgent}' / '{contentType}' / {method} )");
+
+            if (contentType != "multipart/form-data")
+            {
+                _logger.Warn("Invalid content type");
+                return false;
+            }
+
+            if (method != "POST")
+            {
+                _logger.Warn("Not a POST request");
+                return false;
+            }
+
+            return true;
+        }
+
+        [Route("")]
+        [HttpPost]
+        public IActionResult Index()
+        {
+            if (!ValidateRequest())
+            {
+                return new StatusCodeResult((int)HttpStatusCode.NotAcceptable);
+            }
+
+            using (var streamReader = new StreamReader(Request.Body))
+            {
+                try
+                {
+                    var content = streamReader.ReadToEnd();
+                    if (content.Contains("name=\"thumb\";"))
+                    {
+                        // We don't care about the thumbnail
+                        _logger.Trace($"Skipping request as thumbnail was detected");
+                        return new StatusCodeResult((int)HttpStatusCode.OK);
+                    }
+
+                    var start = content.IndexOf('{');
+                    var end = content.LastIndexOf('}');
+
+                    if (start == -1 || end == -1)
+                    {
+                        _logger.Trace($"Skipping requests ({start}/{end})");
+                        return new StatusCodeResult((int)HttpStatusCode.OK);
+                    }
+
+                    var json = content.Substring(start, end - start + 1).Trim();
+                    var plexEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<PlexEvent>(json);
+                    if(plexEvent != null)
+                    {
+                        // ProcessRequest(plexEvent);
+                    }
+                    return new StatusCodeResult((int)HttpStatusCode.OK);
+                }
+                catch(Exception ex)
+                {
+                    _logger.Warn(ex, "Failed to process request");
+                    return new StatusCodeResult((int)HttpStatusCode.InternalServerError);
+                }
+            }
+        }
+
+        private void ProcessRequest(PlexEvent plexEvent)
+        {
+            // Do something with that
+        }
+    }
+}
