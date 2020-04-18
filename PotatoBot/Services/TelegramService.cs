@@ -44,6 +44,12 @@ namespace PotatoBot.Services
 
         private List<int> _users;
 
+        // Characters that need to be escaped with an \
+        string[] _charactersToEscape = new string[]
+        {
+            "_", /* "*",*/ "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"
+        };
+
         internal TelegramService()
         {
             _users = _settings.Admins.Union(_settings.Users).ToList();
@@ -109,7 +115,14 @@ namespace PotatoBot.Services
                 return;
             }
 
-            foreach(var chat in _settings.Admins)
+            foreach(var character in _charactersToEscape)
+            {
+                message = message.Replace(character, $"\\{character}");
+            }
+
+            _logger.Trace($"Sending '{message}' to admins");
+
+            foreach (var chat in _settings.Admins)
             {
                 await _client.SendTextMessageAsync(chat, message, ParseMode.MarkdownV2);
             }

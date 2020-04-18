@@ -2,6 +2,7 @@
 using NLog.Config;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
+using System;
 using System.IO;
 using System.Reflection;
 
@@ -17,12 +18,15 @@ namespace PotatoBot.Managers
 
         protected override async void Write(LogEventInfo logEvent)
         {
-            var message = $"[{logEvent.Level}][{logEvent.TimeStamp}] {logEvent.Message}";
-            if(logEvent.HasStackTrace)
+            try
             {
-                message += $"\n\n```{logEvent.StackTrace}```";
+                var message = $"*[{logEvent.Level}][{logEvent.TimeStamp}]\n{logEvent.CallerClassName}->{logEvent.CallerMemberName} on {logEvent.CallerLineNumber}*\n{logEvent.Message}";
+                await Program.ServiceManager?.TelegramService?.SendToAdmin(message);
             }
-            await Program.ServiceManager?.TelegramService?.SendToAdmin(message);
+            catch (Exception)
+            {
+                // Ignore it as only the log to Telegram failed not to file
+            }
         }
     }
 
@@ -98,6 +102,15 @@ namespace PotatoBot.Managers
             NLog.LogManager.Configuration = _configuration;
             NLog.LogManager.ReconfigExistingLoggers();
             NLog.LogManager.EnableLogging();
+        }
+
+        internal void SetTelegramMinLogLevel(LogLevel logLevel)
+        {
+            _configuration.RemoveRuleByName("Telegram");
+            _configuration.AddRule(logLevel, LogLevel.Fatal, "Telegram");
+
+            NLog.LogManager.Configuration = _configuration;
+            NLog.LogManager.ReconfigExistingLoggers();
         }
     }
 }
