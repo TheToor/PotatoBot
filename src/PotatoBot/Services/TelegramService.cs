@@ -523,35 +523,43 @@ namespace PotatoBot.Services
 
         private async void OnCallbackQueryReceived(object sender, CallbackQueryEventArgs e)
         {
-            _logger.Trace($"Received CallbackQuery from {e.CallbackQuery.From.Username}");
-
-            var data = e.CallbackQuery.Data;
-            var message = e.CallbackQuery.Message;
-
-            lock(_cache)
+            try
             {
-                if(_cache.ContainsKey(message.Chat.Id))
+                _logger.Trace($"Received CallbackQuery from {e.CallbackQuery.From.Username}");
+
+                var data = e.CallbackQuery.Data;
+                var message = e.CallbackQuery.Message;
+
+                lock (_cache)
                 {
-                    var cache = _cache[message.Chat.Id];
-
-                    if(HandlePagination(message, cache, data))
+                    if (_cache.ContainsKey(message.Chat.Id))
                     {
-                        return;
+                        var cache = _cache[message.Chat.Id];
+
+                        if (HandlePagination(message, cache, data))
+                        {
+                            return;
+                        }
+
+                        var task = cache.QueryCallbackInstance.OnCallbackQueryReceived(_client, e);
+                        task.Wait();
+
+                        if (!task.Result)
+                        {
+                            _logger.Warn($"Failed to execute callback for '{cache.QueryCallbackInstance}'");
+                        }
                     }
-
-                    var task = cache.QueryCallbackInstance.OnCallbackQueryReceived(_client, e);
-                    task.Wait();
-
-                    if(!task.Result)
+                    else
                     {
-                        _logger.Warn($"Failed to execute callback for '{cache.QueryCallbackInstance}'");
+                        _logger.Debug($"No callback found for message {message.MessageId}");
+                        _client.DeleteMessageAsync(message.Chat, message.MessageId);
                     }
                 }
-                else
-                {
-                    _logger.Debug($"No callback found for message {message.MessageId}");
-                    _client.DeleteMessageAsync(message.Chat, message.MessageId);
-                }
+            }
+            catch(Exception ex)
+            {
+                _logger.Error(ex, "Failed to process CallbackQuery");
+                await _client.SendTextMessageAsync(e.CallbackQuery.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"));
             }
         }
 
