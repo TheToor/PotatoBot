@@ -109,11 +109,11 @@ namespace PotatoBot.Services
             return true;
         }
 
-        internal async Task SendToAll(string message)
+        internal async Task SendToAll(string message, bool silent = true)
         {
             foreach (var chat in _users)
             {
-                await _client.SendTextMessageAsync(chat, message, ParseMode.Html);
+                await _client.SendTextMessageAsync(chat, message, ParseMode.Html, disableNotification: silent);
             }
         }
 
