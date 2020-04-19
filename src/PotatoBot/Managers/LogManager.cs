@@ -50,9 +50,18 @@ namespace PotatoBot.Managers
 
         private static LoggingConfiguration _configuration;
 
+        private static Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+
         internal LogManager()
         {
             InitializeLogging();
+
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            _logger.Fatal((Exception)e.ExceptionObject, "Unhandeled exception");
         }
 
         internal void InitializeLogging()
