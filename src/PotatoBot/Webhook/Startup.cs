@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace PotatoBot.Webhook
@@ -11,6 +12,10 @@ namespace PotatoBot.Webhook
             {
                 // required for app.UseMvc() to work
                 options.EnableEndpointRouting = false;
+            });
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.AllowSynchronousIO = true;
             });
         }
         public void Configure(IApplicationBuilder app)
