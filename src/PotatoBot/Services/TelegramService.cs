@@ -137,6 +137,11 @@ namespace PotatoBot.Services
             }
         }
 
+        internal bool IsFromAdmin(Message message)
+        {
+            return _settings.Admins.Contains(message.From.Id);
+        }
+
         internal async Task<Message> SimpleReplyToMessage(Message message, string text)
         {
             _logger.Trace($"Sending '{text}' to {message.From.Username}");

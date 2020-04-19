@@ -10,6 +10,11 @@ namespace PotatoBot.Commands
     {
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
         {
+            if(!TelegramService.IsFromAdmin(message))
+            {
+                return true;
+            }
+
             if(arguments.Length == 0)
             {
                 // NO action
