@@ -11,6 +11,8 @@ namespace PotatoBot.Managers
 {
     internal class CommandManager
     {
+        internal List<Command> Commands = new List<Command>();
+
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         private Dictionary<string, ICommand> _commands = new Dictionary<string, ICommand>();
@@ -55,6 +57,8 @@ namespace PotatoBot.Managers
 
                     var commandName = attribute.Name;
                     var instance = (ICommand)Activator.CreateInstance(type);
+
+                    Commands.Add(attribute);
 
                     if (queryInterface.IsAssignableFrom(type))
                     {

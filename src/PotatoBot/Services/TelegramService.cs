@@ -75,6 +75,15 @@ namespace PotatoBot.Services
                 _logger.Trace("Initializing command manager ...");
                 _commandManager = new CommandManager();
 
+                _logger.Trace("Setting up telegram bot ...");
+                var commands = _commandManager.Commands
+                    .Select((c) => new BotCommand()
+                    {
+                        Command = c.Name,
+                        Description = c.Description
+                    });
+                _client.SetMyCommandsAsync(commands);
+
                 _logger.Trace("Initializing cache ...");
                 _cacheTimer = new System.Timers.Timer(1000 * 60 * 60);
                 _cacheTimer.AutoReset = true;

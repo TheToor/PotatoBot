@@ -5,7 +5,7 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Commands
 {
-    [Command("debug")]
+    [Command("debug", Description = "Debug command for admins")]
     internal class DebugCommand : Service, ICommand
     {
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)

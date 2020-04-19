@@ -13,7 +13,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PotatoBot.Commands
 {
-    [Command("queue")]
+    [Command("queue", Description = "Shows the current download queue")]
     internal class QueueCommand : Service, ICommand, IQueryCallback
     {
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();

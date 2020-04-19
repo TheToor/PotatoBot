@@ -6,6 +6,7 @@ namespace PotatoBot.Modals.Commands
     public class Command : Attribute
     {
         public string Name { get; private set; }
+        public string Description { get; set; }
 
         public Command(string name)
         {
