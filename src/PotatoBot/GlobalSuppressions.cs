@@ -5,7 +5,13 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "<Pending>", Scope = "type", Target = "~T:PotatoBot.Modals.API.APIEndPoints")]
+[assembly: SuppressMessage(
+    "Design",
+    "CA1034:Nested types should not be visible",
+    Justification = "Done by design",
+    Scope = "type",
+    Target = "~T:PotatoBot.Modals.API.APIEndPoints"
+)]
 
 [assembly: SuppressMessage(
     "Performance",
