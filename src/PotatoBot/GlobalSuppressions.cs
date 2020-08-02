@@ -6,3 +6,11 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "<Pending>", Scope = "type", Target = "~T:PotatoBot.Modals.API.APIEndPoints")]
+
+[assembly: SuppressMessage(
+    "Performance",
+    "CA1812:VersionCommand is an internal class that is apparently never instantiated.If so, remove the code from the assembly.If this class is intended to contain only static members, make it static (Shared in Visual Basic)",
+    Justification = "Class will be dynamically created during runtime",
+    Scope = "namespace",
+    Target = "PotatoBot.Commands"
+)]
