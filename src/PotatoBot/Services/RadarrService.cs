@@ -56,7 +56,7 @@ namespace PotatoBot.Services
                 SearchTerm = name
             };
 
-            var response = GetRequest<List<Movie>>(APIEndPoints.Radarr.Lookup, requestBody);
+            var response = GetRequest<List<Movie>>(APIEndPoints.RadarrEndpoints.Lookup, requestBody);
             _logger.Trace($"Got {response.Count} movies as response");
 
             return response;
@@ -68,7 +68,7 @@ namespace PotatoBot.Services
 
             var postBody = new AddMovie(movie);
 
-            var response = PostRequest<Movie>(APIEndPoints.Radarr.Movie, postBody, System.Net.HttpStatusCode.Created);
+            var response = PostRequest<Movie>(APIEndPoints.RadarrEndpoints.Movie, postBody, System.Net.HttpStatusCode.Created);
             if (response.Item1 != null)
             {
                 var movieResponse = response.Item1;

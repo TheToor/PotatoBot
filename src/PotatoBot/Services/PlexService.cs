@@ -68,7 +68,7 @@ namespace PotatoBot.Services
 
         private void TestConnection()
         {
-            var response = GetXml<MediaContainer>(APIEndPoints.Plex.Capabilities);
+            var response = GetXml<MediaContainer>(APIEndPoints.PlexEndpoints.Capabilities);
             if (response == null)
             {
                 throw new Exception("TestConnection failed!");
@@ -83,7 +83,7 @@ namespace PotatoBot.Services
 
         private void GetLibraries()
         {
-            var response = GetXml<MediaContainer>(APIEndPoints.Plex.Library);
+            var response = GetXml<MediaContainer>(APIEndPoints.PlexEndpoints.Library);
 
             _libraries = response ?? throw new Exception("Failed to get libraries");
 
@@ -201,7 +201,7 @@ namespace PotatoBot.Services
             client.DefaultRequestHeaders.Add("X-Plex-Version", Program.Version.ToString());
             client.DefaultRequestHeaders.Add("Authorization", $"Basic {base64}");
 
-            var response = client.PostAsync(APIEndPoints.Plex.TokenGeneration, null).Result;
+            var response = client.PostAsync(APIEndPoints.PlexEndpoints.TokenGeneration, null).Result;
 
             if (response.StatusCode == HttpStatusCode.Created)
             {
@@ -243,7 +243,7 @@ namespace PotatoBot.Services
                     _logger.Trace($"Sending request to rescan {library} ...");
                     Get(
                         string.Format(
-                            APIEndPoints.Plex.LibraryUpdate,
+                            APIEndPoints.PlexEndpoints.LibraryUpdate,
                             library
                         )
                     );

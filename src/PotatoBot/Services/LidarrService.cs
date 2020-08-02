@@ -55,7 +55,7 @@ namespace PotatoBot.Services
                 SearchTerm = name
             };
 
-            var response = GetRequest<List<Artist>>(APIEndPoints.Lidarr.Lookup, requestBody);
+            var response = GetRequest<List<Artist>>(APIEndPoints.LidarrEndpoints.Lookup, requestBody);
             _logger.Trace($"Got {response.Count} artists as response");
 
             return response;
@@ -67,7 +67,7 @@ namespace PotatoBot.Services
 
             var postBody = new AddArtist(artist);
 
-            var response = PostRequest<Artist>(APIEndPoints.Lidarr.Artist, postBody, System.Net.HttpStatusCode.Created);
+            var response = PostRequest<Artist>(APIEndPoints.LidarrEndpoints.Artist, postBody, System.Net.HttpStatusCode.Created);
             if (response.Item1 != null)
             {
                 var aristResponse = response.Item1;
@@ -93,7 +93,7 @@ namespace PotatoBot.Services
                     return _albumCache[artistId][albumId];
                 }
 
-                var endpint = string.Format(APIEndPoints.Lidarr.Album, albumId);
+                var endpint = string.Format(APIEndPoints.LidarrEndpoints.Album, albumId);
                 var requestBody = new RequestAlbum()
                 {
                     ArtistId = artistId

@@ -55,7 +55,7 @@ namespace PotatoBot.Services
                 if (_seriesCache.Count == 0 || _seriesCacheUpdates.AddMinutes(30) < DateTime.Now)
                 {
                     _logger.Trace("Updating Series cache ...");
-                    _seriesCache = GetRequest<List<Series>>(APIEndPoints.Sonarr.Series).ToDictionary((i) => i.Id);
+                    _seriesCache = GetRequest<List<Series>>(APIEndPoints.SonarrEndpoints.Series).ToDictionary((i) => i.Id);
                 }
             }
 
@@ -70,7 +70,7 @@ namespace PotatoBot.Services
                 SearchTerm = name
             };
 
-            var response = GetRequest<List<Series>>(APIEndPoints.Sonarr.Lookup, body);
+            var response = GetRequest<List<Series>>(APIEndPoints.SonarrEndpoints.Lookup, body);
             _logger.Trace($"Got {response?.Count ?? 0} series as response");
 
             return response;
@@ -82,7 +82,7 @@ namespace PotatoBot.Services
 
             var body = new AddSeries(series);
 
-            var response = PostRequest<Series>(APIEndPoints.Sonarr.Series, body, System.Net.HttpStatusCode.Created);
+            var response = PostRequest<Series>(APIEndPoints.SonarrEndpoints.Series, body, System.Net.HttpStatusCode.Created);
             if(response.Item1 != null)
             {
                 var seriesResult = response.Item1;
@@ -122,7 +122,7 @@ namespace PotatoBot.Services
                     return _seriesCache[seriesId];
                 }
 
-                var endpoint = $"{APIEndPoints.Sonarr.Series}/{seriesId}";
+                var endpoint = $"{APIEndPoints.SonarrEndpoints.Series}/{seriesId}";
 
                 var response = GetRequest<Series>(endpoint);
                 if (response != null)
@@ -147,7 +147,7 @@ namespace PotatoBot.Services
                     return _episodeCache[seriesId][episodeId];
                 }
 
-                var endpoint = string.Format(APIEndPoints.Sonarr.Episode, episodeId);
+                var endpoint = string.Format(APIEndPoints.SonarrEndpoints.Episode, episodeId);
                 var requestBody = new RequestEpisode()
                 {
                     SeriesId = seriesId
