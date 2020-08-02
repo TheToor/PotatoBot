@@ -106,7 +106,7 @@ namespace PotatoBot.Managers
                 // Remove leading '/' and normalize to lowercase
                 command = command.Substring(1, command.Length - 1).ToLower();
 
-                var arguments = new string[0];
+                var arguments = Array.Empty<string>();
                 if(split.Length == 2)
                 {
                     // Only one argument supplied
