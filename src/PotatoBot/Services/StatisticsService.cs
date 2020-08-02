@@ -140,5 +140,17 @@ namespace PotatoBot.Services
             _statistics.Adds++;
             TrySave();
         }
+
+        public void IncreaseWebhooksReceived()
+        {
+            _statistics.WebhooksReceived++;
+            TrySave();
+        }
+
+        public void IncreaseWebhooksProcessed()
+        {
+            _statistics.WebhooksProcessed++;
+            TrySave();
+        }
     }
 }

@@ -51,6 +51,8 @@ namespace PotatoBot.Webhook.Controllers
         [HttpPost]
         public async Task<IActionResult> Index()
         {
+            Program.ServiceManager.StatisticsService.IncreaseWebhooksReceived();
+
             if (!ValidateRequest())
             {
                 return new StatusCodeResult((int)HttpStatusCode.NotAcceptable);
@@ -156,6 +158,7 @@ namespace PotatoBot.Webhook.Controllers
                         }
                 }
 
+                Program.ServiceManager.StatisticsService.IncreaseWebhooksProcessed();
                 return new StatusCodeResult((int)HttpStatusCode.OK);
             }
         }

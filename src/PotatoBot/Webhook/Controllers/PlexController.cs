@@ -47,6 +47,8 @@ namespace PotatoBot.Webhook.Controllers
         [HttpPost]
         public IActionResult Index()
         {
+            Program.ServiceManager.StatisticsService.IncreaseWebhooksReceived();
+
             if (!ValidateRequest())
             {
                 return new StatusCodeResult((int)HttpStatusCode.NotAcceptable);
@@ -61,6 +63,7 @@ namespace PotatoBot.Webhook.Controllers
                     {
                         // We don't care about the thumbnail
                         _logger.Trace($"Skipping request as thumbnail was detected");
+                        Program.ServiceManager.StatisticsService.IncreaseWebhooksProcessed();
                         return new StatusCodeResult((int)HttpStatusCode.OK);
                     }
 
@@ -70,6 +73,7 @@ namespace PotatoBot.Webhook.Controllers
                     if (start == -1 || end == -1)
                     {
                         _logger.Trace($"Skipping requests ({start}/{end})");
+                        Program.ServiceManager.StatisticsService.IncreaseWebhooksProcessed();
                         return new StatusCodeResult((int)HttpStatusCode.OK);
                     }
 
@@ -79,6 +83,8 @@ namespace PotatoBot.Webhook.Controllers
                     {
                         // ProcessRequest(plexEvent);
                     }
+
+                    Program.ServiceManager.StatisticsService.IncreaseWebhooksProcessed();
                     return new StatusCodeResult((int)HttpStatusCode.OK);
                 }
                 catch(Exception ex)

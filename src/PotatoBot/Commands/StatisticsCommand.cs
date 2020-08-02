@@ -19,7 +19,9 @@ namespace PotatoBot.Commands
                 statistics.CommandsReceived,
                 statistics.CommandsProcessed,
                 statistics.Searches,
-                statistics.Adds
+                statistics.Adds,
+                statistics.WebhooksReceived,
+                statistics.WebhooksProcessed
             );
 
             await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
