@@ -137,26 +137,27 @@ namespace PotatoBot.Services
 
             try
             {
-                var client = GetHttpClient();
-
-                _logger.Trace($"Sending request to {url}");
-
-                var response = client.GetAsync(url).Result;
-
-                if (response.StatusCode != expectedStatusCode)
-                    _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
-
-                var xml = response.Content.ReadAsStringAsync().Result;
-                if (string.IsNullOrEmpty(xml))
+                using (var client = GetHttpClient())
                 {
-                    _logger.Warn("Empty response!");
-                    return default(T);
-                }
+                    _logger.Trace($"Sending request to {url}");
 
-                var serializer = new XmlSerializer(typeof(T));
-                using (var streamReader = new StringReader(xml))
-                {
-                    return (T)serializer.Deserialize(streamReader);
+                    var response = client.GetAsync(url).Result;
+
+                    if (response.StatusCode != expectedStatusCode)
+                        _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
+
+                    var xml = response.Content.ReadAsStringAsync().Result;
+                    if (string.IsNullOrEmpty(xml))
+                    {
+                        _logger.Warn("Empty response!");
+                        return default;
+                    }
+
+                    var serializer = new XmlSerializer(typeof(T));
+                    using (var streamReader = new StringReader(xml))
+                    {
+                        return (T)serializer.Deserialize(streamReader);
+                    }
                 }
             }
             catch (Exception ex)
@@ -172,14 +173,15 @@ namespace PotatoBot.Services
 
             try
             {
-                var client = GetHttpClient();
+                using (var client = GetHttpClient())
+                {
+                    _logger.Trace($"Sending request to {url}");
 
-                _logger.Trace($"Sending request to {url}");
+                    var response = client.GetAsync(url).Result;
 
-                var response = client.GetAsync(url).Result;
-
-                if (response.StatusCode != expectedStatusCode)
-                    _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
+                    if (response.StatusCode != expectedStatusCode)
+                        _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
+                }
             }
             catch (Exception ex)
             {
@@ -191,33 +193,35 @@ namespace PotatoBot.Services
         {
             _logger.Trace($"Requesting new token with ID {_plexIdentifier}");
 
-            var client = GetHttpClient();
-            var body = $"{username}:{password}";
-            var bytes = System.Text.Encoding.UTF8.GetBytes(body);
-            var base64 = Convert.ToBase64String(bytes);
-
-            client.DefaultRequestHeaders.Add("X-Plex-Client-Identifier", _plexIdentifier);
-            client.DefaultRequestHeaders.Add("X-Plex-Product", "PotatoServer");
-            client.DefaultRequestHeaders.Add("X-Plex-Version", Program.Version.ToString());
-            client.DefaultRequestHeaders.Add("Authorization", $"Basic {base64}");
-
-            var response = client.PostAsync(APIEndPoints.PlexEndpoints.TokenGeneration, null).Result;
-
-            if (response.StatusCode == HttpStatusCode.Created)
+            using (var client = GetHttpClient())
             {
-                var text = response.Content.ReadAsStringAsync().Result;
-                var token = JsonConvert.DeserializeObject<TokenResponse>(text);
+                var body = $"{username}:{password}";
+                var bytes = System.Text.Encoding.UTF8.GetBytes(body);
+                var base64 = Convert.ToBase64String(bytes);
 
-                Program.Settings.Plex.APIKey = token.User.Authentication_token;
-                Program.SaveSettings();
+                client.DefaultRequestHeaders.Add("X-Plex-Client-Identifier", _plexIdentifier);
+                client.DefaultRequestHeaders.Add("X-Plex-Product", "PotatoServer");
+                client.DefaultRequestHeaders.Add("X-Plex-Version", Program.Version.ToString());
+                client.DefaultRequestHeaders.Add("Authorization", $"Basic {base64}");
 
-                File.Delete(PlexSetupFile);
+                var response = client.PostAsync(APIEndPoints.PlexEndpoints.TokenGeneration, null).Result;
 
-                _logger.Info("Successfully generated Key for Plex. Plex API available");
-            }
-            else
-            {
-                _logger.Warn($"Invalid response recieved: {response.StatusCode}");
+                if (response.StatusCode == HttpStatusCode.Created)
+                {
+                    var text = response.Content.ReadAsStringAsync().Result;
+                    var token = JsonConvert.DeserializeObject<TokenResponse>(text);
+
+                    Program.Settings.Plex.APIKey = token.User.Authentication_token;
+                    Program.SaveSettings();
+
+                    File.Delete(PlexSetupFile);
+
+                    _logger.Info("Successfully generated Key for Plex. Plex API available");
+                }
+                else
+                {
+                    _logger.Warn($"Invalid response recieved: {response.StatusCode}");
+                }
             }
         }
 
