@@ -20,3 +20,50 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "PotatoBot.Commands"
 )]
+
+[assembly: SuppressMessage(
+    "Microsoft.Globalization",
+    "CA1305:Specify IFormatProvider",
+    Justification = "Not required",
+    Scope = "namespaceanddescendants",
+    Target = "PotatoBot"
+)]
+
+[assembly: SuppressMessage(
+    "Microsoft.Globalization",
+    "CA1307:Specify StringComparison",
+    Justification = "Not required",
+    Scope = "namespaceanddescendants",
+    Target = "PotatoBot"
+)]
+
+[assembly: SuppressMessage(
+    "Microsoft.Globalization",
+    "CA1304:Specify CultureInfo",
+    Justification = "<Pending>",
+    Scope = "namespaceanddescendants",
+    Target = "PotatoBot"
+)]
+
+[assembly: SuppressMessage(
+    "Microsoft.Design",
+    "CA1031:Do not catch general exception types",
+    Justification = "Not required",
+    Scope = "namespaceanddescendants",
+    Target = "PotatoBot"
+)]
+
+[assembly: SuppressMessage(
+    "Microsoft.Reliability",
+    "CA2007:Consider calling ConfigureAwait on the awaited task",
+    Justification = "<Pending>",
+    Scope = "namespaceanddescendants",
+    Target = "PotatoBot"
+)]
+[assembly: SuppressMessage(
+    "Microsoft.Usage",
+    "CA2227:Collection properties should be read only",
+    Justification = "<Pending>",
+    Scope = "namespaceanddescendants",
+    Target = "PotatoBot.Modals"
+)]
