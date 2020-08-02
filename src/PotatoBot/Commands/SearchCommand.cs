@@ -83,6 +83,8 @@ namespace PotatoBot.Commands
 
             _logger.Trace($"Searching in {cacheData.SelectedSearch} for '{searchText}'");
 
+            StatisticsService.IncreaseSearches();
+
             await client.SendChatActionAsync(message.Chat.Id, Telegram.Bot.Types.Enums.ChatAction.Typing);
 
             switch(cacheData.SelectedSearch)
@@ -195,6 +197,7 @@ namespace PotatoBot.Commands
                         var result = SonarrService.AddSeries(selectedSeries);
                         if(result.Added)
                         {
+                            StatisticsService.IncreaseAdds();
                             await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Success"), selectedSeries.Title));
                         }
                         else if(result.AlreadyAdded)
@@ -221,6 +224,7 @@ namespace PotatoBot.Commands
                         var result = RadarrService.AddMovie(selectedMovie);
                         if (result.Added)
                         {
+                            StatisticsService.IncreaseAdds();
                             await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Success"), selectedMovie.Title));
                         }
                         else if (result.AlreadyAdded)
@@ -247,6 +251,7 @@ namespace PotatoBot.Commands
                         var result = LidarrService.AddArtist(selectedArtist);
                         if (result.Added)
                         {
+                            StatisticsService.IncreaseAdds();
                             await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Success"), selectedArtist.ArtistName));
                         }
                         else if (result.AlreadyAdded)

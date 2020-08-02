@@ -113,6 +113,7 @@ namespace PotatoBot.Services
         {
             foreach (var chat in _users)
             {
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
                 await _client.SendTextMessageAsync(chat, message, ParseMode.Html, disableNotification: silent);
             }
         }
@@ -133,6 +134,7 @@ namespace PotatoBot.Services
 
             foreach (var chat in _settings.Admins)
             {
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
                 await _client.SendTextMessageAsync(chat, message, ParseMode.MarkdownV2);
             }
         }
@@ -142,10 +144,12 @@ namespace PotatoBot.Services
             return _settings.Admins.Contains(message.From.Id);
         }
 
-        internal async Task<Message> SimpleReplyToMessage(Message message, string text)
+        internal async Task<Message> SimpleReplyToMessage(Message message, string text, ParseMode parseMode = ParseMode.Default)
         {
             _logger.Trace($"Sending '{text}' to {message.From.Username}");
-            return await _client.SendTextMessageAsync(message.Chat, text, replyToMessageId: message.MessageId);
+
+            Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+            return await _client.SendTextMessageAsync(message.Chat, text, replyToMessageId: message.MessageId, parseMode: parseMode);
         }
 
         internal async Task<Message> ForceReply(IReplyCallback caller, Message message, string title, bool update = true)
@@ -153,6 +157,8 @@ namespace PotatoBot.Services
             var cache = GetCache(message);
             cache.ForceReply = true;
             cache.ForceReplyInstance = caller;
+
+            Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
             var sentMessage = await _client.SendTextMessageAsync(message.Chat.Id, title, replyMarkup: new ForceReplyMarkup());
             cache.MessageId = sentMessage.MessageId;
 
@@ -174,6 +180,7 @@ namespace PotatoBot.Services
         }
         internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string title, IReplyMarkup markup)
         {
+            Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
             var sentMessage = await _client.SendTextMessageAsync(message.Chat, title, replyMarkup: markup, replyToMessageId: message.MessageId);
             var cache = GetCache(sentMessage);
             cache.QueryCallbackInstance = caller;
@@ -288,6 +295,7 @@ namespace PotatoBot.Services
 
             if (create)
             {
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
                 var sentMessage = await _client.SendTextMessageAsync(message.Chat.Id, messageText, parseMode: ParseMode.Html, replyMarkup: keyboardMarkup);
                 cache.MessageId = sentMessage.MessageId;
                 _logger.Trace($"Sent pagination with message id {sentMessage.MessageId}");
@@ -442,6 +450,8 @@ namespace PotatoBot.Services
 
                 _logger.Trace($"Received new message from [{user.Id}] {user.Username}: {message.Text}");
 
+                Program.ServiceManager.StatisticsService.IncreaseMessagesReveived();
+
                 // Discard messages from bots
                 if (message.From.IsBot)
                 {
@@ -474,6 +484,9 @@ namespace PotatoBot.Services
                 if(message.Text.StartsWith("/", StringComparison.InvariantCultureIgnoreCase))
                 {
                     // Command
+
+                    Program.ServiceManager.StatisticsService.IncreaseCommandsReceived();
+
                     _logger.Trace("Detected command");
                     await _commandManager.ProcessMessage(_client, message);
                 }
@@ -517,6 +530,7 @@ namespace PotatoBot.Services
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process message");
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
                 await _client.SendTextMessageAsync(e.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"), replyToMessageId: e.Message.MessageId);
             }
         }
@@ -559,6 +573,7 @@ namespace PotatoBot.Services
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process CallbackQuery");
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
                 await _client.SendTextMessageAsync(e.CallbackQuery.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"));
             }
         }

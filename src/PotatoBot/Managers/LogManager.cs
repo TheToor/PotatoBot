@@ -21,7 +21,11 @@ namespace PotatoBot.Managers
             try
             {
                 var message = $"*[{logEvent.Level}][{logEvent.TimeStamp}]\n{logEvent.CallerClassName}->{logEvent.CallerMemberName}*\n{logEvent.Message}";
-                await Program.ServiceManager?.TelegramService?.SendToAdmin(message);
+                if(Program.ServiceManager == null || Program.ServiceManager.TelegramService == null)
+                {
+                    return;
+                }
+                await Program.ServiceManager.TelegramService.SendToAdmin(message);
             }
             catch (Exception)
             {

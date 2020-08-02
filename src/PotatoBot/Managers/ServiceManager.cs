@@ -59,6 +59,7 @@ namespace PotatoBot.Managers
         }
 
         internal TelegramService TelegramService { get; } = new TelegramService();
+        internal StatisticsService StatisticsService { get; } = new StatisticsService();
 
         private List<IService> _services = new List<IService>()
         {
@@ -72,6 +73,7 @@ namespace PotatoBot.Managers
             _logger.Info("ServiceManager starting ...");
 
             _services.Add(TelegramService);
+            _services.Add(StatisticsService);
 
             var settings = Program.Settings;
             

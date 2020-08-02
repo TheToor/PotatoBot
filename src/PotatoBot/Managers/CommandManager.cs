@@ -129,6 +129,10 @@ namespace PotatoBot.Managers
                 {
                     _logger.Warn($"Failed to execute command '{command}'");
                 }
+                else
+                {
+                    Program.ServiceManager.StatisticsService.IncreaseCommandsProcessed();
+                }
                 return result;
             }
             catch(Exception ex)

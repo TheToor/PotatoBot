@@ -10,5 +10,6 @@ namespace PotatoBot.Modals.Commands
         internal static SonarrService SonarrService => Program.ServiceManager.Sonarr;
         internal static RadarrService RadarrService => Program.ServiceManager.Radarr;
         internal static LidarrService LidarrService => Program.ServiceManager.Lidarr;
+        internal static StatisticsService StatisticsService => Program.ServiceManager.StatisticsService;
     }
 }
