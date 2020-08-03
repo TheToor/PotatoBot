@@ -7,6 +7,7 @@
         public const string QualityProfile = "qualityprofile";
         public const string LanguageProfile = "languageprofile";
         public const string Queue = "queue";
+        public const string DiskSpace = "diskspace";
 
         public static class RadarrEndpoints
         {

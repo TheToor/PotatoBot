@@ -42,6 +42,11 @@ namespace PotatoBot.API
             return GetRequest<SystemStatus>(APIEndPoints.SystemStatus);
         }
 
+        internal virtual List<DiskSpace> GetDiskSpace()
+        {
+            return GetRequest<List<DiskSpace>>(APIEndPoints.DiskSpace);
+        }
+
         internal virtual List<QualityProfile> GetQualityProfiles()
         {
             return GetRequest<List<QualityProfile>>(APIEndPoints.QualityProfile);
