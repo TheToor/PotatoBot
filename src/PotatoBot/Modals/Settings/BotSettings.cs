@@ -1,4 +1,6 @@
-﻿namespace PotatoBot.Modals.Settings
+﻿using System.Collections.Generic;
+
+namespace PotatoBot.Modals.Settings
 {
     public class BotSettings
     {
@@ -11,5 +13,7 @@
         public EntertainmentSettings Lidarr { get; set; } = new EntertainmentSettings();
 
         public PlexSettings Plex { get; set; } = new PlexSettings();
+
+        public List<SABnzbdSettings> SABnzbd { get; set; } = new List<SABnzbdSettings>();
     }
 }

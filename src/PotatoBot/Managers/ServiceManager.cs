@@ -1,4 +1,5 @@
-﻿using PotatoBot.Services;
+﻿using NodaTime;
+using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
 
@@ -66,6 +67,8 @@ namespace PotatoBot.Managers
             new WebhookService()
         };
 
+        private List<SABnzbdService> _sabNzbdServices = new List<SABnzbdService>();
+
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         internal ServiceManager()
@@ -119,6 +122,24 @@ namespace PotatoBot.Managers
                 Program.Settings.Lidarr.RescanAfterDownload = false;
             }
 
+            if(settings.SABnzbd?.Count > 0)
+            {
+                _logger.Info($"Adding {settings.SABnzbd.Count} SABnzbd Servers");
+
+                foreach(var server in settings.SABnzbd)
+                {
+                    if(!server.Enabled)
+                    {
+                        _logger.Trace($"Skipping '{server.Url}' because it is disabled");
+                        continue;
+                    }
+
+                    var service = new SABnzbdService(server);
+                    _sabNzbdServices.Add(service);
+                    _services.Add(service);
+                }
+            }
+
             StartAllServices();
         }
 
@@ -161,6 +182,11 @@ namespace PotatoBot.Managers
                     _logger.Warn($"Failed to stop {service.Name}");
                 }
             }
+        }
+
+        internal List<SABnzbdService> GetSABnzbdServices()
+        {
+            return _sabNzbdServices;
         }
     }
 }

@@ -135,6 +135,13 @@ namespace PotatoBot
             try
             {
                 Settings = JsonConvert.DeserializeObject<BotSettings>(settings);
+
+#if TRACE
+                _logger.Trace("===================================================================");
+                _logger.Trace("Read Settings: ");
+                _logger.Trace(JsonConvert.SerializeObject(Settings));
+                _logger.Trace("===================================================================");
+#endif
             }
             catch(Exception ex)
             {
