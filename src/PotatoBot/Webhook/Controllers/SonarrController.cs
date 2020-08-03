@@ -85,7 +85,7 @@ namespace PotatoBot.Webhook.Controllers
                                     episodes,
                                     grabEvent.Release.Quality,
                                     grabEvent.Release.ReleaseGroup,
-                                    $"{Math.Round(size.LargestWholeNumberDecimalValue, 2):00} {size.LargestWholeNumberDecimalSymbol}"
+                                    $"{Math.Round(size.LargestWholeNumberDecimalValue, 2):0.00} {size.LargestWholeNumberDecimalSymbol}"
                                 )
                             );
                             break;
