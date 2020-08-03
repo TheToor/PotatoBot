@@ -15,7 +15,7 @@ namespace PotatoBot.Modals.API
         public string DownloadClient { get; set; }
         public string DownloadId { get; set; } 
         public string ErrorMessage { get; set; }
-        public DateTime estimatedCompletionTime { get; set; }
+        public DateTime EstimatedCompletionTime { get; set; }
         public string Indexer { get; set; }
         public string OutputPath { get; set; }
         public string Protocol { get; set; }
