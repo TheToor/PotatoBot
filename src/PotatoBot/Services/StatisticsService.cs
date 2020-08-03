@@ -64,9 +64,10 @@ namespace PotatoBot.Services
 
         private void TrySave()
         {
-            if(DateTime.Now > _lastSaved.AddSeconds(_saveDelay))
+            if(DateTime.Now < _lastSaved.AddSeconds(_saveDelay))
             {
                 // Do not save when last save is not longer than _saveDelay seconds ago
+                _logger.Trace($"NOT executing save as last save was on {_lastSaved} ({_saveDelay} / {DateTime.Now})");
                 return;
             }
 
