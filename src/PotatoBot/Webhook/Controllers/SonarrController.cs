@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -84,7 +85,7 @@ namespace PotatoBot.Webhook.Controllers
                                     episodes,
                                     grabEvent.Release.Quality,
                                     grabEvent.Release.ReleaseGroup,
-                                    $"{size.LargestWholeNumberDecimalValue} {size.LargestWholeNumberDecimalSymbol}"
+                                    $"{Math.Round(size.LargestWholeNumberDecimalValue, 2):00} {size.LargestWholeNumberDecimalSymbol}"
                                 )
                             );
                             break;
