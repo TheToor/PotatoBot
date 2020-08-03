@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using ByteSizeLib;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NLog;
@@ -68,6 +69,7 @@ namespace PotatoBot.Webhook.Controllers
                     case EventType.Grab:
                         {
                             var grabEvent = JsonConvert.DeserializeObject<Grab>(json);
+                            var size = ByteSize.FromBytes(grabEvent.Release.Size);
 
                             var episodes = string.Empty;
                             foreach (var episode in grabEvent.Episodes)
@@ -79,7 +81,10 @@ namespace PotatoBot.Webhook.Controllers
                                 string.Format(
                                     Program.LanguageManager.GetTranslation("Series", "Grab"),
                                     grabEvent.Series.Title,
-                                    episodes
+                                    episodes,
+                                    grabEvent.Release.Quality,
+                                    grabEvent.Release.ReleaseGroup,
+                                    $"{size.LargestWholeNumberDecimalValue} {size.LargestWholeNumberDecimalSymbol}"
                                 )
                             );
                             break;

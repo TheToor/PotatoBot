@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using ByteSizeLib;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NLog;
@@ -67,11 +68,16 @@ namespace PotatoBot.Webhook.Controllers
                 {
                     case EventType.Grab:
                         {
-                            var testEvent = JsonConvert.DeserializeObject<Grab>(json);
+                            var grabEvent = JsonConvert.DeserializeObject<Grab>(json);
+                            var size = ByteSize.FromBytes(grabEvent.Release.Size);
+
                             await _telegramManager.SendToAll(
                                 string.Format(
                                     Program.LanguageManager.GetTranslation("Artists", "Grab"),
-                                    testEvent.Albums.Select((a) => a.Title).Aggregate((i, j) => i + "\n" + j)
+                                    grabEvent.Albums.Select((a) => a.Title).Aggregate((i, j) => i + "\n" + j),
+                                    grabEvent.Release.Quality,
+                                    grabEvent.Release.ReleaseGroup,
+                                    $"{size.LargestWholeNumberDecimalValue} {size.LargestWholeNumberDecimalSymbol}"
                                 )
                             );
                         }

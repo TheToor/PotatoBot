@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using ByteSizeLib;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NLog;
@@ -68,11 +69,16 @@ namespace PotatoBot.Webhook.Controllers
                     case EventType.Grab:
                         {
                             var grabEvent = JsonConvert.DeserializeObject<Grab>(json);
+                            var size = ByteSize.FromBytes(grabEvent.Release.Size);
+
                             await _telegramManager.SendToAll(
                                 string.Format(
                                     Program.LanguageManager.GetTranslation("Movies", "Grab"),
                                     grabEvent.RemoteMovie.Year,
-                                    grabEvent.Movie.Title
+                                    grabEvent.Movie.Title,
+                                    grabEvent.Release.Quality,
+                                    grabEvent.Release.ReleaseGroup,
+                                    $"{size.LargestWholeNumberDecimalValue} {size.LargestWholeNumberDecimalSymbol}"
                                 )
                             );
                             break;
