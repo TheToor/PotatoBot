@@ -48,18 +48,14 @@ namespace PotatoBot.Services
             return true;
         }
 
-        internal List<Series> GetSeries()
+        internal List<Series> GetAllSeries()
         {
-            lock (_seriesCacheLock)
-            {
-                if (_seriesCache.Count == 0 || _seriesCacheUpdates.AddMinutes(30) < DateTime.Now)
-                {
-                    _logger.Trace("Updating Series cache ...");
-                    _seriesCache = GetRequest<List<Series>>(APIEndPoints.SonarrEndpoints.Series).ToDictionary((i) => i.Id);
-                }
-            }
+            _logger.Trace("Fetching all series ...");
 
-            return _seriesCache.Values.ToList();
+            var response = GetRequest<List<Series>>(APIEndPoints.SonarrEndpoints.Series);
+            _logger.Trace($"Got {response.Count} series as a response");
+
+            return response;
         }
 
         internal List<Series> SearchSeries(string name)

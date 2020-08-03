@@ -48,6 +48,16 @@ namespace PotatoBot.Services
             return response;
         }
 
+        internal List<Movie> GetAllMovies()
+        {
+            _logger.Trace("Fetching all movies ...");
+
+            var response = GetRequest<List<Movie>>(APIEndPoints.RadarrEndpoints.Movie);
+            _logger.Trace($"Got {response.Count} movies as a response");
+
+            return response;
+        }
+
         public List<Movie> SearchMovieByName(string name)
         {
             _logger.Trace($"Searching movie with name {name} ...");

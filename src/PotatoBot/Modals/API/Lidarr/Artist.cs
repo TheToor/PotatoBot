@@ -1,4 +1,6 @@
-﻿namespace PotatoBot.Modals.API.Lidarr
+﻿using System.Collections.Generic;
+
+namespace PotatoBot.Modals.API.Lidarr
 {
     public class Artist
     {
@@ -23,5 +25,9 @@
 
         public string Path { get; set; }
         public string RootFolderPath { get; set; }
+
+        public ArtistsStatistics Statistics { get; set; }
+
+        public List<Image> Images { get; set; } = new List<Image>();
     }
 }

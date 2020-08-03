@@ -46,6 +46,16 @@ namespace PotatoBot.Services
             return true;
         }
 
+        internal List<Artist> GetAllArtists()
+        {
+            _logger.Trace("Fetching all artists  ...");
+
+            var response = GetRequest<List<Artist>>(APIEndPoints.LidarrEndpoints.Artist);
+            _logger.Trace($"Got {response.Count} artists as a response");
+
+            return response;
+        }
+
         internal List<Artist> SearchAristsByName(string name)
         {
             _logger.Trace($"Searching artist with name {name} ...");

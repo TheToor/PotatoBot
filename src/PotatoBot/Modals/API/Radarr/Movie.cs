@@ -19,7 +19,7 @@ namespace PotatoBot.Modals.API.Radarr
         public string Overview { get; set; }
         public DateTime InCinemas { get; set; }
         public DateTime PhysicalRelease { get; set; }
-        public List<Image> Images { get; set; }
+        public List<Image> Images { get; set; } = new List<Image>();
         public string Website { get; set; }
         public bool Downloaded { get; set; }
         public ushort Year { get; set; }

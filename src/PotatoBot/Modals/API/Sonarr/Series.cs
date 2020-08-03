@@ -33,7 +33,7 @@ namespace PotatoBot.Modals.API.Sonarr
         // This should be an enum
         public string SeriesType { get; set; }
         public string SortTitle { get; set; }
-        public Statistics Statistics { get; set; }
+        public SeriesStatistics Statistics { get; set; }
         // This should be an enum
         public string Status { get; set; }
         // To check
