@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NLog.Web;
+using Org.BouncyCastle.Utilities.Net;
 using PotatoBot.Webhook;
 using System;
 using System.Threading;
@@ -30,19 +33,27 @@ namespace PotatoBot.Services
 
                 _endpoint = new WebHostBuilder()
                     .UseConfiguration(config)
-                    .UseKestrel()
+                    .UseStartup<Startup>()
+                    .PreferHostingUrls(false)
+                    .UseKestrel((kestrel) =>
+                    {
+                        var appServices = kestrel.ApplicationServices;
+                        kestrel.ConfigureHttpsDefaults((httpsOptions) =>
+                        {
+                            httpsOptions.UseLettuceEncrypt(appServices);
+                        });
+                    })
                     .ConfigureLogging((logging) =>
                     {
                         logging.ClearProviders();
 #if WEB_DEBUG
-                    logging.SetMinimumLevel(LogLevel.Trace);
+                        logging.SetMinimumLevel(LogLevel.Trace);
 #else
-                    logging.SetMinimumLevel(LogLevel.Warning);
+                        logging.SetMinimumLevel(LogLevel.Warning);
 #endif
                     })
                     .UseNLog()
-                    .UseStartup<Startup>()
-                    .UseUrls(_settings.BindingUrl)
+                    .UseUrls(new[] { _settings.BindingUrl, _settings.HTTPSBindingUrl })
                     .SuppressStatusMessages(true)
                     .Build();
 

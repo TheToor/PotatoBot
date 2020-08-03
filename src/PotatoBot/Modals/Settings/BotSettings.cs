@@ -17,5 +17,7 @@ namespace PotatoBot.Modals.Settings
         public List<SABnzbdSettings> SABnzbd { get; set; } = new List<SABnzbdSettings>();
 
         public List<string> CORSUrls { get; set; } = new List<string>();
+
+        public LettuceEncryptSettings LettuceEncrypt { get; set; } = new LettuceEncryptSettings();
     }
 }
