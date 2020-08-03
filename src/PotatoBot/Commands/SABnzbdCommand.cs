@@ -46,7 +46,7 @@ namespace PotatoBot.Commands
             return true;
         }
 
-        private async Task<bool> ProcessStatusCommand(Message message, List<SABnzbdService> servers)
+        private static async Task<bool> ProcessStatusCommand(Message message, List<SABnzbdService> servers)
         {
             var responseText = string.Format(
                 LanguageManager.GetTranslation("Commands", "SABnzbd", "Status", "Title"),
@@ -84,7 +84,7 @@ namespace PotatoBot.Commands
             return true;
         }
 
-        private async Task<bool> ProcessPauseCommand(Message message, List<SABnzbdService> servers)
+        private static async Task<bool> ProcessPauseCommand(Message message, List<SABnzbdService> servers)
         {
             var responseText = string.Format(
                 LanguageManager.GetTranslation("Commands", "SABnzbd", "Pause"),
@@ -103,7 +103,7 @@ namespace PotatoBot.Commands
             return true;
         }
 
-        private async Task<bool> ProcessResumeCommand(Message message, List<SABnzbdService> servers)
+        private static async Task<bool> ProcessResumeCommand(Message message, List<SABnzbdService> servers)
         {
             var responseText = string.Format(
                 LanguageManager.GetTranslation("Commands", "SABnzbd", "Resume"),
