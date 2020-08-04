@@ -1,0 +1,220 @@
+{
+	"Name": "EN Insulting",
+
+	"GeneralError": [
+		"You fucked it up mate",
+		"How did you do that?",
+		"It crashed. Are you proud now?",
+		"You broke it. Congrats."
+	],
+	"CommandNotFoundError": [
+		"I DON'T KNOW WHAT YOU WANT",
+		"I DON'T UNDERSTAND"
+	],
+	"CommandProcessingError": [
+		"Failed to process your message. Sorry not sorry!",
+		"Whatever you did, it broke something. Don't do it again. Or do it again. I'm a bot not your mother."
+	],
+	"Commands": {
+		"Stats": {
+			"Stats": [
+				"<b>{0}</b> Messages sent\n<b>{1}</b> Messages received\n<b>{2}</b> Messages processed\n<b>{3}</b> Commands received\n<b>{4}</b> Commands processed\n<b>{5}</b> searches\n<b>{6}</b> additions to the libraries\n<b>{7}</b> Webhooks received\n<b>{8}</b> Webhooks processed"
+			]
+		},
+		"Start": {
+			"Start": [
+				"Nope",
+				"No start available. At least not for you"
+			]
+		},
+		"Help": {
+			"Help": [
+				"Hahahahahahahahaha. No.",
+				"Why would I even?",
+				"Would you?"
+			]
+		},
+		"Storage": {
+			"Storage": [
+				"Showing free disk space of <b>{0}</b> services \n\n"
+			],
+			"Label": [
+				"{0} ({1}): {2} free of {3}"
+			]
+		},
+		"Search": {
+			"NotEnabled": [
+				"This shit is disabled (for ya?)"
+			],
+			"Start": [
+				"What can I search for the lazy bastard today?"
+			],
+
+			"Selected": [
+				"So your fat ass wants to search for {0}. Here we goooo!"
+			],
+
+			"NoMovie": [
+				"You actually did it. I didn't find shit for '{0}'. You can be proud of yourself.",
+				"Nothing found for '{0}'. Maybe try searching for something useful."
+			],
+			"Movie": [
+				"Found <b>{0}</b> Movies for ya"
+			],
+
+			"NoSeries": [
+				"You fucked it up. Didn't find shit for '{0}'."
+			],
+			"Series": [
+				"Found <b>{0}</b> Series for ya"
+			],
+
+			"NoArtist": [
+				"Didn't find anything for '{0}'. Try better next time"
+			],
+			"Artist": [
+				"Found <b>{0}</b> Artists for ya"
+			],
+
+			"Success": [
+				"Added {0} for ya.",
+				"If I'm not mistaken, then I did add {0} for ya. Thank me later"
+			],
+			"Exists": [
+				"You twat tried to add a something that already exists. Are you dumb?"
+			],
+			"Fail": [
+				"I gave my best but failed. {0} was not added",
+				"Blame the programmer. He made me do it. Failed to add {0}"
+			]
+		},
+		"Queue": {
+			"NotEnabled": [
+				"This shit is disabled (for ya?)"
+			],
+			"Start": [
+				"Show queue of what? Your mom?"
+			],
+
+			"NoTypeArgument": [
+				"You need to specify which queue. Dumbass.",
+				"No name, no queue. That simple"
+			],
+			"UnknownTypeArgument": [
+				"Can't get that queue. Guess why.",
+				"Welp. No. That thing has no queue"
+			],
+			"NoMovie": [
+				"No movies currently downloading. Go add some!"
+			],
+			"NoSeries": [
+				"No series currently downloading. Go add some!"
+			],
+			"NoArtist": [
+				"No songs currently downloading. Go add some!"
+			],
+			"Movie": [
+				"<b>{0}</b> movies are currently downloading"
+			],
+			"Series": [
+				"<b>{0}</b> episodes currently downloading"
+			],
+			"Artist": [
+				"<b>{0}</b> songs currently downloading"
+			]
+		},
+		"Download": {
+			"NotEnabled": [
+				"This shit is disabled (for ya?)"
+			],
+			"NoTypeArgument": [
+				"Can't download shit if you don't tell me what"
+			],
+			"UnknownTypeArgument": [
+				"I can't download that. Did you even read the manual? Oh right. There isn't one."
+			],
+			"Downloading": [
+				"Trying to start the download of '{0}'. You happy now?"
+			],
+			"Downloaded": [
+				"Downloaded '{0}'.\nFilename: {1}\nChange filename?"
+			],
+			"Success": [
+				"Successfully downloaded and saved '{0}'"
+			]
+		},
+		"SABnzbd": {
+			"CommandNotFound": [
+				"TWAT"
+			],
+			"Status": {
+				"Title": [
+					"Status from all {0} SABnzbd servers\n\n"
+				],
+				"Text": [
+					"Paused: {0}\nVersion: {1}\nLoad Average: {2}\nFree Disk Space: {3}\nSize Remaining: {4} ({5} / {6})"
+				]
+			},
+			"Pause": [
+				"Paused SABnzbd on {0} servers\n\n"
+			],
+			"Resume": [
+				"Resumed SABnzbd on {0} servers\n\n"
+			]
+		}
+	},
+	"Series": {
+		"Grab": [
+			"Grabbed new episode(s) for ya.\n\n<b>{0}</b>{1}\n{2} / {3} / {4}"
+		],
+		"Download": [
+			"Downloaded new episode(s).\n\n<b>{0}</b>{1}"
+		],
+		"Upgrade": [
+			"Upgrade a episode for ya.\n\n<b>{0}</b>{1}"
+		],
+		"Rename": [
+			"Renamed a series for ya. It had a shit name anyways.\n<b>{0}</b>>"
+		],
+		"Test": [
+			"You tested. You DARE to test me??? Unbelievable.\n\n<b>{0}</b>{1}\nAs you see it works. Thank me later."
+		]
+	},
+	"Movies": {
+		"Grab": [
+			"Grabbed a new movie for ya.\n<b>[{0}] {1}</b>\n{2} / {3} / {4}"
+		],
+		"Download": [
+			"Downloaded a new movie.\n<b>[{0}] {1}</b>"
+		],
+		"Upgrade": [
+			"Upgrade a movie for ya.\n<b>[{0}] {1}</b>"
+		],
+		"Rename": [
+			"Renamed a file for ya. It had a shit name anyways.\n<b>{0}</b>"
+		],
+		"Test": [
+			"You tested. You DARE to test me??? Unbelievable.\n([{0}] {1})\nAs you see it works. Thank me later."
+		]
+	},
+	"Artists": {
+		"Grab": [
+			"Grabbed a new track(s) for ya.\n<b>{0}</b>\n{1} / {2} / {3}"
+		],
+		"Download": [
+			"Downloaded a new track.\n<b>{0}</b>"
+		],
+		"Upgrade": [
+			"Upgrade a track for ya.\n<b>{0}</b>"
+		],
+		"Rename": [
+			"Renamed a file for ya. It had a shit name anyways.\n<b>{0}</b>"
+		],
+		"Rename": [
+			"Retagged a file for ya. The tags were bullshit before.\n<b>{0}</b>"
+		],
+		"Test": [
+			"You tested. You DARE to test me??? Unbelievable.\n{0}\nAs you see it works. Thank me later."
+		]
+	}
+}
