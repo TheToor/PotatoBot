@@ -52,8 +52,8 @@ namespace PotatoBot.Commands
                                     LanguageManager.GetTranslation("Commands", "Storage", "Label"),
                                     i.Path,
                                     i.Label,
-                                    $"{(int)Math.Round(freeSpace.LargestWholeNumberDecimalValue)} {freeSpace.LargestWholeNumberDecimalSymbol}",
-                                    $"{(int)Math.Round(totalSpace.LargestWholeNumberDecimalValue)} {totalSpace.LargestWholeNumberDecimalSymbol}"
+                                    $"{(int)Math.Round(freeSpace.LargestWholeNumberBinaryValue)} {freeSpace.LargestWholeNumberBinarySymbol}",
+                                    $"{(int)Math.Round(totalSpace.LargestWholeNumberBinaryValue)} {totalSpace.LargestWholeNumberBinarySymbol}"
                                 );
                             }
                         )
