@@ -6,7 +6,7 @@
   <h3 align="center">PotatoBot</h3>
 
   <p align="center">
-    PotatoBot is a Telegram bot for the management of Radarr, Sonarr, Lidarr and Plex!
+    PotatoBot is a Telegram bot for the management of Radarr, Sonarr, Lidarr, SABnzbd and Plex!
     <br />
     <a href="https://github.com/TheToor/PotatoBot/issues">Report Bug</a>
     ·
@@ -39,6 +39,7 @@ TODO
 * [NLog]([https://nlog-project.org/](https://nlog-project.org/))
 * [Telegram.Bot](https://github.com/TelegramBots/telegram.bot)
 * [ical.NET]([https://github.com/rianjs/ical.net](https://github.com/rianjs/ical.net))
+* [ByteSize]([https://github.com/omar/ByteSize](https://github.com/omar/ByteSize))
 
 
 ## Getting Started
