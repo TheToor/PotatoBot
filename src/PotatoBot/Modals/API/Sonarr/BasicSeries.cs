@@ -5,7 +5,7 @@ namespace PotatoBot.Modals.API.Sonarr
     public class BasicSeries
     {
         public string Title { get; set; }
-        public MediaStatistics Statistics { get; set; }
+        public SeriesStatistics Statistics { get; set; }
         public Image Poster { get; set; }
 
         public BasicSeries(Series series)
