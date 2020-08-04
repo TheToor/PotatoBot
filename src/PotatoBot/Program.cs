@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using PotatoBot.Managers;
 using PotatoBot.Modals.Settings;
 using System;
@@ -81,6 +82,7 @@ namespace PotatoBot
                 Thread.Sleep(10);
             }
             while (!_exit);
+
             _logger.Trace("Stop request received");
 
             _logger.Trace("Stopping all services ...");
@@ -88,11 +90,21 @@ namespace PotatoBot
 
             _exited = true;
 
+            _logger.Trace("All services stopped");
+
+            NLog.LogManager.Flush();
+            NLog.LogManager.Shutdown();
+
             return 0;
         }
 
         private static void ProcessExit(object sender, EventArgs e)
         {
+            if(_exit || _exited)
+            {
+                return;
+            }
+
             _exit = true;
             _logger.Info("Stop requested");
 
@@ -102,9 +114,7 @@ namespace PotatoBot
             }
             while (!_exited);
 
-            _logger.Trace("Stop request processed");
-
-            Environment.Exit(0);
+            return;
         }
 
         private static bool ReadSettings()
