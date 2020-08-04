@@ -36,10 +36,10 @@ TODO
 
 ### Built With
 
-* [NLog]([https://nlog-project.org/](https://nlog-project.org/))
+* [NLog](https://nlog-project.org/)
 * [Telegram.Bot](https://github.com/TelegramBots/telegram.bot)
-* [ical.NET]([https://github.com/rianjs/ical.net](https://github.com/rianjs/ical.net))
-* [ByteSize]([https://github.com/omar/ByteSize](https://github.com/omar/ByteSize))
+* [ical.NET](https://github.com/rianjs/ical.net)
+* [ByteSize](https://github.com/omar/ByteSize)
 
 
 ## Getting Started
