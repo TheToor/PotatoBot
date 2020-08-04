@@ -4,6 +4,7 @@ namespace PotatoBot.Modals.API.Sonarr
 {
     public class SeriesStatistics : MediaStatistics
     {
+        public int SeasonCount { get; set; }
         public int EpisodeCount { get; set; }
         public int EpsideFileCount { get; set; }
         public float PercentOfEpisodes { get; set; }
