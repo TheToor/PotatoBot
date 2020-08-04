@@ -62,10 +62,7 @@ namespace PotatoBot.Managers
         internal TelegramService TelegramService { get; } = new TelegramService();
         internal StatisticsService StatisticsService { get; } = new StatisticsService();
 
-        private List<IService> _services = new List<IService>()
-        {
-            new WebhookService()
-        };
+        private List<IService> _services = new List<IService>();
 
         private List<SABnzbdService> _sabNzbdServices = new List<SABnzbdService>();
 
@@ -139,6 +136,9 @@ namespace PotatoBot.Managers
                     _services.Add(service);
                 }
             }
+
+            // Webhook should be started as the last service as it may depend on other services (like Sonarr)
+            _services.Add(new WebhookService());
 
             StartAllServices();
         }
