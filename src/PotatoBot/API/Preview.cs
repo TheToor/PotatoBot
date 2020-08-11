@@ -9,7 +9,8 @@ namespace PotatoBot.API
     [Route("[controller]", Name = "Preview")]
     public class Preview : Controller
     {
-        internal static Dictionary<string, object> CachedResponse;
+        internal static Dictionary<string, object> CachedPreviewResponse;
+        internal static Dictionary<string, ulong> CachedStatisticsResponse;
 
         private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -17,11 +18,11 @@ namespace PotatoBot.API
         [HttpGet]
         public IActionResult Index()
         {
-            if(CachedResponse == null)
+            if(CachedPreviewResponse == null)
             {
                 return Json(Array.Empty<string>());
             }
-            return Json(CachedResponse);
+            return Json(CachedPreviewResponse);
         }
 
         [Route("poster/{type}")]
@@ -47,6 +48,17 @@ namespace PotatoBot.API
             var imageBytes = await DownloadPoster(libraryUrl, requestUrl);
 
             return File(imageBytes, "image/jpeg");
+        }
+
+        [Route("mediastatistics")]
+        [HttpGet]
+        public IActionResult GetMediaStatistics()
+        {
+            if(CachedStatisticsResponse == null)
+            {
+                return Json(Array.Empty<string>());
+            }
+            return Json(CachedStatisticsResponse);
         }
 
         private static async Task<byte[]> DownloadPoster(string libraryUrl, string requestUrl)

@@ -1,4 +1,5 @@
-﻿using NodaTime;
+﻿using NLog.Fluent;
+using NodaTime;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
@@ -46,25 +47,13 @@ namespace PotatoBot.Managers
             }
         }
 
-        private PlexService _plex;
-        internal PlexService Plex
-        {
-            get
-            {
-                if(!Program.Settings.Plex.Enabled)
-                {
-                    throw new Exception("Plex Service is not enabled");
-                }
-                return _plex;
-            }
-        }
-
         internal TelegramService TelegramService { get; } = new TelegramService();
         internal StatisticsService StatisticsService { get; } = new StatisticsService();
 
         private List<IService> _services = new List<IService>();
 
         private List<SABnzbdService> _sabNzbdServices = new List<SABnzbdService>();
+        private List<PlexService> _plexServices = new List<PlexService>();
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -104,19 +93,22 @@ namespace PotatoBot.Managers
                 API.Calendar.Calendars.Add(_lidarr);
             }
 
-            if(settings.Plex.Enabled)
+            if(settings.Plex?.Count > 0)
             {
-                _logger.Info("Enalbing Plex Service ...");
-                _plex = new PlexService();
-                _services.Add(_plex);
-            }
-            else
-            {
-                _logger.Info("Plex not enabled. Disabling RescanAfterDownload feature");
+                _logger.Info($"Adding {settings.Plex.Count} Plex Servers");
 
-                Program.Settings.Radarr.RescanAfterDownload = false;
-                Program.Settings.Sonarr.RescanAfterDownload = false;
-                Program.Settings.Lidarr.RescanAfterDownload = false;
+                foreach (var server in settings.Plex)
+                {
+                    if (!server.Enabled)
+                    {
+                        _logger.Trace($"Skipping '{server.Url}' because it is disabled");
+                        continue;
+                    }
+
+                    var service = new PlexService(server);
+                    _plexServices.Add(service);
+                    _services.Add(service);
+                }
             }
 
             if(settings.SABnzbd?.Count > 0)
@@ -187,6 +179,11 @@ namespace PotatoBot.Managers
         internal List<SABnzbdService> GetSABnzbdServices()
         {
             return _sabNzbdServices;
+        }
+
+        internal List<PlexService> GetPlexServices()
+        {
+            return _plexServices;
         }
     }
 }

@@ -103,12 +103,6 @@ namespace PotatoBot.Webhook.Controllers
                                 )
                             );
 
-                            if (Program.Settings.Radarr.RescanAfterDownload)
-                            {
-                                _logger.Trace("Initiating rescan of libraries ...");
-                                Program.ServiceManager.Plex.RescanMediaLibraries(Program.Settings.Radarr.Rescan);
-                            }
-
                             break;
                         }
 
@@ -121,12 +115,6 @@ namespace PotatoBot.Webhook.Controllers
                                     renameEvent.Movie.Title
                                 )
                             );
-
-                            if (Program.Settings.Radarr.RescanAfterDownload)
-                            {
-                                _logger.Trace("Initiating rescan of libraries ...");
-                                Program.ServiceManager.Plex.RescanMediaLibraries(Program.Settings.Radarr.Rescan);
-                            }
 
                             break;
                         }

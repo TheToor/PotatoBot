@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NLog.Web;
 using PotatoBot.Modals.API.Lidarr;
+using PotatoBot.Modals.API.Plex;
 using PotatoBot.Modals.API.Radarr;
 using PotatoBot.Modals.API.Sonarr;
 using PotatoBot.Webhook;
@@ -35,38 +36,86 @@ namespace PotatoBot.Services
 
         private void UpdateCache(object sender, System.Timers.ElapsedEventArgs e)
         {
+            _logger.Trace("Updating Media Preview cache ...");
+
+            {
+                var plexServers = Program.ServiceManager.GetPlexServices();
+
+                var response = new Dictionary<string, ulong>()
+                {
+                    { "Movies", 0 },
+                    { "Series", 0 },
+                    { "Music", 0 }
+                };
+
+                foreach (var plexServer in plexServers)
+                {
+                    var stats = plexServer.GetMediaStatistics();
+
+                    foreach (var media in stats.StatisticsMedia)
+                    {
+                        if (!Enum.TryParse(media.MetaDataType.ToString(), out MediaType mediaType))
+                        {
+                            _logger.Warn($"Failed to convert '{media.MetaDataType}' to a valid MediaType");
+                            continue;
+                        }
+
+                        switch (mediaType)
+                        {
+                            case MediaType.Movie:
+                                response["Movies"] += media.Duration;
+                                break;
+
+                            case MediaType.Episode:
+                                response["Series"] += media.Duration;
+                                break;
+
+                            case MediaType.Track:
+                                response["Music"] += media.Duration;
+                                break;
+                        }
+                    }
+                }
+
+                API.Preview.CachedStatisticsResponse = response;
+            }
+
+            _logger.Info("Finished updating Media Preview cache");
+
             _logger.Debug("Updating Preview Cache ...");
 
-            var cachedResponse = new Dictionary<string, object>();
-
-            if (Program.Settings.Radarr.Enabled)
             {
-                var movies = Program.ServiceManager.Radarr.GetAllMovies();
-                if (movies != null)
-                {
-                    cachedResponse.Add("Movies", movies.ConvertAll((o) => new BasicMovie(o)));
-                }
-            }
+                var cachedResponse = new Dictionary<string, object>();
 
-            if (Program.Settings.Sonarr.Enabled)
-            {
-                var series = Program.ServiceManager.Sonarr.GetAllSeries();
-                if (series != null)
+                if (Program.Settings.Radarr.Enabled)
                 {
-                    cachedResponse.Add("Series", series.ConvertAll((o) => new BasicSeries(o)));
+                    var movies = Program.ServiceManager.Radarr.GetAllMovies();
+                    if (movies != null)
+                    {
+                        cachedResponse.Add("Movies", movies.ConvertAll((o) => new BasicMovie(o)));
+                    }
                 }
-            }
 
-            if (Program.Settings.Lidarr.Enabled)
-            {
-                var artists = Program.ServiceManager.Lidarr.GetAllArtists();
-                if (artists != null)
+                if (Program.Settings.Sonarr.Enabled)
                 {
-                    cachedResponse.Add("Artists", artists.ConvertAll((o) => new BasicArtist(o)));
+                    var series = Program.ServiceManager.Sonarr.GetAllSeries();
+                    if (series != null)
+                    {
+                        cachedResponse.Add("Series", series.ConvertAll((o) => new BasicSeries(o)));
+                    }
                 }
-            }
 
-            API.Preview.CachedResponse = cachedResponse;
+                if (Program.Settings.Lidarr.Enabled)
+                {
+                    var artists = Program.ServiceManager.Lidarr.GetAllArtists();
+                    if (artists != null)
+                    {
+                        cachedResponse.Add("Artists", artists.ConvertAll((o) => new BasicArtist(o)));
+                    }
+                }
+
+                API.Preview.CachedPreviewResponse = cachedResponse;
+            }
 
             _logger.Info("Finished updating Preview cache");
         }

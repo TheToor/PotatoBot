@@ -41,6 +41,8 @@
             public const string Library = "library/sections";
             public const string LibraryUpdate = "library/sections/{0}/refresh";
             public const string LibraryRefresh = "library/sections/{0}/refresh?force=1";
+
+            public const string MediaStatistics = "statistics/media?timespan=1&at>=0";
         }
     }
 }

@@ -115,12 +115,6 @@ namespace PotatoBot.Webhook.Controllers
                                 )
                             );
 
-                            if(Program.Settings.Sonarr.RescanAfterDownload)
-                            {
-                                _logger.Trace("Initiating rescan of libraries ...");
-                                Program.ServiceManager.Plex.RescanMediaLibraries(Program.Settings.Sonarr.Rescan);
-                            }
-
                             break;
                         }
 
@@ -133,12 +127,6 @@ namespace PotatoBot.Webhook.Controllers
                                     renameEvent.Series.Title
                                 )
                             );
-
-                            if (Program.Settings.Sonarr.RescanAfterDownload)
-                            {
-                                _logger.Trace("Initiating rescan of libraries ...");
-                                Program.ServiceManager.Plex.RescanMediaLibraries(Program.Settings.Sonarr.Rescan);
-                            }
 
                             break;
                         }

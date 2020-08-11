@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using PotatoBot.Modals.API;
 using PotatoBot.Modals.API.Plex;
+using PotatoBot.Modals.API.Plex.Statistics;
+using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,36 +16,38 @@ namespace PotatoBot.Services
 {
     internal class PlexService : IService
     {
-        public string Name => "Plex";
+        public string Name { get; }
 
-        private const string PlexSetupFile = "plex.setup";
+        private string _plexSetupFile => $"plex.{Name.Replace(" ", "_")}.setup";
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private readonly string _plexIdentifier;
-        private string _plexToken => Program.Settings.Plex.APIKey;
+        private readonly PlexSettings _plexSettings;
+        private string _plexToken => _plexSettings.APIKey;
 
 
         private MediaContainer _libraries;
 
         private readonly Dictionary<int, DateTime> _lastAPIRescanInitiated = new Dictionary<int, DateTime>();
 
-        internal PlexService()
+        internal PlexService(PlexSettings plexSettings)
         {
-            if (File.Exists(PlexSetupFile))
+            Name = plexSettings.Name;
+
+            _plexSettings = plexSettings ?? throw new ArgumentNullException(nameof(plexSettings));
+
+            if (File.Exists(_plexSetupFile))
             {
                 _logger.Trace("Setup initiated ...");
 
-                var lines = File.ReadAllLines(PlexSetupFile);
+                var lines = File.ReadAllLines(_plexSetupFile);
                 if (lines.Length < 2)
-                    throw new Exception($"Invalid {PlexSetupFile} file!");
+                    throw new Exception($"Invalid {_plexSetupFile} file!");
 
                 var username = lines[0];
                 var password = lines[1];
 
                 _logger.Trace("Successfully read username and password. Generating new identifier ...");
-
-                _plexIdentifier = Guid.NewGuid().ToString();
 
                 GetToken(username, password);
             }
@@ -51,9 +55,8 @@ namespace PotatoBot.Services
             TestConnection();
 
             GetLibraries();
-            VerifyLibraries();
 
-            _logger.Info("Started Plex API");
+            _logger.Info($"Started {Name} Plex API");
         }
 
         public bool Start()
@@ -93,32 +96,6 @@ namespace PotatoBot.Services
             }
         }
 
-        private void VerifyLibraries()
-        {
-            var settings = Program.Settings;
-            if (settings.Sonarr != null && settings.Sonarr.RescanAfterDownload && settings.Sonarr.Rescan.Length > 0)
-            {
-                _logger.Trace("Verifying Sonarr settings ...");
-                foreach (var library in settings.Sonarr.Rescan)
-                {
-                    var key = library.ToString();
-                    if (!_libraries.Directory.Any((d) => d.Key == key))
-                        throw new Exception("Invalid library specified for rescan!");
-                }
-            }
-
-            if (settings.Radarr != null && settings.Radarr.RescanAfterDownload && settings.Radarr.Rescan.Length > 0)
-            {
-                _logger.Trace("Verifying Radarr settings ...");
-                foreach (var library in settings.Radarr.Rescan)
-                {
-                    var key = library.ToString();
-                    if (!_libraries.Directory.Any((d) => d.Key == key))
-                        throw new Exception("Invalid library specified for rescan!");
-                }
-            }
-        }
-
         private HttpClient GetHttpClient()
         {
             var client = new HttpClient();
@@ -133,7 +110,7 @@ namespace PotatoBot.Services
 
         private T GetXml<T>(string endpoint, bool hasParameters = false, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
-            var url = $"{Program.Settings.Plex.ServerUrl}/{endpoint}{(hasParameters ? "" : "?")}X-Plex-Token={_plexToken}";
+            var url = new Uri($"{_plexSettings.Url}/{endpoint}{(hasParameters ? "&" : "?")}X-Plex-Token={_plexToken}");
 
             try
             {
@@ -169,7 +146,7 @@ namespace PotatoBot.Services
 
         private void Get(string endpoint, bool hasParameters = false, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
-            var url = $"{Program.Settings.Plex.ServerUrl}/{endpoint}{(hasParameters ? "" : "?")}X-Plex-Token={_plexToken}";
+            var url = $"{_plexSettings.Url}/{endpoint}{(hasParameters ? "" : "?")}X-Plex-Token={_plexToken}";
 
             try
             {
@@ -191,7 +168,8 @@ namespace PotatoBot.Services
 
         private void GetToken(string username, string password)
         {
-            _logger.Trace($"Requesting new token with ID {_plexIdentifier}");
+            var guid = Guid.NewGuid().ToString();
+            _logger.Trace($"Requesting new token with ID {guid}");
 
             using (var client = GetHttpClient())
             {
@@ -199,8 +177,8 @@ namespace PotatoBot.Services
                 var bytes = System.Text.Encoding.UTF8.GetBytes(body);
                 var base64 = Convert.ToBase64String(bytes);
 
-                client.DefaultRequestHeaders.Add("X-Plex-Client-Identifier", _plexIdentifier);
-                client.DefaultRequestHeaders.Add("X-Plex-Product", "PotatoServer");
+                client.DefaultRequestHeaders.Add("X-Plex-Client-Identifier", guid);
+                client.DefaultRequestHeaders.Add("X-Plex-Product", Program.Namespace);
                 client.DefaultRequestHeaders.Add("X-Plex-Version", Program.Version.ToString());
                 client.DefaultRequestHeaders.Add("Authorization", $"Basic {base64}");
 
@@ -211,10 +189,10 @@ namespace PotatoBot.Services
                     var text = response.Content.ReadAsStringAsync().Result;
                     var token = JsonConvert.DeserializeObject<TokenResponse>(text);
 
-                    Program.Settings.Plex.APIKey = token.User.Authentication_token;
+                    _plexSettings.APIKey = token.User.Authentication_token;
                     Program.SaveSettings();
 
-                    File.Delete(PlexSetupFile);
+                    File.Delete(_plexSetupFile);
 
                     _logger.Info("Successfully generated Key for Plex. Plex API available");
                 }
@@ -223,6 +201,12 @@ namespace PotatoBot.Services
                     _logger.Warn($"Invalid response recieved: {response.StatusCode}");
                 }
             }
+        }
+
+        internal StatisticsMediaContainer GetMediaStatistics()
+        {
+            var response = GetXml<StatisticsMediaContainer>(APIEndPoints.PlexEndpoints.MediaStatistics, true);
+            return response ?? new StatisticsMediaContainer();
         }
 
         internal void RescanMediaLibraries(int[] libraries)

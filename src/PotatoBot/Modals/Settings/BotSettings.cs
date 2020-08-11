@@ -12,7 +12,7 @@ namespace PotatoBot.Modals.Settings
         public EntertainmentSettings Sonarr { get; set; } = new EntertainmentSettings();
         public EntertainmentSettings Lidarr { get; set; } = new EntertainmentSettings();
 
-        public PlexSettings Plex { get; set; } = new PlexSettings();
+        public List<PlexSettings> Plex { get; set; } = new List<PlexSettings>();
 
         public List<SABnzbdSettings> SABnzbd { get; set; } = new List<SABnzbdSettings>();
 

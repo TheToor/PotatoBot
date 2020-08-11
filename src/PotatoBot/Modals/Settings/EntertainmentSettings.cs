@@ -12,8 +12,5 @@
         public string DownloadPath { get; set; }
         public uint QualityProfile { get; set; }
         public uint LanguageProfile { get; set; }
-
-        public bool RescanAfterDownload { get; set; }
-        public int[] Rescan { get; set; }
     }
 }
