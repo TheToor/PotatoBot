@@ -9,8 +9,6 @@ namespace PotatoBot.Modals.API.Radarr
         // Radarr does not (yet?) have languge profiles. Language is specified inside the quality profile
         //public uint LanguageProfileId { get; set; }
         public uint QualityProfileId { get; set; }
-        // Same as 'QualityProfileId' ??
-        public ulong ProfileId { get; set; }
 
         public string Title { get; set; }
         public string SortTitle { get; set; }

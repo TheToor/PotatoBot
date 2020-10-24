@@ -7,7 +7,6 @@ using PotatoBot.Modals.API.Sonarr;
 using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace PotatoBot.Services
 {

@@ -5,6 +5,7 @@ namespace PotatoBot.Modals.API.Requests.POST
     public class AddMovie : Movie
     {
         public string RootFolderPath { get; set; }
+        public string MinimumAvailability { get;set;}
         public MovieAddOptions AddOptions { get; set; }
 
         public AddMovie(Movie movie)
@@ -12,11 +13,11 @@ namespace PotatoBot.Modals.API.Requests.POST
             Title = movie.Title;
             TitleSlug = movie.TitleSlug;
             Images = movie.Images;
+            IMDBId = movie.IMDBId;
             TMDBId = movie.TMDBId;
             Year = movie.Year;
 
             QualityProfileId = Program.Settings.Radarr.QualityProfile;
-            ProfileId = Program.Settings.Radarr.QualityProfile;
             RootFolderPath = Program.Settings.Radarr.DownloadPath;
 
             Monitored = true;
@@ -24,6 +25,8 @@ namespace PotatoBot.Modals.API.Requests.POST
             {
                 SearchForMovie = true
             };
+
+            MinimumAvailability = "Announced";
         }
     }
 }

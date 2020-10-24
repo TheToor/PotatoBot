@@ -78,7 +78,7 @@ namespace PotatoBot.Managers
             if(settings.Radarr.Enabled)
             {
                 _logger.Info("Enabling Radarr Service ...");
-                _radarr = new RadarrService(settings.Radarr, "api");
+                _radarr = new RadarrService(settings.Radarr, "api/v3");
                 _services.Add(_radarr);
 
                 API.Calendar.Calendars.Add(_radarr);
