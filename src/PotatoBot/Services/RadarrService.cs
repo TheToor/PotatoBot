@@ -40,12 +40,12 @@ namespace PotatoBot.Services
         {
             _logger.Trace("Fetching download queue");
 
-            var response = GetRequest<List<RadarrQueueItem>>(APIEndPoints.Queue);
+            var response = GetRequest<Modals.API.Queue<RadarrQueueItem>>(APIEndPoints.Queue);
             if (response != null)
             {
                 _logger.Trace("Successfully fetched download queue");
             }
-            return response;
+            return response.Records;
         }
 
         internal List<Movie> GetAllMovies()
