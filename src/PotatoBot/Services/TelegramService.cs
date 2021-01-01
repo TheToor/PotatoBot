@@ -42,7 +42,7 @@ namespace PotatoBot.Services
         // Time until a message "expires" in hours
         private uint _cacheInvalidationTime = 24;
 
-        private List<int> _users;
+        private readonly List<int> _users;
 
         // Characters that need to be escaped with an \
         string[] _charactersToEscape = new string[]
