@@ -57,7 +57,7 @@ namespace PotatoBot.API
             return GetRequest<List<LanguageProfile>>(APIEndPoints.LanguageProfile);
         }
 
-        private HttpClient GetHttpClient()
+        private static HttpClient GetHttpClient()
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();

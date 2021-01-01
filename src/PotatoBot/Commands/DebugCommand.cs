@@ -1,4 +1,5 @@
-﻿using PotatoBot.Modals.Commands;
+﻿using PotatoBot.Managers;
+using PotatoBot.Modals.Commands;
 using PotatoBot.Services;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,17 +39,17 @@ namespace PotatoBot.Commands
 
                         if(level == "0")
                         {
-                            Program.LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Error);
+                            LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Error);
                             await TelegramService.SimpleReplyToMessage(message, "Loglevel set to ERROR");
                         }
                         else if(level == "1")
                         {
-                            Program.LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Warn);
+                            LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Warn);
                             await TelegramService.SimpleReplyToMessage(message, "Loglevel set to WARN");
                         }
                         else if (level == "2")
                         {
-                            Program.LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Info);
+                            LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Info);
                             await TelegramService.SimpleReplyToMessage(message, "Loglevel set to INFO");
                         }
                         else

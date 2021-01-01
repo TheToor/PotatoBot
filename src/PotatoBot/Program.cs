@@ -46,8 +46,8 @@ namespace PotatoBot
         private const string _settingsFileName = "settings.json";
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private static volatile bool _exit = false;
-        private static volatile bool _exited = false;
+        private static volatile bool _exit;
+        private static volatile bool _exited;
 
         static int Main(string[] args)
         {
@@ -93,7 +93,6 @@ namespace PotatoBot
             _logger.Trace("All services stopped");
 
             NLog.LogManager.Flush();
-            NLog.LogManager.Shutdown();
 
             return 0;
         }

@@ -117,7 +117,7 @@ namespace PotatoBot.Managers
             NLog.LogManager.EnableLogging();
         }
 
-        internal void SetTelegramMinLogLevel(LogLevel logLevel)
+        internal static void SetTelegramMinLogLevel(LogLevel logLevel)
         {
             _configuration.RemoveRuleByName("Telegram");
             _configuration.AddRule(logLevel, LogLevel.Fatal, "Telegram");

@@ -30,7 +30,7 @@ namespace PotatoBot.Services
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private TelegramSettings _settings => Program.Settings.Telegram;
+        private static TelegramSettings _settings => Program.Settings.Telegram;
 
         private TelegramBotClient _client;
 
@@ -114,6 +114,8 @@ namespace PotatoBot.Services
 
         public bool Stop()
         {
+            _cacheTimer.Stop();
+            _cacheTimer.Dispose();
             _client.StopReceiving();
             return true;
         }
@@ -135,7 +137,7 @@ namespace PotatoBot.Services
             }
         }
 
-        private List<string> SplitMessage(string message)
+        private static List<string> SplitMessage(string message)
         {
             var messages = new List<string>();
 
@@ -204,7 +206,7 @@ namespace PotatoBot.Services
             return await _client.SendTextMessageAsync(message.Chat, text, replyToMessageId: message.MessageId, parseMode: parseMode);
         }
 
-        internal async Task<Message> ForceReply(IReplyCallback caller, Message message, string title, bool update = true)
+        internal async Task<Message> ForceReply(IReplyCallback caller, Message message, string title)
         {
             var cache = GetCache(message);
             cache.ForceReply = true;

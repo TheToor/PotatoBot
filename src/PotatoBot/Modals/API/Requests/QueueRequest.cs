@@ -6,7 +6,7 @@
         public int PageSize { get; set; } = 100;
         public string SortDirection { get; set; } = "ascending";
         public string SortKey { get; set; } = "sortKey";
-        public bool IncludeUnknownSeriesItems { get; set; } = false;
+        public bool IncludeUnknownSeriesItems { get; set; }
 
         public override string ToGet()
         {

@@ -18,7 +18,7 @@ namespace PotatoBot.Services
     {
         public string Name => "Webhook Endpoint";
 
-        private Modals.Settings.WebhookSettings _settings => Program.Settings.Webhook;
+        private static Modals.Settings.WebhookSettings _settings => Program.Settings.Webhook;
 
         private IWebHost _endpoint;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -185,6 +185,9 @@ namespace PotatoBot.Services
                 }
 
                 _cacheUpdateTimer.Stop();
+                _cacheUpdateTimer.Dispose();
+
+                _cancellationTokenSource.Dispose();
             }
             catch(Exception ex)
             {

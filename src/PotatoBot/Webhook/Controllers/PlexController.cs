@@ -94,10 +94,5 @@ namespace PotatoBot.Webhook.Controllers
                 }
             }
         }
-
-        private void ProcessRequest(PlexEvent plexEvent)
-        {
-            // Do something with that
-        }
     }
 }

@@ -12,7 +12,7 @@ namespace PotatoBot.Modals.Commands
         public DateTime Created { get; } = DateTime.Now;
         public DateTime LastAccessed { get; set; } = DateTime.Now;
 
-        public bool ForceReply { get; set; } = false;
+        public bool ForceReply { get; set; }
         public IReplyCallback ForceReplyInstance { get; set; }
 
         public IQueryCallback QueryCallbackInstance { get; set; }

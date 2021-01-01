@@ -6,13 +6,13 @@ namespace PotatoBot.Extensions
 {
     public class PageResult<T>
     {
-        public int Start;
-        public int End;
+        public int Start { get; set; }
+        public int End { get; set; }
 
-        public bool NextPossible = false;
-        public bool PreviousPossible = false;
+        public bool NextPossible { get; set; }
+        public bool PreviousPossible { get; set; }
 
-        public List<T> Items { get; set; }
+        public List<T> Items { get; set; } = new List<T>();
     }
     public static class ListExtensions
     {
