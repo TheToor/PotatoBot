@@ -61,8 +61,9 @@ namespace PotatoBot.Managers
         {
             _logger.Info("ServiceManager starting ...");
 
-            _services.Add(TelegramService);
+            // TelegramService relies on StatisticsService
             _services.Add(StatisticsService);
+            _services.Add(TelegramService);
 
             var settings = Program.Settings;
             

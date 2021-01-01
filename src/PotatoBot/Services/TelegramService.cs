@@ -93,9 +93,15 @@ namespace PotatoBot.Services
                 _cacheTimer.Elapsed += ValidateCache;
                 _cacheTimer.Start();
 
-                _logger.Trace("Starting ...");
-                _client.StartReceiving();
+                // Add additional delay before we start receiving
+                Task.Factory.StartNew(async () =>
+                {
+                    await Task.Delay(5000);
 
+                    _logger.Trace("Starting ...");
+                    _client.StartReceiving();
+                });
+                
                 _logger.Info($"Successfully initialized {Name} Service");
                 return true;
             }
@@ -496,7 +502,7 @@ namespace PotatoBot.Services
 
                 _logger.Trace($"Received new message from [{user.Id}] {user.Username}: {message.Text}");
 
-                Program.ServiceManager.StatisticsService.IncreaseMessagesReveived();
+                Program.ServiceManager?.StatisticsService?.IncreaseMessagesReveived();
 
                 // Discard messages from bots
                 if (message.From.IsBot)
@@ -531,7 +537,7 @@ namespace PotatoBot.Services
                 {
                     // Command
 
-                    Program.ServiceManager.StatisticsService.IncreaseCommandsReceived();
+                    Program.ServiceManager?.StatisticsService?.IncreaseCommandsReceived();
 
                     _logger.Trace("Detected command");
                     await _commandManager.ProcessMessage(_client, message);
