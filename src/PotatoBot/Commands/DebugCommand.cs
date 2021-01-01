@@ -1,4 +1,6 @@
 ﻿using PotatoBot.Modals.Commands;
+using PotatoBot.Services;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -53,6 +55,18 @@ namespace PotatoBot.Commands
                         {
                             await TelegramService.SimpleReplyToMessage(message, "Unsupported Loglevel (0 = Error, 1 = Warn, 2 = Info)");
                         }
+                    }
+                    break;
+
+                case "longmessage":
+                    {
+                        var testMessage = "";
+                        for(int i = 0; i < 256; i++)
+                        {
+                            testMessage += new string(i.ToString().Last(), 58);
+                            testMessage += "\n";
+                        }
+                        await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
                     }
                     break;
             }

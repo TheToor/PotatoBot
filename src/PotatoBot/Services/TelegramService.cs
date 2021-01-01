@@ -6,6 +6,7 @@ using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -22,6 +23,8 @@ namespace PotatoBot.Services
         const string SelectData = "Select";
         const string DisabledData = "Disabled";
         const string CancelData = "Cancel";
+
+        private const ushort _maxMessageLength = 4096;
 
         public string Name => "Telegram";
 
@@ -107,6 +110,49 @@ namespace PotatoBot.Services
         {
             _client.StopReceiving();
             return true;
+        }
+
+        internal async Task SendSimpleMessage(ChatId chatId, string message, ParseMode parseMode, bool disableNotification = false)
+        {
+            if(message.Length > _maxMessageLength)
+            {
+                var messages = SplitMessage(message);
+
+                foreach (var splittedMessage in messages)
+                {
+                    await _client.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
+                }
+            }
+            else
+            {
+                await _client.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
+            }
+        }
+
+        private List<string> SplitMessage(string message)
+        {
+            var messages = new List<string>();
+
+            for (int i = _maxMessageLength; i > 0; i--)
+            {
+                if (message[i] == '\n')
+                {
+                    // Split by EOL
+                    messages.Add(message.Substring(0, i));
+                    // Remove splitted message from message
+                    message = message.Substring(i, message.Length - i);
+                    // Reset the loop
+                    i = message.Length > _maxMessageLength ? _maxMessageLength : message.Length;
+
+                    if (message.Length == 0)
+                    {
+                        // End loop if we "packed" all messages
+                        break;
+                    }
+                }
+            }
+
+            return messages;
         }
 
         internal async Task SendToAll(string message, bool silent = true)
@@ -530,7 +576,7 @@ namespace PotatoBot.Services
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process message");
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                Program.ServiceManager?.StatisticsService?.IncreaseMessagesSent();
                 await _client.SendTextMessageAsync(e.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"), replyToMessageId: e.Message.MessageId);
             }
         }

@@ -97,7 +97,7 @@ namespace PotatoBot.Commands
                     queueText += $"\n\t<b>[{completion}%][{item.Status}]</b> {item.GetQueueTitle()}";
                 }
 
-                await client.SendTextMessageAsync(message.Chat.Id, queueText, Telegram.Bot.Types.Enums.ParseMode.Html);
+                await TelegramService.SendSimpleMessage(message.Chat.Id, queueText, Telegram.Bot.Types.Enums.ParseMode.Html);
             }
 
             return true;
