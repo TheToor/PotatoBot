@@ -57,28 +57,28 @@ namespace PotatoBot.Commands
             var searchTypeString = searchType.ToString();
             var queue = new List<QueueItem>();
 
-            switch(searchType)
+            switch (searchType)
             {
                 case SearchType.Series:
                     {
-                        queue = SonarrService.GetQueue().Cast<QueueItem>().ToList();
+                        queue = SonarrService.SelectMany(s => s.GetQueue()).Cast<QueueItem>().ToList();
                     }
                     break;
 
                 case SearchType.Movie:
                     {
-                        queue = RadarrService.GetQueue().Cast<QueueItem>().ToList();
+                        queue = RadarrService.SelectMany(r => r.GetQueue()).Cast<QueueItem>().ToList();
                     }
                     break;
 
                 case SearchType.Artist:
                     {
-                        queue = LidarrService.GetQueue().Cast<QueueItem>().ToList();
+                        queue = LidarrService.SelectMany(a => a.GetQueue()).Cast<QueueItem>().ToList();
                     }
                     break;
             }
 
-            if(queue?.Count == 0)
+            if (queue?.Count == 0)
             {
                 await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("Commands", "Queue", $"No{searchTypeString}"));
             }

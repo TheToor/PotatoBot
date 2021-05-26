@@ -8,9 +8,9 @@ namespace PotatoBot.Modals.Settings
 
         public WebhookSettings Webhook { get; set; } = new WebhookSettings();
 
-        public EntertainmentSettings Radarr { get; set; } = new EntertainmentSettings();
-        public EntertainmentSettings Sonarr { get; set; } = new EntertainmentSettings();
-        public EntertainmentSettings Lidarr { get; set; } = new EntertainmentSettings();
+        public List<EntertainmentSettings> Radarr { get; set; } = new List<EntertainmentSettings>();
+        public List<EntertainmentSettings> Sonarr { get; set; } = new List<EntertainmentSettings>();
+        public List<EntertainmentSettings> Lidarr { get; set; } = new List<EntertainmentSettings>();
 
         public List<PlexSettings> Plex { get; set; } = new List<PlexSettings>();
 

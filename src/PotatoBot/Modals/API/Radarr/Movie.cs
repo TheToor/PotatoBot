@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PotatoBot.Modals.API.Radarr
 {
-    public class Movie
+    public class Movie : IEqualityComparer<Movie>
     {
         public int Id { get; set; }
         // Radarr does not (yet?) have languge profiles. Language is specified inside the quality profile
@@ -37,5 +38,23 @@ namespace PotatoBot.Modals.API.Radarr
         public DateTime Added { get; set; }
         public Rating Ratings { get; set; }
         public List<AlternativeTitle> AlternativeTitles { get; set; }
+
+        public bool Equals([AllowNull] Movie x, [AllowNull] Movie y)
+        {
+            if (x == null) return false;
+            if (y == null) return false;
+            if (ReferenceEquals(x, y)) return true;
+
+            if (x.TMDBId == y.TMDBId)
+                return true;
+            if (x.IMDBId == y.IMDBId)
+                return true;
+            return false;
+        }
+
+        public int GetHashCode([DisallowNull] Movie obj)
+        {
+            return TMDBId.GetHashCode() ^ IMDBId.GetHashCode();
+        }
     }
 }

@@ -12,8 +12,11 @@ using System.Text;
 
 namespace PotatoBot.API
 {
-    internal class APIBase
+    public class APIBase
     {
+        public string Name => _settings.Name ?? "Unknown";
+        public EntertainmentSettings Settings => _settings;
+
         private readonly EntertainmentSettings _settings;
         private readonly string _apiUrl;
 
@@ -37,7 +40,7 @@ namespace PotatoBot.API
             }
         }
 
-        internal virtual SystemStatus GetSystemStatus()
+        internal SystemStatus GetSystemStatus()
         {
             return GetRequest<SystemStatus>(APIEndPoints.SystemStatus);
         }

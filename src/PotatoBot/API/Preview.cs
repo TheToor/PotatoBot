@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -33,15 +34,15 @@ namespace PotatoBot.API
             switch(type)
             {
                 case "movie":
-                    libraryUrl = Program.Settings.Radarr.Url;
+                    libraryUrl = Program.Settings.Radarr.FirstOrDefault(r => r.Enabled).Url;
                     break;
 
                 case "series":
-                    libraryUrl = Program.Settings.Sonarr.Url;
+                    libraryUrl = Program.Settings.Sonarr.FirstOrDefault(s => s.Enabled).Url;
                     break;
 
                 case "artist":
-                    libraryUrl = Program.Settings.Lidarr.Url;
+                    libraryUrl = Program.Settings.Lidarr.FirstOrDefault(l => l.Enabled).Url;
                     break;
             }
 

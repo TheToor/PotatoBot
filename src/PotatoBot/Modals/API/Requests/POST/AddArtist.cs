@@ -1,4 +1,5 @@
 ﻿using PotatoBot.Modals.API.Lidarr;
+using PotatoBot.Services;
 
 namespace PotatoBot.Modals.API.Requests.POST
 {
@@ -6,7 +7,7 @@ namespace PotatoBot.Modals.API.Requests.POST
     {
         public ArtistAddOptions AddOptions { get; set; }
 
-        public AddArtist(Artist artist)
+        public AddArtist(LidarrService service, Artist artist)
         {
             Id = artist.Id;
             ForeignArtistId = artist.ForeignArtistId;
@@ -20,8 +21,8 @@ namespace PotatoBot.Modals.API.Requests.POST
 
             Overview = artist.Overview;
 
-            QualityProfileId = Program.Settings.Lidarr.QualityProfile;
-            RootFolderPath = Program.Settings.Lidarr.DownloadPath;
+            QualityProfileId = service.Settings.QualityProfile;
+            RootFolderPath = service.Settings.DownloadPath;
 
             LanguageProfileId = 1;
             MetadataProfileId = 1;

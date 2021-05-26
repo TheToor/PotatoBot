@@ -1,13 +1,18 @@
-﻿namespace PotatoBot.Modals.API.Lidarr
+﻿using PotatoBot.API;
+using PotatoBot.Services;
+
+namespace PotatoBot.Modals.API.Lidarr
 {
     public class LidarrQueueItem : QueueItem
     {
         public ulong ArtistId { get; set; }
         public ulong AlbumId { get; set; }
 
+        public LidarrQueueItem(APIBase api) : base(api) { }
+
         public override string GetQueueTitle()
         {
-            var albumInfo = Program.ServiceManager.Lidarr.GetAlbumInfo(ArtistId, AlbumId);
+            var albumInfo = (API as LidarrService).GetAlbumInfo(ArtistId, AlbumId);
             return $"{albumInfo.Artist.ArtistName} : {albumInfo.Title}";
         }
     }

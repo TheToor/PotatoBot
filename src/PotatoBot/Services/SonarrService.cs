@@ -10,10 +10,8 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Services
 {
-    internal class SonarrService : APIBase, IService
+    public class SonarrService : APIBase, IService
     {
-        public string Name => "Sonarr";
-
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         // Cache things
@@ -75,7 +73,7 @@ namespace PotatoBot.Services
         {
             _logger.Trace($"Adding series [{series.TvDbId}] {series.Title}");
 
-            var body = new AddSeries(series);
+            var body = new AddSeries(this, series);
 
             var response = PostRequest<Series>(APIEndPoints.SonarrEndpoints.Series, body, System.Net.HttpStatusCode.Created);
             if(response.Item1 != null)

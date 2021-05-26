@@ -18,17 +18,26 @@ namespace PotatoBot.Commands
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
         {           
             var services = new Dictionary<string, APIBase>();
-            if(Program.Settings.Radarr.Enabled)
+            if(Program.Settings.Radarr.Count > 0)
             {
-                services.Add("Radarr", Program.ServiceManager.Radarr);
+                foreach (var service in Program.ServiceManager.Radarr)
+                {
+                    services.Add(service.Name, service);
+                }
             }
-            if(Program.Settings.Sonarr.Enabled)
+            if(Program.Settings.Sonarr.Count > 0)
             {
-                services.Add("Sonarr", Program.ServiceManager.Sonarr);
+                foreach (var service in Program.ServiceManager.Sonarr)
+                {
+                    services.Add(service.Name, service);
+                }
             }
-            if(Program.Settings.Lidarr.Enabled)
+            if(Program.Settings.Lidarr.Count > 0)
             {
-                services.Add("Lidarr", Program.ServiceManager.Lidarr);
+                foreach (var service in Program.ServiceManager.Lidarr)
+                {
+                    services.Add(service.Name, service);
+                }
             }
 
             var responseText = string.Format(

@@ -228,6 +228,11 @@ namespace PotatoBot.Services
 
         internal async Task<Message> ReplyWithMarkupAndData(IQueryCallback caller, Message message, string title, IReplyMarkup markup, IData data)
         {
+            if (message.From.IsBot)
+            {
+                await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+            }
+
             var sentMessage = await ReplyWithMarkup(caller, message, title, markup);
             CacheOrUpdate(sentMessage, data);
             return sentMessage;
@@ -235,7 +240,7 @@ namespace PotatoBot.Services
         internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string title, IReplyMarkup markup)
         {
             Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-            var sentMessage = await _client.SendTextMessageAsync(message.Chat, title, replyMarkup: markup, replyToMessageId: message.MessageId);
+            var sentMessage = await _client.SendTextMessageAsync(message.Chat, title, replyMarkup: markup, replyToMessageId: (message.From.IsBot ? 0 : message.MessageId));
             var cache = GetCache(sentMessage);
             cache.QueryCallbackInstance = caller;
             return sentMessage;
@@ -377,10 +382,10 @@ namespace PotatoBot.Services
             }
         }
 
-        internal List<List<InlineKeyboardButton>> GetDefaultEntertainmentInlineKeyboardButtons()
+        internal static List<List<InlineKeyboardButton>> GetDefaultEntertainmentInlineKeyboardButtons()
         {
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-            if (Program.Settings.Radarr.Enabled)
+            if (Program.Settings.Radarr?.Count > 0)
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
@@ -388,7 +393,7 @@ namespace PotatoBot.Services
                 });
             }
 
-            if (Program.Settings.Sonarr.Enabled)
+            if (Program.Settings.Sonarr?.Count > 0)
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
@@ -396,7 +401,7 @@ namespace PotatoBot.Services
                 });
             }
 
-            if (Program.Settings.Lidarr.Enabled)
+            if (Program.Settings.Lidarr?.Count > 0)
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {

@@ -1,4 +1,6 @@
-﻿using PotatoBot.Managers;
+﻿using Microsoft.AspNetCore.Routing;
+using PotatoBot.API;
+using PotatoBot.Managers;
 using PotatoBot.Modals.API.Lidarr;
 using PotatoBot.Modals.API.Radarr;
 using PotatoBot.Modals.API.Sonarr;
@@ -6,6 +8,7 @@ using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
 using PotatoBot.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -47,14 +50,11 @@ namespace PotatoBot.Commands
             var message = e.CallbackQuery.Message;
             var cacheData = TelegramService.GetCachedData<SearchData>(message);
 
-            switch(cacheData.SelectedSearch)
+            if(cacheData.SelectedSearch == SearchType.None)
             {
-                case SearchType.None:
-                    return await HandleSearchSelection(client, message, messageData, cacheData);
+                return await HandleSearchSelection(client, message, messageData, cacheData);
             }
-
-            _logger.Warn($"Unhandled SearchType: {cacheData.SelectedSearch}");
-            return true;
+            return await HandleServiceSelection(client, message, messageData, cacheData);
         }
 
         private async Task<bool> HandleSearchSelection(TelegramBotClient client, Message message, string messageData, SearchData cacheData)
@@ -68,7 +68,78 @@ namespace PotatoBot.Commands
             cacheData.SelectedSearch = selectedSearch;
             _logger.Trace($"{message.From.Username} is searching for {selectedSearch}");
 
-            var title = string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Selected"), selectedSearch.ToString());
+            var title = Program.LanguageManager.GetTranslation("Commands", "Search", "Selection");
+            var keyboardMarkup = new List<List<InlineKeyboardButton>>();
+            switch (selectedSearch)
+            {
+                case SearchType.Movie:
+                    {
+                        foreach(var radarr in Program.ServiceManager.Radarr)
+                        {
+                            keyboardMarkup.Add(new List<InlineKeyboardButton>()
+                            {
+                                InlineKeyboardButton.WithCallbackData(radarr.Name, radarr.Name)
+                            });
+                        }
+                    }
+                    break;
+
+                case SearchType.Series:
+                    {
+                        foreach (var sonarr in Program.ServiceManager.Sonarr)
+                        {
+                            keyboardMarkup.Add(new List<InlineKeyboardButton>()
+                            {
+                                InlineKeyboardButton.WithCallbackData(sonarr.Name, sonarr.Name)
+                            });
+                        }
+                    }
+                    break;
+
+                case SearchType.Artist:
+                    {
+                        foreach (var lidarr in Program.ServiceManager.Lidarr)
+                        {
+                            keyboardMarkup.Add(new List<InlineKeyboardButton>()
+                            {
+                                InlineKeyboardButton.WithCallbackData(lidarr.Name, lidarr.Name)
+                            });
+                        }
+                    }
+                    break;
+            }
+
+            var markup = new InlineKeyboardMarkup(keyboardMarkup);
+
+            await TelegramService.ReplyWithMarkupAndData(this, message, title, markup, cacheData);
+
+            return true;
+        }
+
+        private async Task<bool> HandleServiceSelection(TelegramBotClient client, Message message, string messageData, SearchData cacheData)
+        {
+            var service = default(APIBase);
+            switch(cacheData.SelectedSearch)
+            {
+                case SearchType.Movie:
+                    service = RadarrService.First(r => r.Name == messageData);
+                    break;
+                case SearchType.Series:
+                    service = SonarrService.First(s => s.Name == messageData);
+                    break;
+                case SearchType.Artist:
+                    service = LidarrService.First(l => l.Name == messageData);
+                    break;
+            }
+
+            cacheData.API = service;
+            _logger.Trace($"{message.From.Username} is searching for {cacheData.SelectedSearch} with {service.Name}");
+
+            var title = string.Format(
+                Program.LanguageManager.GetTranslation("Commands", "Search", "Selected"),
+                cacheData.SelectedSearch.ToString(),
+                service.Name
+            );
 
             await TelegramService.ForceReply(this, message, title);
 
@@ -81,17 +152,17 @@ namespace PotatoBot.Commands
             var cacheData = TelegramService.GetCachedData<SearchData>(message);
             cacheData.SearchText = searchText;
 
-            _logger.Trace($"Searching in {cacheData.SelectedSearch} for '{searchText}'");
+            _logger.Trace($"Searching in {cacheData.API.Name} for '{searchText}'");
 
             StatisticsService.IncreaseSearches();
 
             await client.SendChatActionAsync(message.Chat.Id, Telegram.Bot.Types.Enums.ChatAction.Typing);
 
-            switch(cacheData.SelectedSearch)
+            switch (cacheData.SelectedSearch)
             {
                 case SearchType.Series:
                     {
-                        cacheData.SeriesSearchResults = SonarrService.SearchSeries(searchText);
+                        cacheData.SeriesSearchResults = (cacheData.API as SonarrService).SearchSeries(searchText);
 
                         var resultCount = cacheData.SeriesSearchResults?.Count ?? 0;
 
@@ -120,16 +191,16 @@ namespace PotatoBot.Commands
 
                 case SearchType.Movie:
                     {
-                        cacheData.MovieSearchResults = RadarrService.SearchMovieByName(searchText);
+                        cacheData.MovieSearchResults = (cacheData.API as RadarrService).SearchMovieByName(searchText);
 
                         var resultCount = cacheData.MovieSearchResults?.Count ?? 0;
 
                         _logger.Trace($"Found {resultCount} movies for '{searchText}'");
 
-                        if(resultCount > 0)
+                        if (resultCount > 0)
                         {
                             cacheData.MovieSearchResults = cacheData.MovieSearchResults.OrderByDescending((m) => m.Year).ToList();
-                            
+
                             var title = string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Movie"), cacheData.MovieSearchResults.Count);
 
                             var formatFunction = new Func<object, string>((obj) =>
@@ -149,13 +220,13 @@ namespace PotatoBot.Commands
 
                 case SearchType.Artist:
                     {
-                        cacheData.ArtistSearchResults = LidarrService.SearchAristsByName(searchText);
+                        cacheData.ArtistSearchResults = (cacheData.API as LidarrService).SearchAristsByName(searchText);
 
                         var resultCount = cacheData.ArtistSearchResults?.Count ?? 0;
 
                         _logger.Trace($"Found {resultCount} artists for '{searchText}'");
 
-                        if(resultCount > 0)
+                        if (resultCount > 0)
                         {
                             var title = string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Artist"), cacheData.ArtistSearchResults.Count);
 
@@ -182,25 +253,25 @@ namespace PotatoBot.Commands
         {
             var cacheData = TelegramService.GetCachedData<SearchData>(message);
 
-            switch(cacheData.SelectedSearch)
+            switch (cacheData.SelectedSearch)
             {
                 case SearchType.Series:
                     {
                         var selectedSeries = TelegramService.GetPageinationResult<Series>(message, selectedIndex);
-                        if(selectedSeries == null)
+                        if (selectedSeries == null)
                         {
                             _logger.Trace($"Failed to find pageination result with index {selectedIndex}");
                             await client.SendTextMessageAsync(message.Chat.Id, string.Format(LanguageManager.GetTranslation("Commands", "Search", "Fail"), cacheData.SearchText));
                             return true;
                         }
 
-                        var result = SonarrService.AddSeries(selectedSeries);
-                        if(result.Added)
+                        var result = (cacheData.API as SonarrService).AddSeries(selectedSeries);
+                        if (result.Added)
                         {
                             StatisticsService.IncreaseAdds();
                             await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Success"), selectedSeries.Title));
                         }
-                        else if(result.AlreadyAdded)
+                        else if (result.AlreadyAdded)
                         {
                             await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Exists"), selectedSeries.Title));
                         }
@@ -214,14 +285,14 @@ namespace PotatoBot.Commands
                 case SearchType.Movie:
                     {
                         var selectedMovie = TelegramService.GetPageinationResult<Movie>(message, selectedIndex);
-                        if(selectedMovie == null)
+                        if (selectedMovie == null)
                         {
                             _logger.Trace($"Failed to find pageination result with index {selectedIndex}");
                             await client.SendTextMessageAsync(message.Chat.Id, string.Format(LanguageManager.GetTranslation("Commands", "Search", "Fail"), cacheData.SearchText));
                             return true;
                         }
 
-                        var result = RadarrService.AddMovie(selectedMovie);
+                        var result = (cacheData.API as RadarrService).AddMovie(selectedMovie);
                         if (result.Added)
                         {
                             StatisticsService.IncreaseAdds();
@@ -248,7 +319,7 @@ namespace PotatoBot.Commands
                             return true;
                         }
 
-                        var result = LidarrService.AddArtist(selectedArtist);
+                        var result = (cacheData.API as LidarrService).AddArtist(selectedArtist);
                         if (result.Added)
                         {
                             StatisticsService.IncreaseAdds();

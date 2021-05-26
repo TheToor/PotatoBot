@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PotatoBot.Modals.API.Sonarr
 {
-    public class Series
+    public class Series : IEqualityComparer<Series>
     {
         public ulong Id { get; set; }
         public uint LanguageProfileId { get; set; }
@@ -44,5 +45,21 @@ namespace PotatoBot.Modals.API.Sonarr
         public int TvDbId { get; set; }
         public bool UseSceneNumbering { get; set; }
         public int Year { get; set; }
+
+        public bool Equals([AllowNull] Series x, [AllowNull] Series y)
+        {
+            if (x == null) return false;
+            if (y == null) return false;
+            if (ReferenceEquals(x, y)) return true;
+
+            if (x.TvDbId == y.TvDbId)
+                return true;
+            return false;
+        }
+
+        public int GetHashCode([DisallowNull] Series obj)
+        {
+            return TvDbId.GetHashCode();
+        }
     }
 }

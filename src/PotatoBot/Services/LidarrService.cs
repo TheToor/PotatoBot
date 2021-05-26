@@ -9,10 +9,8 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Services
 {
-    internal class LidarrService : APIBase, IService
+    public class LidarrService : APIBase, IService
     {
-        public string Name => "Lidarr";
-
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly object _albumLock = new object();
@@ -75,7 +73,7 @@ namespace PotatoBot.Services
         {
             _logger.Trace($"Adding artist [{artist.Id}] {artist.ArtistName}");
 
-            var postBody = new AddArtist(artist);
+            var postBody = new AddArtist(this, artist);
 
             var response = PostRequest<Artist>(APIEndPoints.LidarrEndpoints.Artist, postBody, System.Net.HttpStatusCode.Created);
             if (response.Item1 != null)

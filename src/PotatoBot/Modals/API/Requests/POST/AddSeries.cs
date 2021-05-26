@@ -1,4 +1,5 @@
 ﻿using PotatoBot.Modals.API.Sonarr;
+using PotatoBot.Services;
 
 namespace PotatoBot.Modals.API.Requests.POST
 {
@@ -8,7 +9,7 @@ namespace PotatoBot.Modals.API.Requests.POST
         public string RootFolderPath { get; set; }
         public SeriesAddOption AddOptions { get; set; }
 
-        public AddSeries(Series series)
+        public AddSeries(SonarrService service, Series series)
         {
             // Minimal required things for Sonarr
 
@@ -18,9 +19,9 @@ namespace PotatoBot.Modals.API.Requests.POST
             Images = series.Images;
             Seasons = series.Seasons;
 
-            QualityProfileId = Program.Settings.Sonarr.QualityProfile;
-            LanguageProfileId = Program.Settings.Sonarr.LanguageProfile;
-            RootFolderPath = Program.Settings.Sonarr.DownloadPath;
+            QualityProfileId = service.Settings.QualityProfile;
+            LanguageProfileId = service.Settings.LanguageProfile;
+            RootFolderPath = service.Settings.DownloadPath;
 
             SeasonFolder = true;
             Monitored = true;

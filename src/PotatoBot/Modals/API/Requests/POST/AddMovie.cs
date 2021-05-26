@@ -1,4 +1,5 @@
 ﻿using PotatoBot.Modals.API.Radarr;
+using PotatoBot.Services;
 
 namespace PotatoBot.Modals.API.Requests.POST
 {
@@ -8,7 +9,7 @@ namespace PotatoBot.Modals.API.Requests.POST
         public string MinimumAvailability { get;set;}
         public MovieAddOptions AddOptions { get; set; }
 
-        public AddMovie(Movie movie)
+        public AddMovie(RadarrService service, Movie movie)
         {
             Title = movie.Title;
             TitleSlug = movie.TitleSlug;
@@ -17,8 +18,8 @@ namespace PotatoBot.Modals.API.Requests.POST
             TMDBId = movie.TMDBId;
             Year = movie.Year;
 
-            QualityProfileId = Program.Settings.Radarr.QualityProfile;
-            RootFolderPath = Program.Settings.Radarr.DownloadPath;
+            QualityProfileId = service.Settings.QualityProfile;
+            RootFolderPath = service.Settings.DownloadPath;
 
             Monitored = true;
             AddOptions = new MovieAddOptions()

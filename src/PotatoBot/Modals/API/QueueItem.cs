@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PotatoBot.API;
+using System;
 using System.Collections.Generic;
 
 namespace PotatoBot.Modals.API
@@ -6,6 +7,7 @@ namespace PotatoBot.Modals.API
     public abstract class QueueItem
     {
         public uint Id { get; set; }
+        public APIBase API { get; set; }
 
         /// <summary>
         /// The Name of the download not of the Media item (Series, Movie, Artist)
@@ -27,6 +29,11 @@ namespace PotatoBot.Modals.API
         public string TimeLeft { get; set; }
         public string TrackedDownloadState { get; set; }
         public string TrackedDownloadStatus { get; set; }
+
+        public QueueItem(APIBase api)
+        {
+            API = api;
+        }
 
         public abstract string GetQueueTitle();
     }

@@ -8,41 +8,29 @@ namespace PotatoBot.Managers
 {
     internal class ServiceManager
     {
-        private SonarrService _sonarr;
-        internal SonarrService Sonarr
+        private List<SonarrService> _sonarr = new List<SonarrService>();
+        internal List<SonarrService> Sonarr
         {
             get
             {
-                if(!Program.Settings.Sonarr.Enabled)
-                {
-                    throw new Exception("Sonarr Service is not enabled");
-                }
                 return _sonarr;
             }
         }
 
-        private RadarrService _radarr;
-        internal RadarrService Radarr
+        private List<RadarrService> _radarr = new List<RadarrService>();
+        internal List<RadarrService> Radarr
         {
             get
             {
-                if(!Program.Settings.Radarr.Enabled)
-                {
-                    throw new Exception("Radarr Service is not enabled");
-                }
                 return _radarr;
             }
         }
 
-        private LidarrService _lidarr;
-        internal LidarrService Lidarr
+        private List<LidarrService> _lidarr = new List<LidarrService>();
+        internal List<LidarrService> Lidarr
         {
             get
             {
-                if(!Program.Settings.Lidarr.Enabled)
-                {
-                    throw new Exception("Lidarr Service is not enabled");
-                }
                 return _lidarr;
             }
         }
@@ -66,32 +54,53 @@ namespace PotatoBot.Managers
             _services.Add(TelegramService);
 
             var settings = Program.Settings;
-            
-            if(settings.Sonarr.Enabled)
-            {
-                _logger.Info("Enabling Sonarr Service ...");
-                _sonarr = new SonarrService(settings.Sonarr, "api/v3");
-                _services.Add(_sonarr);
 
-                API.Calendar.Calendars.Add(_sonarr);
+            foreach (var sonarr in settings.Sonarr)
+            {
+                if (sonarr.Enabled)
+                {
+                    _logger.Info("Enabling Sonarr Service ...");
+                    var sonarrService = new SonarrService(sonarr, "api/v3");
+                    _services.Add(sonarrService);
+                    _sonarr.Add(sonarrService);
+
+                    if (sonarr.EnableCalendar)
+                    {
+                        API.Calendar.Calendars.Add(sonarrService);
+                    }
+                }
             }
 
-            if(settings.Radarr.Enabled)
+            foreach (var radarr in settings.Radarr)
             {
-                _logger.Info("Enabling Radarr Service ...");
-                _radarr = new RadarrService(settings.Radarr, "api/v3");
-                _services.Add(_radarr);
+                if (radarr.Enabled)
+                {
+                    _logger.Info("Enabling Radarr Service ...");
+                    var radarrService = new RadarrService(radarr, "api/v3");
+                    _services.Add(radarrService);
+                    _radarr.Add(radarrService);
 
-                API.Calendar.Calendars.Add(_radarr);
+                    if (radarr.EnableCalendar)
+                    {
+                        API.Calendar.Calendars.Add(radarrService);
+                    }
+                }
             }
 
-            if(settings.Lidarr.Enabled)
+            foreach (var lidarr in settings.Lidarr)
             {
-                _logger.Info("Enalbing Lidarr Service ...");
-                _lidarr = new LidarrService(settings.Lidarr, "api/v1");
-                _services.Add(_lidarr);
+                if (lidarr.Enabled)
+                {
+                    _logger.Info("Enalbing Lidarr Service ...");
+                    var lidarrService = new LidarrService(lidarr, "api/v1");
+                    _services.Add(lidarrService);
+                    _lidarr.Add(lidarrService);
 
-                API.Calendar.Calendars.Add(_lidarr);
+                    if (lidarr.EnableCalendar)
+                    {
+                        API.Calendar.Calendars.Add(lidarrService);
+                    }
+                }
             }
 
             if(settings.Plex?.Count > 0)

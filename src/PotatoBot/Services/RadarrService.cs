@@ -9,10 +9,8 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Services
 {
-    internal class RadarrService : APIBase, IService
+    public class RadarrService : APIBase, IService
     {
-        public string Name => "Radarr";
-
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         internal RadarrService(EntertainmentSettings settings, string apiUrl) : base(settings, apiUrl)
@@ -76,7 +74,7 @@ namespace PotatoBot.Services
         {
             _logger.Trace($"Adding movie [{movie.TMDBId}] {movie.Title}");
 
-            var postBody = new AddMovie(movie);
+            var postBody = new AddMovie(this, movie);
 
             var response = PostRequest<Movie>(APIEndPoints.RadarrEndpoints.Movie, postBody, System.Net.HttpStatusCode.Created);
             if (response.Item1 != null)

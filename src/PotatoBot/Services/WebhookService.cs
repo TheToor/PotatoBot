@@ -9,6 +9,7 @@ using PotatoBot.Modals.API.Sonarr;
 using PotatoBot.Webhook;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -87,27 +88,27 @@ namespace PotatoBot.Services
             {
                 var cachedResponse = new Dictionary<string, object>();
 
-                if (Program.Settings.Radarr.Enabled)
+                if (Program.Settings.Radarr.Count > 0)
                 {
-                    var movies = Program.ServiceManager.Radarr.GetAllMovies();
+                    var movies = Program.ServiceManager.Radarr.SelectMany(r => r.GetAllMovies()).Distinct().ToList();
                     if (movies != null)
                     {
                         cachedResponse.Add("Movies", movies.ConvertAll((o) => new BasicMovie(o)));
                     }
                 }
 
-                if (Program.Settings.Sonarr.Enabled)
+                if (Program.Settings.Sonarr.Count > 0)
                 {
-                    var series = Program.ServiceManager.Sonarr.GetAllSeries();
+                    var series = Program.ServiceManager.Sonarr.SelectMany(s => s.GetAllSeries()).Distinct().ToList();
                     if (series != null)
                     {
                         cachedResponse.Add("Series", series.ConvertAll((o) => new BasicSeries(o)));
                     }
                 }
 
-                if (Program.Settings.Lidarr.Enabled)
+                if (Program.Settings.Lidarr.Count > 0)
                 {
-                    var artists = Program.ServiceManager.Lidarr.GetAllArtists();
+                    var artists = Program.ServiceManager.Lidarr.SelectMany(l => l.GetAllArtists()).Distinct().ToList();
                     if (artists != null)
                     {
                         cachedResponse.Add("Artists", artists.ConvertAll((o) => new BasicArtist(o)));

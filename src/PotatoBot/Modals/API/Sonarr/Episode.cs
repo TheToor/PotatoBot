@@ -1,9 +1,16 @@
-﻿using System;
+﻿using PotatoBot.Services;
+using System;
 
 namespace PotatoBot.Modals.API.Sonarr
 {
     public class Episode
     {
+        public SonarrService API { get; set; }
+        public Episode(SonarrService api)
+        {
+            API = api;
+        }
+
         public int Id { get; set; }
         public uint SeriesId { get; set; }
 
@@ -25,7 +32,7 @@ namespace PotatoBot.Modals.API.Sonarr
             {
                 if (_series == null)
                 {
-                    _series = Program.ServiceManager.Sonarr.GetSeriesInfo(SeriesId);
+                    _series = API.GetSeriesInfo(SeriesId);
                 }
                 return _series;
             }
