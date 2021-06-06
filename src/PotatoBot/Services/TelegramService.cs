@@ -384,7 +384,7 @@ namespace PotatoBot.Services
         internal static List<List<InlineKeyboardButton>> GetDefaultEntertainmentInlineKeyboardButtons()
         {
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-            if (Program.Settings.Radarr?.Count > 0)
+            if (Program.ServiceManager.Radarr?.Count > 0)
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
@@ -392,7 +392,7 @@ namespace PotatoBot.Services
                 });
             }
 
-            if (Program.Settings.Sonarr?.Count > 0)
+            if (Program.ServiceManager.Sonarr?.Count > 0)
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
@@ -400,7 +400,7 @@ namespace PotatoBot.Services
                 });
             }
 
-            if (Program.Settings.Lidarr?.Count > 0)
+            if (Program.ServiceManager.Lidarr?.Count > 0)
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
