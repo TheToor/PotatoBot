@@ -1,5 +1,6 @@
 ﻿using PotatoBot.Extensions;
 using PotatoBot.Managers;
+using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
 using PotatoBot.Modals.Settings;
@@ -246,11 +247,10 @@ namespace PotatoBot.Services
             return sentMessage;
         }
 
-        internal async Task ReplyWithPageination<T>(
+        internal async Task ReplyWithPageination(
             Message message,
             string title,
-            List<T> list,
-            Func<object, string> formatFunction,
+            IEnumerable<IServarrItem> list,
             Func<TelegramBotClient, Message, int, Task<bool>> selectionFunction
         )
         {
@@ -261,14 +261,13 @@ namespace PotatoBot.Services
             _logger.Trace("Preparing page ...");
             cache.PageTitle = title;
             cache.Page = 0;
-            cache.PageItemList = list.Cast<object>().ToList();
-            cache.PageFormatFunction = formatFunction;
+            cache.PageItemList = list;
             cache.PageSelectionFunction = selectionFunction;
 
             await UpdatePageination(message.ReplyToMessage, true);
         }
 
-        internal T GetPageinationResult<T>(Message message, int selectedIndex)
+        internal IServarrItem GetPageinationResult(Message message, int selectedIndex)
         {
             var cache = GetCache(message);
 
@@ -283,7 +282,7 @@ namespace PotatoBot.Services
                 return default;
             }
 
-            return (T)page.Items[selectedIndex];
+            return page.Items[selectedIndex];
         }
 
         internal async Task UpdatePageination(Message message, bool create = false)
@@ -296,7 +295,7 @@ namespace PotatoBot.Services
             var page = cache.PageItemList.TakePaged(cache.Page, cache.PageSize);
             for(var i = 0; i < page.Items.Count; i++)
             {
-                text += $"<b>{i + 1}:</b> " + cache.PageFormatFunction(page.Items[i]);
+                text += $"<b>{i + 1}:</b> " + page.Items[i].PageTitle;
             }
 
             _logger.Trace("Building button layout ...");

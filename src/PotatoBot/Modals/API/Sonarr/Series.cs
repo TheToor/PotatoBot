@@ -4,13 +4,14 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace PotatoBot.Modals.API.Sonarr
 {
-    public class Series : IEqualityComparer<Series>
+    public class Series : IServarrItem, IEqualityComparer<Series>
     {
         public ulong Id { get; set; }
         public uint LanguageProfileId { get; set; }
         public uint QualityProfileId { get; set; }
 
         public string Title { get; set; }
+        public string PageTitle => $"<b>{Year} - {Title}</b>\n{Overview}\n\n";
 
         public DateTime Added { get; set; }
         public string AirTime { get; set; }
@@ -44,7 +45,7 @@ namespace PotatoBot.Modals.API.Sonarr
         public int TvRageId { get; set; }
         public int TvDbId { get; set; }
         public bool UseSceneNumbering { get; set; }
-        public int Year { get; set; }
+        public ushort Year { get; set; }
 
         public bool Equals([AllowNull] Series x, [AllowNull] Series y)
         {

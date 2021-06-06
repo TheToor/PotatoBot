@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace PotatoBot.Modals.API.Radarr
 {
-    public class Movie : IEqualityComparer<Movie>
+    public class Movie : IServarrItem, IEqualityComparer<Movie>
     {
         public int Id { get; set; }
         // Radarr does not (yet?) have languge profiles. Language is specified inside the quality profile
@@ -12,6 +12,8 @@ namespace PotatoBot.Modals.API.Radarr
         public uint QualityProfileId { get; set; }
 
         public string Title { get; set; }
+        public string PageTitle => $"<b>{Year} - {Title}</b>\n{Overview}\n\n";
+
         public string SortTitle { get; set; }
         public long SizeOnDisk { get; set; }
         public string Status { get; set; }

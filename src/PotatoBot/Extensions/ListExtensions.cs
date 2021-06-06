@@ -16,9 +16,10 @@ namespace PotatoBot.Extensions
     }
     public static class ListExtensions
     {
-        public static PageResult<T> TakePaged<T>(this List<T> list, int page, int itemsPerPage)
+        public static PageResult<T> TakePaged<T>(this IEnumerable<T> list, int page, int itemsPerPage)
         {
-            if(list.Count == 0)
+            var itemCount = list.Count();
+            if (itemCount == 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(list));
             }
@@ -32,25 +33,25 @@ namespace PotatoBot.Extensions
             result.Start = page * itemsPerPage;
             result.End = result.Start + itemsPerPage;
 
-            if(result.Start >= list.Count)
+            if(result.Start >= itemCount)
             {
                 // We are over the end so just return an empty List
                 
-                if(result.Start - itemsPerPage < list.Count)
+                if(result.Start - itemsPerPage < itemCount)
                 {
                     result.PreviousPossible = true;
                 }
 
-                result.Start = list.Count;
-                result.End = list.Count;
+                result.Start = itemCount;
+                result.End = itemCount;
                 result.Items = new List<T>();
 
                 result.NextPossible = false;
             }
-            else if(result.End >= list.Count)
+            else if(result.End >= itemCount)
             {
                 // Start is in range of list but end is over
-                result.End = list.Count;
+                result.End = itemCount;
 
                 result.NextPossible = false;
 
@@ -78,7 +79,7 @@ namespace PotatoBot.Extensions
                     result.PreviousPossible = true;
                 }
 
-                if (result.End < list.Count)
+                if (result.End < itemCount)
                 {
                     result.NextPossible = true;
                 }

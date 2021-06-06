@@ -2,8 +2,16 @@
 
 namespace PotatoBot.Modals.API.Lidarr
 {
-    public class Artist
+    public class Artist : IServarrItem
     {
+        public string Title
+        {
+            get => ArtistName;
+            set => ArtistName = value;
+        }
+        public string PageTitle => $"<b>{ArtistName}</b>\n{Overview}\n\n";
+        public ushort Year { get; set; }
+
         public ulong Id { get; set; }
         public string ForeignArtistId { get; set; }
 

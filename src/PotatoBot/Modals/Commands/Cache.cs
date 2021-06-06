@@ -25,8 +25,7 @@ namespace PotatoBot.Modals.Commands
         public string PageTitle { get; set; }
         public int PageSize { get; } = 3;
         public int Page { get; set; }
-        public List<object> PageItemList { get; set; }
-        public Func<object, string> PageFormatFunction { get; set; }
+        public IEnumerable<IServarrItem> PageItemList { get; set; }
         public Func<TelegramBotClient, Message, int, Task<bool>> PageSelectionFunction { get; set; }
     }
 }

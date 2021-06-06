@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace PotatoBot.Modals.API.Radarr
 {
@@ -10,8 +11,10 @@ namespace PotatoBot.Modals.API.Radarr
         public string Studio { get; set; }
         public ushort Runtime { get; set; }
 
-        public BasicMovie(Movie movie)
+        public BasicMovie(IServarrItem item)
         {
+            var movie = item as Movie ?? throw new ArgumentNullException(nameof(item));
+
             Title = movie.Title;
             SizeOnDisk = movie.SizeOnDisk;
             Poster = movie.Images?.FirstOrDefault((i) => i.CoverType == "poster");

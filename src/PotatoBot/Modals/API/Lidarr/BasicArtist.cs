@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace PotatoBot.Modals.API.Lidarr
 {
@@ -8,8 +9,10 @@ namespace PotatoBot.Modals.API.Lidarr
         public ArtistsStatistics Statistics { get; set; }
         public Image Poster { get; set; }
 
-        public BasicArtist(Artist artist)
+        public BasicArtist(IServarrItem item)
         {
+            var artist = item as Artist ?? throw new ArgumentNullException(nameof(item));
+
             ArtistName = artist.ArtistName;
             Statistics = artist.Statistics;
             Poster = artist.Images?.FirstOrDefault((i) => i.CoverType == "poster");

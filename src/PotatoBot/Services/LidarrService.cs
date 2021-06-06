@@ -2,15 +2,20 @@
 using PotatoBot.Modals;
 using PotatoBot.Modals.API;
 using PotatoBot.Modals.API.Lidarr;
+using PotatoBot.Modals.API.Radarr;
 using PotatoBot.Modals.API.Requests;
 using PotatoBot.Modals.API.Requests.POST;
 using PotatoBot.Modals.Settings;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PotatoBot.Services
 {
-    public class LidarrService : APIBase, IService
+    public class LidarrService : APIBase, IService, IServarr
     {
+        public ServarrType Type => ServarrType.Lidarr;
+
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly object _albumLock = new object();
@@ -19,19 +24,6 @@ namespace PotatoBot.Services
 
         internal LidarrService(EntertainmentSettings settings, string apiUrl) : base(settings, apiUrl)
         {
-        }
-
-        internal virtual List<LidarrQueueItem> GetQueue()
-        {
-            _logger.Trace("Fetching download queue");
-
-            var response = GetRequest<Modals.API.Queue<LidarrQueueItem>>(APIEndPoints.Queue, new QueueRequest());
-            if (response != null)
-            {
-                _logger.Trace("Successfully fetched download queue");
-                return response.Records;
-            }
-            return null;
         }
 
         public bool Start()
@@ -44,7 +36,7 @@ namespace PotatoBot.Services
             return true;
         }
 
-        internal List<Artist> GetAllArtists()
+        public IEnumerable<IServarrItem> GetAll()
         {
             _logger.Trace("Fetching all artists  ...");
 
@@ -54,7 +46,7 @@ namespace PotatoBot.Services
             return response;
         }
 
-        internal List<Artist> SearchAristsByName(string name)
+        public IEnumerable<IServarrItem> Search(string name)
         {
             _logger.Trace($"Searching artist with name {name} ...");
 
@@ -69,8 +61,10 @@ namespace PotatoBot.Services
             return response;
         }
 
-        internal AddResult AddArtist(Artist artist)
+        public AddResult Add(IServarrItem item)
         {
+            var artist = item as Artist ?? throw new ArgumentNullException(nameof(item));
+
             _logger.Trace($"Adding artist [{artist.Id}] {artist.ArtistName}");
 
             var postBody = new AddArtist(this, artist);
@@ -87,6 +81,19 @@ namespace PotatoBot.Services
                 AlreadyAdded = response.Item2 == System.Net.HttpStatusCode.BadRequest,
                 StatusCode = response.Item2
             };
+        }
+
+        public List<QueueItem> GetQueue()
+        {
+            _logger.Trace("Fetching download queue");
+
+            var response = GetRequest<Modals.API.Queue<LidarrQueueItem>>(APIEndPoints.Queue, new QueueRequest());
+            if (response != null)
+            {
+                _logger.Trace("Successfully fetched download queue");
+                return response.Records.Cast<QueueItem>().ToList();
+            }
+            return null;
         }
 
         internal Album GetAlbumInfo(ulong artistId, ulong albumId)

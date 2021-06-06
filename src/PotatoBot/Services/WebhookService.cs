@@ -90,7 +90,7 @@ namespace PotatoBot.Services
 
                 if (Program.Settings.Radarr.Count > 0)
                 {
-                    var movies = Program.ServiceManager.Radarr.SelectMany(r => r.GetAllMovies()).Distinct().ToList();
+                    var movies = Program.ServiceManager.Radarr.SelectMany(r => r.GetAll()).Distinct().ToList();
                     if (movies != null)
                     {
                         cachedResponse.Add("Movies", movies.ConvertAll((o) => new BasicMovie(o)));
@@ -99,7 +99,7 @@ namespace PotatoBot.Services
 
                 if (Program.Settings.Sonarr.Count > 0)
                 {
-                    var series = Program.ServiceManager.Sonarr.SelectMany(s => s.GetAllSeries()).Distinct().ToList();
+                    var series = Program.ServiceManager.Sonarr.SelectMany(s => s.GetAll()).Distinct().ToList();
                     if (series != null)
                     {
                         cachedResponse.Add("Series", series.ConvertAll((o) => new BasicSeries(o)));
@@ -108,7 +108,7 @@ namespace PotatoBot.Services
 
                 if (Program.Settings.Lidarr.Count > 0)
                 {
-                    var artists = Program.ServiceManager.Lidarr.SelectMany(l => l.GetAllArtists()).Distinct().ToList();
+                    var artists = Program.ServiceManager.Lidarr.SelectMany(l => l.GetAll()).Distinct().ToList();
                     if (artists != null)
                     {
                         cachedResponse.Add("Artists", artists.ConvertAll((o) => new BasicArtist(o)));

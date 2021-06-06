@@ -7,17 +7,19 @@ using PotatoBot.Modals.API.Sonarr;
 using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PotatoBot.Services
 {
-    public class SonarrService : APIBase, IService
+    public class SonarrService : APIBase, IService, IServarr
     {
+        public ServarrType Type => ServarrType.Sonarr;
+
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         // Cache things
 
         private readonly object _seriesCacheLock = new object();
-        private DateTime _seriesCacheUpdates = DateTime.MinValue;
         // SeriesId -> Series
         private Dictionary<ulong, Series> _seriesCache = new Dictionary<ulong, Series>();
         private readonly object _episodeCacheLock = new object();
@@ -45,7 +47,7 @@ namespace PotatoBot.Services
             return true;
         }
 
-        internal List<Series> GetAllSeries()
+        public IEnumerable<IServarrItem> GetAll()
         {
             _logger.Trace("Fetching all series ...");
 
@@ -55,7 +57,7 @@ namespace PotatoBot.Services
             return response;
         }
 
-        internal List<Series> SearchSeries(string name)
+        public IEnumerable<IServarrItem> Search(string name)
         {
             _logger.Trace($"Searching for series with name '{name}' ...");
             var body = new LookupRequest()
@@ -69,8 +71,10 @@ namespace PotatoBot.Services
             return response;
         }
 
-        internal AddResult AddSeries(Series series)
+        public AddResult Add(IServarrItem item)
         {
+            var series = item as Series ?? throw new ArgumentNullException(nameof(item));
+
             _logger.Trace($"Adding series [{series.TvDbId}] {series.Title}");
 
             var body = new AddSeries(this, series);
@@ -90,7 +94,7 @@ namespace PotatoBot.Services
             };
         }
 
-        internal virtual List<SonarrQueueItem> GetQueue()
+        public List<QueueItem> GetQueue()
         {
             _logger.Trace("Fetching download queue");
 
@@ -98,7 +102,7 @@ namespace PotatoBot.Services
             if (response != null)
             {
                 _logger.Trace("Successfully fetched download queue");
-                return response.Records;
+                return response.Records.Cast<QueueItem>().ToList();
             }
             return null;
         }

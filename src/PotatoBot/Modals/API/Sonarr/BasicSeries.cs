@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace PotatoBot.Modals.API.Sonarr
 {
@@ -8,8 +9,10 @@ namespace PotatoBot.Modals.API.Sonarr
         public SeriesStatistics Statistics { get; set; }
         public Image Poster { get; set; }
 
-        public BasicSeries(Series series)
+        public BasicSeries(IServarrItem item)
         {
+            var series = item as Series ?? throw new ArgumentNullException(nameof(item));
+
             Title = series.Title;
             Statistics = series.Statistics;
             Poster = series.Images.FirstOrDefault((i) => i.CoverType == "poster");

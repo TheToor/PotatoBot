@@ -5,12 +5,16 @@ using PotatoBot.Modals.API.Radarr;
 using PotatoBot.Modals.API.Requests;
 using PotatoBot.Modals.API.Requests.POST;
 using PotatoBot.Modals.Settings;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PotatoBot.Services
 {
-    public class RadarrService : APIBase, IService
+    public class RadarrService : APIBase, IService, IServarr
     {
+        public ServarrType Type => ServarrType.Radarr;
+
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         internal RadarrService(EntertainmentSettings settings, string apiUrl) : base(settings, apiUrl)
@@ -34,19 +38,7 @@ namespace PotatoBot.Services
             return true;
         }
 
-        internal List<RadarrQueueItem> GetQueue()
-        {
-            _logger.Trace("Fetching download queue");
-
-            var response = GetRequest<Modals.API.Queue<RadarrQueueItem>>(APIEndPoints.Queue);
-            if (response != null)
-            {
-                _logger.Trace("Successfully fetched download queue");
-            }
-            return response.Records;
-        }
-
-        internal List<Movie> GetAllMovies()
+        public IEnumerable<IServarrItem> GetAll()
         {
             _logger.Trace("Fetching all movies ...");
 
@@ -56,7 +48,7 @@ namespace PotatoBot.Services
             return response;
         }
 
-        public List<Movie> SearchMovieByName(string name)
+        public IEnumerable<IServarrItem> Search(string name)
         {
             _logger.Trace($"Searching movie with name {name} ...");
             var requestBody = new LookupRequest()
@@ -70,8 +62,10 @@ namespace PotatoBot.Services
             return response;
         }
 
-        public AddResult AddMovie(Movie movie)
+        public AddResult Add(IServarrItem item)
         {
+            var movie = item as Movie ?? throw new ArgumentNullException(nameof(item));
+
             _logger.Trace($"Adding movie [{movie.TMDBId}] {movie.Title}");
 
             var postBody = new AddMovie(this, movie);
@@ -88,6 +82,18 @@ namespace PotatoBot.Services
                 AlreadyAdded = response.Item2 == System.Net.HttpStatusCode.BadRequest,
                 StatusCode = System.Net.HttpStatusCode.BadRequest
             };
+        }
+
+        public List<QueueItem> GetQueue()
+        {
+            _logger.Trace("Fetching download queue");
+
+            var response = GetRequest<Modals.API.Queue<RadarrQueueItem>>(APIEndPoints.Queue);
+            if (response != null)
+            {
+                _logger.Trace("Successfully fetched download queue");
+            }
+            return response.Records.Cast<QueueItem>().ToList();
         }
     }
 }
