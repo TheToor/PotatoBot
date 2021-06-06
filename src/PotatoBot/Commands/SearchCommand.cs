@@ -1,16 +1,10 @@
-﻿using Microsoft.AspNetCore.Routing;
-using PotatoBot.API;
-using PotatoBot.Managers;
+﻿using PotatoBot.Managers;
 using PotatoBot.Modals;
-using PotatoBot.Modals.API.Lidarr;
-using PotatoBot.Modals.API.Radarr;
-using PotatoBot.Modals.API.Sonarr;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
