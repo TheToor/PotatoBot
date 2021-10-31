@@ -46,7 +46,7 @@ namespace PotatoBot.Services
         // Time until a message "expires" in hours
         private uint _cacheInvalidationTime = 24;
 
-        private readonly List<int> _users;
+        private readonly List<long> _users;
 
         // Characters that need to be escaped with an \
         string[] _charactersToEscape = new string[]
@@ -490,7 +490,7 @@ namespace PotatoBot.Services
             }
         }
 
-        private bool IsValidUser(int userId)
+        private bool IsValidUser(long userId)
         {
             if(_settings.Users.Contains(userId) || _settings.Admins.Contains(userId))
             {

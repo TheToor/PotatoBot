@@ -6,8 +6,8 @@ namespace PotatoBot.Modals.Settings
     {
         public string BotToken { get; set; }
 
-        public List<int> Admins { get; set; }
-        public List<int> Users { get; set; }
+        public List<long> Admins { get; set; }
+        public List<long> Users { get; set; }
 
         public string DateTimeFormat { get; set; }
     }
