@@ -27,7 +27,7 @@ namespace PotatoBot.Webhook
             });
             services.Configure<JsonOptions>((option) =>
             {
-                option.JsonSerializerOptions.IgnoreNullValues = true;
+                option.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
             });
             services.Configure<KestrelServerOptions>(options =>
             {
