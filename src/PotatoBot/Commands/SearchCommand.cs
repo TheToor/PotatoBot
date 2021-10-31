@@ -40,10 +40,10 @@ namespace PotatoBot.Commands
             return true;
         }
 
-        public async Task<bool> OnCallbackQueryReceived(TelegramBotClient client, CallbackQueryEventArgs e)
+        public async Task<bool> OnCallbackQueryReceived(TelegramBotClient client, CallbackQuery callbackQuery)
         {
-            var messageData = e.CallbackQuery.Data;
-            var message = e.CallbackQuery.Message;
+            var messageData = callbackQuery.Data;
+            var message = callbackQuery.Message;
             var cacheData = TelegramService.GetCachedData<SearchData>(message);
 
             if(cacheData.SelectedSearch == SearchType.None)

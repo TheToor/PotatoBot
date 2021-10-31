@@ -8,9 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -38,13 +40,16 @@ namespace PotatoBot.Services
         private CommandManager _commandManager;
 
         // Thread lock for cache
-        private object _cacheLock = new object();
+        private readonly object _cacheLock = new();
         // Cache to store data "inside" of a telegram chat
-        private Dictionary<long, Cache> _cache = new Dictionary<long, Cache>();
+        private Dictionary<long, Cache> _cache = new();
         // Timer to invalidate cache
         private System.Timers.Timer _cacheTimer;
         // Time until a message "expires" in hours
         private uint _cacheInvalidationTime = 24;
+
+        private static bool _isReceiving;
+        private readonly CancellationTokenSource _botCancellationTokenSource = new();
 
         private readonly List<long> _users;
 
@@ -70,12 +75,6 @@ namespace PotatoBot.Services
                 var info = _client.GetMeAsync().Result;
                 _logger.Info($"Connected as {info.FirstName} {info.LastName} ({info.Username})");
 
-                _logger.Trace("Setting events ...");
-                _client.OnMessage += OnNewMessage;
-                _client.OnReceiveError += OnReceiveError;
-                _client.OnReceiveGeneralError += OnReceiveGeneralError;
-                _client.OnCallbackQuery += OnCallbackQueryReceived;
-
                 _logger.Trace("Initializing command manager ...");
                 _commandManager = new CommandManager();
 
@@ -89,8 +88,10 @@ namespace PotatoBot.Services
                 _client.SetMyCommandsAsync(commands);
 
                 _logger.Trace("Initializing cache ...");
-                _cacheTimer = new System.Timers.Timer(1000 * 60 * 60);
-                _cacheTimer.AutoReset = true;
+                _cacheTimer = new System.Timers.Timer(1000 * 60 * 60)
+                {
+                    AutoReset = true
+                };
                 _cacheTimer.Elapsed += ValidateCache;
                 _cacheTimer.Start();
 
@@ -100,7 +101,8 @@ namespace PotatoBot.Services
                     await Task.Delay(5000);
 
                     _logger.Trace("Starting ...");
-                    _client.StartReceiving();
+                    _client.StartReceiving(new DefaultUpdateHandler(HandleUpdateAsync, HandleErrorAsync), _botCancellationTokenSource.Token);
+                    _isReceiving = true;
                 });
                 
                 _logger.Info($"Successfully initialized {Name} Service");
@@ -115,9 +117,10 @@ namespace PotatoBot.Services
 
         public bool Stop()
         {
+            _isReceiving = false;
             _cacheTimer.Stop();
             _cacheTimer.Dispose();
-            _client.StopReceiving();
+            _botCancellationTokenSource.Cancel();
             return true;
         }
 
@@ -175,7 +178,7 @@ namespace PotatoBot.Services
 
         internal async Task SendToAdmin(string message)
         {
-            if(!_client?.IsReceiving ?? false)
+            if(!_isReceiving)
             {
                 return;
             }
@@ -490,7 +493,7 @@ namespace PotatoBot.Services
             }
         }
 
-        private bool IsValidUser(long userId)
+        private static bool IsValidUser(long userId)
         {
             if(_settings.Users.Contains(userId) || _settings.Admins.Contains(userId))
             {
@@ -499,12 +502,46 @@ namespace PotatoBot.Services
             return false;
         }
 
-        private async void OnNewMessage(object sender, MessageEventArgs e)
+        private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        {
+            var handler = update.Type switch
+            {
+                UpdateType.Message => OnNewMessage(update.Message),
+                UpdateType.CallbackQuery => OnCallbackQueryReceived(update.CallbackQuery),
+                _ => HandleUnknownUpdate(update)
+            };
+
+            try
+            {
+                await handler;
+            }
+            catch(Exception ex)
+            {
+                await HandleErrorAsync(botClient, ex, cancellationToken);
+            }
+        }
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+
+        private async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        {
+            _logger.Warn($"Error in TelegramManager: {exception}");
+            return;
+        }
+
+        private static async Task HandleUnknownUpdate(Update update)
+        {
+            _logger.Debug($"Received unknown message of type {update.Type}");
+            return;
+        }
+
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+
+        private async Task OnNewMessage(Message message)
         {
             try
             {
-                var user = e.Message.From;
-                var message = e.Message;
+                var user = message.From;
 
                 _logger.Trace($"Received new message from [{user.Id}] {user.Username}: {message.Text}");
 
@@ -589,18 +626,18 @@ namespace PotatoBot.Services
             {
                 _logger.Error(ex, "Failed to process message");
                 Program.ServiceManager?.StatisticsService?.IncreaseMessagesSent();
-                await _client.SendTextMessageAsync(e.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"), replyToMessageId: e.Message.MessageId);
+                await _client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"), replyToMessageId: message.MessageId);
             }
         }
 
-        private async void OnCallbackQueryReceived(object sender, CallbackQueryEventArgs e)
+        private async Task OnCallbackQueryReceived(CallbackQuery callbackQuery)
         {
             try
             {
-                _logger.Trace($"Received CallbackQuery from {e.CallbackQuery.From.Username}");
+                _logger.Trace($"Received CallbackQuery from {callbackQuery.From.Username}");
 
-                var data = e.CallbackQuery.Data;
-                var message = e.CallbackQuery.Message;
+                var data = callbackQuery.Data;
+                var message = callbackQuery.Message;
 
                 lock (_cache)
                 {
@@ -613,7 +650,7 @@ namespace PotatoBot.Services
                             return;
                         }
 
-                        var task = cache.QueryCallbackInstance.OnCallbackQueryReceived(_client, e);
+                        var task = cache.QueryCallbackInstance.OnCallbackQueryReceived(_client, callbackQuery);
                         task.Wait();
 
                         if (!task.Result)
@@ -632,7 +669,7 @@ namespace PotatoBot.Services
             {
                 _logger.Error(ex, "Failed to process CallbackQuery");
                 Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-                await _client.SendTextMessageAsync(e.CallbackQuery.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"));
+                await _client.SendTextMessageAsync(callbackQuery.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"));
             }
         }
 
@@ -702,16 +739,6 @@ namespace PotatoBot.Services
             }
 
             return false;
-        }
-
-        private void OnReceiveError(object sender, ReceiveErrorEventArgs e)
-        {
-            _logger.Warn($"Error in TelegramManager: {e.ApiRequestException}");
-        }
-
-        private void OnReceiveGeneralError(object sender, ReceiveGeneralErrorEventArgs e)
-        {
-            _logger.Warn($"Error in TelegramManager: {e.Exception}");
         }
     }
 }
