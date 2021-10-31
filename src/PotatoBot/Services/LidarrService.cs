@@ -91,7 +91,13 @@ namespace PotatoBot.Services
             if (response != null)
             {
                 _logger.Trace("Successfully fetched download queue");
-                return response.Records.Cast<QueueItem>().ToList();
+                var list = new List<QueueItem>();
+                foreach (var record in response.Records)
+                {
+                    record.API = this;
+                    list.Add(record);
+                }
+                return list;
             }
             return null;
         }
