@@ -14,8 +14,8 @@ namespace PotatoBot.Managers
             get => Path.Combine(Directory.GetCurrentDirectory(), "Language", "active.json");
         }
 
-        private readonly Random _random = new Random();
-        private dynamic _language;
+        private readonly Random _random = new();
+        private readonly dynamic _language;
 
         internal LanguageManager()
         {
