@@ -4,14 +4,14 @@ using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using NLog;
-using PotatoBot.Webhook.Modals.Plex;
+using PotatoBot.WebHook.Modals.Plex;
 
 namespace PotatoBot.Webhook.Controllers
 {
     [Route("webhook/[controller]", Name = "Plex")]
     public class PlexController : Controller
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
         private bool ValidateRequest()
         {
@@ -77,12 +77,15 @@ namespace PotatoBot.Webhook.Controllers
                         return new StatusCodeResult((int)HttpStatusCode.OK);
                     }
 
-                    var json = content.Substring(start, end - start + 1).Trim();
-                    var plexEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<PlexEvent>(json);
-                    if(plexEvent != null)
-                    {
-                        // ProcessRequest(plexEvent);
-                    }
+//                    var json = content.Substring(start, end - start + 1).Trim();
+//#if DEBUG
+//                    _logger.Trace(json);
+//#endif
+//                    var plexEventBase = Newtonsoft.Json.JsonConvert.DeserializeObject<PlexEventBase>(json);
+//                    if(plexEventBase != null && plexEventBase.EventType == EventType.NewInLibrary)
+//                    {
+//                        ProcessRequest(Newtonsoft.Json.JsonConvert.DeserializeObject<PlexEvent>(json));
+//                    }
 
                     Program.ServiceManager.StatisticsService.IncreaseWebhooksProcessed();
                     return new StatusCodeResult((int)HttpStatusCode.OK);
@@ -93,6 +96,11 @@ namespace PotatoBot.Webhook.Controllers
                     return new StatusCodeResult((int)HttpStatusCode.InternalServerError);
                 }
             }
+        }
+
+        private static void ProcessRequest(PlexEvent plexEvent)
+        {
+
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace PotatoBot.Webhook.Modals.Plex
+﻿namespace PotatoBot.WebHook.Modals.Plex
 {
     public class Player
     {
