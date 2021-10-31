@@ -25,13 +25,8 @@ namespace PotatoBot.API
 
         internal APIBase(EntertainmentSettings settings, string apiUrl)
         {
-            if (settings == null)
-                throw new ArgumentNullException(nameof(settings));
-            if (string.IsNullOrEmpty(apiUrl))
-                throw new ArgumentNullException(nameof(apiUrl));
-
-            _settings = settings;
-            _apiUrl = apiUrl;
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _apiUrl = apiUrl ?? throw new ArgumentNullException(nameof(apiUrl));
 
             var systemStatus = GetSystemStatus();
             if(systemStatus == null)
@@ -80,32 +75,30 @@ namespace PotatoBot.API
                 url += $"&{getRequest.ToGet()}";
             }
 
-            using (var client = GetHttpClient())
+            using var client = GetHttpClient();
+            try
             {
-                try
+                _logger.Trace($"Sending request to '{url}'");
+
+                var response = client.GetAsync(url).Result;
+                if (response.StatusCode != expectedStatusCode)
                 {
-                    _logger.Trace($"Sending request to '{url}'");
-
-                    var response = client.GetAsync(url).Result;
-                    if (response.StatusCode != expectedStatusCode)
-                    {
-                        _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
-                    }
-
-                    var json = response.Content.ReadAsStringAsync().Result;
-                    if (string.IsNullOrEmpty(json))
-                    {
-                        _logger.Warn("Empty response received");
-                        return default(T);
-                    }
-
-                    return JsonConvert.DeserializeObject<T>(json);
+                    _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
                 }
-                catch (Exception ex)
+
+                var json = response.Content.ReadAsStringAsync().Result;
+                if (string.IsNullOrEmpty(json))
                 {
-                    _logger.Error(ex, $"Failed to process request to {endpoint}");
-                    return default(T);
+                    _logger.Warn("Empty response received");
+                    return default;
                 }
+
+                return JsonConvert.DeserializeObject<T>(json);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Failed to process request to {endpoint}");
+                return default;
             }
         }
 
@@ -113,57 +106,55 @@ namespace PotatoBot.API
         {
             var url = $"{_settings.Url}/{_apiUrl}/{endpoint}?apikey={_settings.APIKey}";
 
-            using (var client = GetHttpClient())
+            using var client = GetHttpClient();
+            try
             {
+                _logger.Trace($"Sending request to '{url}'");
+
+                var serialized = JsonConvert.SerializeObject
+                (
+                    body,
+                    Formatting.None,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    }
+                );
+                var content = new StringContent(serialized, Encoding.UTF8, "application/json");
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                _logger.Trace($"Content: {content.ReadAsStringAsync().Result}");
+
+                var response = client.PostAsync(url, content).Result;
+                if (!expectedStatusCode.Contains(response.StatusCode))
+                {
+                    // Do not attempt to deserialize an unknown status code
+                    _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
+                    return new Tuple<T, HttpStatusCode>(default, response.StatusCode);
+                }
+
+                var json = response.Content.ReadAsStringAsync().Result;
+                if (string.IsNullOrEmpty(json))
+                {
+                    _logger.Warn("Empty response received");
+                    return new Tuple<T, HttpStatusCode>(default, HttpStatusCode.NoContent);
+                }
+
                 try
                 {
-                    _logger.Trace($"Sending request to '{url}'");
-
-                    var serialized = JsonConvert.SerializeObject
-                    (
-                        body,
-                        Formatting.None,
-                        new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore
-                        }
-                    );
-                    var content = new StringContent(serialized, Encoding.UTF8, "application/json");
-                    content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                    _logger.Trace($"Content: {content.ReadAsStringAsync().Result}");
-
-                    var response = client.PostAsync(url, content).Result;
-                    if (!expectedStatusCode.Contains(response.StatusCode))
-                    {
-                        // Do not attempt to deserialize an unknown status code
-                        _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
-                        return new Tuple<T, HttpStatusCode>(default, response.StatusCode);
-                    }
-
-                    var json = response.Content.ReadAsStringAsync().Result;
-                    if (string.IsNullOrEmpty(json))
-                    {
-                        _logger.Warn("Empty response received");
-                        return new Tuple<T, HttpStatusCode>(default, HttpStatusCode.NoContent);
-                    }
-
-                    try
-                    {
-                        return new Tuple<T, HttpStatusCode>(JsonConvert.DeserializeObject<T>(json), response.StatusCode);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Warn(ex, "Failed to deserialize response. See content after stack trace");
-                        _logger.Warn($"JSON: {json}");
-
-                        return new Tuple<T, HttpStatusCode>(default, response.StatusCode);
-                    }
+                    return new Tuple<T, HttpStatusCode>(JsonConvert.DeserializeObject<T>(json), response.StatusCode);
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, $"Failed to process request to {endpoint}");
-                    return new Tuple<T, HttpStatusCode>(default, HttpStatusCode.InternalServerError);
+                    _logger.Warn(ex, "Failed to deserialize response. See content after stack trace");
+                    _logger.Warn($"JSON: {json}");
+
+                    return new Tuple<T, HttpStatusCode>(default, response.StatusCode);
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Failed to process request to {endpoint}");
+                return new Tuple<T, HttpStatusCode>(default, HttpStatusCode.InternalServerError);
             }
         }
 
@@ -180,21 +171,19 @@ namespace PotatoBot.API
             try
             {
                 var url = $"{_settings.Url}/feed/calendar/{_settings.CalendarOptions}&apikey={_settings.APIKey}";
-                using (var client = GetHttpClient())
+                using var client = GetHttpClient();
+                var response = client.GetAsync(url).Result;
+
+                if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    var response = client.GetAsync(url).Result;
-
-                    if (response.StatusCode == HttpStatusCode.OK)
+                    var text = response.Content.ReadAsStringAsync().Result;
+                    if (string.IsNullOrEmpty(text))
                     {
-                        var text = response.Content.ReadAsStringAsync().Result;
-                        if (string.IsNullOrEmpty(text))
-                        {
-                            _logger.Debug("Empty calendar!");
-                            return null;
-                        }
-
-                        return Ical.Net.Calendar.Load(text);
+                        _logger.Debug("Empty calendar!");
+                        return null;
                     }
+
+                    return Ical.Net.Calendar.Load(text);
                 }
             }
             catch (Exception ex)

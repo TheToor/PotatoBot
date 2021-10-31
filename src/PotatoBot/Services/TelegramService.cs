@@ -46,7 +46,7 @@ namespace PotatoBot.Services
         // Timer to invalidate cache
         private System.Timers.Timer _cacheTimer;
         // Time until a message "expires" in hours
-        private uint _cacheInvalidationTime = 24;
+        private readonly uint _cacheInvalidationTime = 24;
 
         private static bool _isReceiving;
         private readonly CancellationTokenSource _botCancellationTokenSource = new();
@@ -54,7 +54,7 @@ namespace PotatoBot.Services
         private readonly List<long> _users;
 
         // Characters that need to be escaped with an \
-        string[] _charactersToEscape = new string[]
+        readonly string[] _charactersToEscape = new string[]
         {
             "_", /* "*",*/ "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"
         };
@@ -197,7 +197,7 @@ namespace PotatoBot.Services
             }
         }
 
-        internal bool IsFromAdmin(Message message)
+        internal static bool IsFromAdmin(Message message)
         {
             return _settings.Admins.Contains(message.From.Id);
         }
@@ -341,8 +341,10 @@ namespace PotatoBot.Services
                 secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
             }
 
-            var thirdRow = new List<InlineKeyboardButton>();
-            thirdRow.Add(InlineKeyboardButton.WithCallbackData("Cancel", CancelData));
+            var thirdRow = new List<InlineKeyboardButton>
+            {
+                InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
+            };
 
             var keyboardMarkup = new InlineKeyboardMarkup(new List<List<InlineKeyboardButton>>()
             {
@@ -380,7 +382,7 @@ namespace PotatoBot.Services
                     return (T)cache.Data;
                 }
 
-                return default(T);
+                return default;
             }
         }
 

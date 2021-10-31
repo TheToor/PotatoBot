@@ -7,7 +7,6 @@ using PotatoBot.Modals.API.Sonarr;
 using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace PotatoBot.Services
 {
@@ -19,12 +18,12 @@ namespace PotatoBot.Services
 
         // Cache things
 
-        private readonly object _seriesCacheLock = new object();
+        private readonly object _seriesCacheLock = new();
         // SeriesId -> Series
-        private Dictionary<ulong, Series> _seriesCache = new Dictionary<ulong, Series>();
-        private readonly object _episodeCacheLock = new object();
+        private readonly Dictionary<ulong, Series> _seriesCache = new();
+        private readonly object _episodeCacheLock = new();
         // SeriesId -> EpisodeId -> Episode
-        private readonly Dictionary<ulong, Dictionary<ulong, Episode>> _episodeCache = new Dictionary<ulong, Dictionary<ulong, Episode>>();
+        private readonly Dictionary<ulong, Dictionary<ulong, Episode>> _episodeCache = new();
 
         internal SonarrService(EntertainmentSettings settings, string apiUrl) : base(settings, apiUrl)
         {

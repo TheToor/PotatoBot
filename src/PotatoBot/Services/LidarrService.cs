@@ -2,13 +2,11 @@
 using PotatoBot.Modals;
 using PotatoBot.Modals.API;
 using PotatoBot.Modals.API.Lidarr;
-using PotatoBot.Modals.API.Radarr;
 using PotatoBot.Modals.API.Requests;
 using PotatoBot.Modals.API.Requests.POST;
 using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace PotatoBot.Services
 {
@@ -18,9 +16,9 @@ namespace PotatoBot.Services
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private readonly object _albumLock = new object();
+        private readonly object _albumLock = new();
         // AristId -> AlbumId -> Album
-        private readonly Dictionary<ulong, Dictionary<ulong, Album>> _albumCache = new Dictionary<ulong, Dictionary<ulong, Album>>();
+        private readonly Dictionary<ulong, Dictionary<ulong, Album>> _albumCache = new();
 
         internal LidarrService(EntertainmentSettings settings, string apiUrl) : base(settings, apiUrl)
         {

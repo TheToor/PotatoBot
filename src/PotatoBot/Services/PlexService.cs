@@ -28,7 +28,7 @@ namespace PotatoBot.Services
 
         private MediaContainer _libraries;
 
-        private readonly Dictionary<int, DateTime> _lastAPIRescanInitiated = new Dictionary<int, DateTime>();
+        private readonly Dictionary<int, DateTime> _lastAPIRescanInitiated = new();
 
         internal PlexService(PlexSettings plexSettings)
         {
@@ -96,7 +96,7 @@ namespace PotatoBot.Services
             }
         }
 
-        private HttpClient GetHttpClient()
+        private static HttpClient GetHttpClient()
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();
@@ -114,33 +114,29 @@ namespace PotatoBot.Services
 
             try
             {
-                using (var client = GetHttpClient())
+                using var client = GetHttpClient();
+                _logger.Trace($"Sending request to {url}");
+
+                var response = client.GetAsync(url).Result;
+
+                if (response.StatusCode != expectedStatusCode)
+                    _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
+
+                var xml = response.Content.ReadAsStringAsync().Result;
+                if (string.IsNullOrEmpty(xml))
                 {
-                    _logger.Trace($"Sending request to {url}");
-
-                    var response = client.GetAsync(url).Result;
-
-                    if (response.StatusCode != expectedStatusCode)
-                        _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
-
-                    var xml = response.Content.ReadAsStringAsync().Result;
-                    if (string.IsNullOrEmpty(xml))
-                    {
-                        _logger.Warn("Empty response!");
-                        return default;
-                    }
-
-                    var serializer = new XmlSerializer(typeof(T));
-                    using (var streamReader = new StringReader(xml))
-                    {
-                        return (T)serializer.Deserialize(streamReader);
-                    }
+                    _logger.Warn("Empty response!");
+                    return default;
                 }
+
+                var serializer = new XmlSerializer(typeof(T));
+                using var streamReader = new StringReader(xml);
+                return (T)serializer.Deserialize(streamReader);
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, $"Failed to get information from endpoint '{endpoint}'");
-                return default(T);
+                return default;
             }
         }
 
@@ -150,15 +146,13 @@ namespace PotatoBot.Services
 
             try
             {
-                using (var client = GetHttpClient())
-                {
-                    _logger.Trace($"Sending request to {url}");
+                using var client = GetHttpClient();
+                _logger.Trace($"Sending request to {url}");
 
-                    var response = client.GetAsync(url).Result;
+                var response = client.GetAsync(url).Result;
 
-                    if (response.StatusCode != expectedStatusCode)
-                        _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
-                }
+                if (response.StatusCode != expectedStatusCode)
+                    _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
             }
             catch (Exception ex)
             {
@@ -171,35 +165,33 @@ namespace PotatoBot.Services
             var guid = Guid.NewGuid().ToString();
             _logger.Trace($"Requesting new token with ID {guid}");
 
-            using (var client = GetHttpClient())
+            using var client = GetHttpClient();
+            var body = $"{username}:{password}";
+            var bytes = System.Text.Encoding.UTF8.GetBytes(body);
+            var base64 = Convert.ToBase64String(bytes);
+
+            client.DefaultRequestHeaders.Add("X-Plex-Client-Identifier", guid);
+            client.DefaultRequestHeaders.Add("X-Plex-Product", Program.Namespace);
+            client.DefaultRequestHeaders.Add("X-Plex-Version", Program.Version.ToString());
+            client.DefaultRequestHeaders.Add("Authorization", $"Basic {base64}");
+
+            var response = client.PostAsync(APIEndPoints.PlexEndpoints.TokenGeneration, null).Result;
+
+            if (response.StatusCode == HttpStatusCode.Created)
             {
-                var body = $"{username}:{password}";
-                var bytes = System.Text.Encoding.UTF8.GetBytes(body);
-                var base64 = Convert.ToBase64String(bytes);
+                var text = response.Content.ReadAsStringAsync().Result;
+                var token = JsonConvert.DeserializeObject<TokenResponse>(text);
 
-                client.DefaultRequestHeaders.Add("X-Plex-Client-Identifier", guid);
-                client.DefaultRequestHeaders.Add("X-Plex-Product", Program.Namespace);
-                client.DefaultRequestHeaders.Add("X-Plex-Version", Program.Version.ToString());
-                client.DefaultRequestHeaders.Add("Authorization", $"Basic {base64}");
+                _plexSettings.APIKey = token.User.Authentication_token;
+                Program.SaveSettings();
 
-                var response = client.PostAsync(APIEndPoints.PlexEndpoints.TokenGeneration, null).Result;
+                File.Delete(_plexSetupFile);
 
-                if (response.StatusCode == HttpStatusCode.Created)
-                {
-                    var text = response.Content.ReadAsStringAsync().Result;
-                    var token = JsonConvert.DeserializeObject<TokenResponse>(text);
-
-                    _plexSettings.APIKey = token.User.Authentication_token;
-                    Program.SaveSettings();
-
-                    File.Delete(_plexSetupFile);
-
-                    _logger.Info("Successfully generated Key for Plex. Plex API available");
-                }
-                else
-                {
-                    _logger.Warn($"Invalid response recieved: {response.StatusCode}");
-                }
+                _logger.Info("Successfully generated Key for Plex. Plex API available");
+            }
+            else
+            {
+                _logger.Warn($"Invalid response recieved: {response.StatusCode}");
             }
         }
 
