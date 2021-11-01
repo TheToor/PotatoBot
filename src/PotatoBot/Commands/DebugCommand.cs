@@ -70,6 +70,18 @@ namespace PotatoBot.Commands
                         await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
                     }
                     break;
+
+                case "parametertest":
+                    {
+                        var testMessage = "";
+                        foreach(var argument in arguments)
+                        {
+                            testMessage += "Arg: " + argument;
+                            testMessage += "\n";
+                        }
+                        await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
+                    }
+                    break;
             }
 
             return true;

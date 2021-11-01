@@ -11,13 +11,13 @@ namespace PotatoBot.Managers
 {
     internal class CommandManager
     {
-        internal List<Command> Commands = new List<Command>();
+        internal List<Command> Commands = new();
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private Dictionary<string, ICommand> _commands = new Dictionary<string, ICommand>();
-        private Dictionary<string, IQueryCallback> _queryCommands = new Dictionary<string, IQueryCallback>();
-        private Dictionary<string, IReplyCallback> _replyCommands = new Dictionary<string, IReplyCallback>();
+        private readonly Dictionary<string, ICommand> _commands = new();
+        private readonly Dictionary<string, IQueryCallback> _queryCommands = new();
+        private readonly Dictionary<string, IReplyCallback> _replyCommands = new();
 
         internal CommandManager()
         {
@@ -91,6 +91,32 @@ namespace PotatoBot.Managers
             _logger.Info($"CommandManager successfully loaded {_commands.Count} commands");
         }
 
+        private static CommandParameters GetParameters(string commandLine)
+        {
+            var split = commandLine.Split(' ');
+            if (commandLine.Contains('_'))
+            {
+                split = commandLine.Split('_');
+            }
+
+            var arguments = Array.Empty<string>();
+            if (split.Length == 2)
+            {
+                // Only one argument supplied
+                arguments = new string[] { split[1] };
+            }
+            else if (split.Length > 2)
+            {
+                arguments = split.Skip(1).ToArray();
+            }
+            return new CommandParameters()
+            {
+                // Remove leading '/' and normalize to lowercase
+                CommandName = split[0].Substring(1, split[0].Length - 1).ToLower(),
+                Arguments = arguments
+            };
+        }
+
         public async Task<bool> ProcessMessage(TelegramBotClient client, Message message)
         {
             try
@@ -101,30 +127,16 @@ namespace PotatoBot.Managers
                     return false;
                 }
 
-                var split = text.Split(' ');
-                var command = split[0];
-                // Remove leading '/' and normalize to lowercase
-                command = command.Substring(1, command.Length - 1).ToLower();
+                var command = GetParameters(text);
 
-                var arguments = Array.Empty<string>();
-                if(split.Length == 2)
-                {
-                    // Only one argument supplied
-                    arguments = new string[] { split[1] };
-                }
-                else if(split.Length > 2)
-                {
-                    arguments = split.Skip(1).ToArray();
-                }
-
-                if(!_commands.ContainsKey(command))
+                if (!_commands.ContainsKey(command.CommandName))
                 {
                     // Command not found
                     await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("CommandNotFoundError"), replyToMessageId: message.MessageId);
                     return true;
                 }
 
-                var result = await _commands[command].Execute(client, message, arguments);
+                var result = await _commands[command.CommandName].Execute(client, message, command.Arguments);
                 if(!result)
                 {
                     _logger.Warn($"Failed to execute command '{command}'");
