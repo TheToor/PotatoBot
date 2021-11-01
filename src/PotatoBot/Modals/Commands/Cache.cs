@@ -23,7 +23,7 @@ namespace PotatoBot.Modals.Commands
         public int MessageId { get; set; }
 
         public string PageTitle { get; set; }
-        public int PageSize { get; } = 3;
+        public int PageSize { get; set; } = 3;
         public int Page { get; set; }
         public IEnumerable<IServarrItem> PageItemList { get; set; }
         public Func<TelegramBotClient, Message, int, Task<bool>> PageSelectionFunction { get; set; }

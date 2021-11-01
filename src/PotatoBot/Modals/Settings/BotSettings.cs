@@ -17,5 +17,8 @@ namespace PotatoBot.Modals.Settings
         public List<SABnzbdSettings> SABnzbd { get; set; } = new List<SABnzbdSettings>();
 
         public List<string> CORSUrls { get; set; } = new List<string>();
+
+        public bool DebugNoPreview { get; set; }
+        public bool AddPicturesToSearch { get; set; }
     }
 }

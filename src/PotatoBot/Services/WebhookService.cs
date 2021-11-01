@@ -39,6 +39,12 @@ namespace PotatoBot.Services
         {
             _logger.Trace("Updating Media Preview cache ...");
 
+            if(Program.Settings.DebugNoPreview)
+            {
+                _logger.Warn("Not updating Preview cache due to debug setting");
+                return;
+            }
+
             {
                 var plexServers = Program.ServiceManager.GetPlexServices();
 

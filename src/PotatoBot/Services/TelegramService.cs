@@ -264,6 +264,10 @@ namespace PotatoBot.Services
             _logger.Trace("Preparing page ...");
             cache.PageTitle = title;
             cache.Page = 0;
+            if(Program.Settings.AddPicturesToSearch)
+            {
+                cache.PageSize = 1;
+            }
             cache.PageItemList = list;
             cache.PageSelectionFunction = selectionFunction;
 
@@ -296,78 +300,172 @@ namespace PotatoBot.Services
             var text = string.Empty;
 
             var page = cache.PageItemList.TakePaged(cache.Page, cache.PageSize);
-            for(var i = 0; i < page.Items.Count; i++)
+
+            if (!Program.Settings.AddPicturesToSearch)
             {
-                text += $"<b>{i + 1}:</b> " + page.Items[i].PageTitle;
+                for (var i = 0; i < page.Items.Count; i++)
+                {
+                    text += $"<b>{i + 1}:</b> " + page.Items[i].PageTitle;
+                }
+            }
+            else if(page.Items?.Count > 0)
+            {
+                text += page.Items[0].PageTitle;
             }
 
             _logger.Trace("Building button layout ...");
 
-            // Selection buttons
-            var firstRow = new List<InlineKeyboardButton>();
-            for (var i = 0; i < page.Items.Count; i++)
+            var keyboardMarkupData = new List<List<InlineKeyboardButton>>();
+            if (!Program.Settings.AddPicturesToSearch)
             {
-                firstRow.Add(InlineKeyboardButton.WithCallbackData($"{i + 1}", $"{SelectData}{i}"));
-            }
-
-            if (page.Items.Count != cache.PageSize)
-            {
-                // Add filler buttons if required
-                for (var i = page.Items.Count; i < cache.PageSize; i++)
+                // Selection buttons
+                var firstRow = new List<InlineKeyboardButton>();
+                for (var i = 0; i < page.Items.Count; i++)
                 {
-                    firstRow.Add(InlineKeyboardButton.WithCallbackData($" ", $"{DisabledData}"));
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData($"Add {i + 1}", $"{SelectData}{i}"));
                 }
-            }
 
-            // Prev/Next buttons
-            var secondRow = new List<InlineKeyboardButton>();
-            if (page.PreviousPossible)
-            {
-                secondRow.Add(InlineKeyboardButton.WithCallbackData("<<", PreviousData));
-            }
-            else if(page.NextPossible)
-            {
-                // If next is possible add a spacing button
-                secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
-            }
+                if (page.Items.Count != cache.PageSize)
+                {
+                    // Add filler buttons if required
+                    for (var i = page.Items.Count; i < cache.PageSize; i++)
+                    {
+                        firstRow.Add(InlineKeyboardButton.WithCallbackData($" ", $"{DisabledData}"));
+                    }
+                }
 
-            if (page.NextPossible)
-            {
-                secondRow.Add(InlineKeyboardButton.WithCallbackData(">>", NextData));
-            }
-            else if(page.PreviousPossible)
-            {
-                // if previous is possbile add a spacing button
-                secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
-            }
+                // Prev/Next buttons
+                var secondRow = new List<InlineKeyboardButton>();
+                if (page.PreviousPossible)
+                {
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData("<<", PreviousData));
+                }
+                else if (page.NextPossible)
+                {
+                    // If next is possible add a spacing button
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                }
 
-            var thirdRow = new List<InlineKeyboardButton>
-            {
-                InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
-            };
+                if (page.NextPossible)
+                {
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData(">>", NextData));
+                }
+                else if (page.PreviousPossible)
+                {
+                    // if previous is possbile add a spacing button
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                }
 
-            var keyboardMarkup = new InlineKeyboardMarkup(new List<List<InlineKeyboardButton>>()
-            {
-                firstRow,
-                secondRow,
-                thirdRow
-            });
+                var thirdRow = new List<InlineKeyboardButton>
+                {
+                    InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
+                };
 
-            var messageText = $"{cache.PageTitle}\n\n{text}";
-            _logger.Trace($"Sending pageination ({messageText.Length})");
+                keyboardMarkupData.Add(firstRow);
+                keyboardMarkupData.Add(secondRow);
+                keyboardMarkupData.Add(thirdRow);
 
-            if (create)
-            {
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-                var sentMessage = await _client.SendTextMessageAsync(message.Chat.Id, messageText, parseMode: ParseMode.Html, replyMarkup: keyboardMarkup);
-                cache.MessageId = sentMessage.MessageId;
-                _logger.Trace($"Sent pagination with message id {sentMessage.MessageId}");
+                var keyboardMarkup = new InlineKeyboardMarkup(keyboardMarkupData);
+
+                var messageText = $"{cache.PageTitle}\n\n{text}";
+                _logger.Trace($"Sending pageination ({messageText.Length})");
+
+                if (create)
+                {
+                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                    var sentMessage = await _client.SendTextMessageAsync(message.Chat.Id, messageText, parseMode: ParseMode.Html, replyMarkup: keyboardMarkup); ;
+                    cache.MessageId = sentMessage.MessageId;
+                    _logger.Trace($"Sent pagination with message id {sentMessage.MessageId}");
+                }
+                else
+                {
+                    await _client.EditMessageTextAsync(message.Chat.Id, message.MessageId, messageText, parseMode: ParseMode.Html);
+                    await _client.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, keyboardMarkup);
+                    _logger.Trace($"Updated pagination with message id {message.MessageId}");
+                }
             }
             else
             {
-                await _client.EditMessageTextAsync(message.Chat.Id, message.MessageId, text, parseMode: ParseMode.Html);
-                await _client.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, keyboardMarkup);
-                _logger.Trace($"Updated pagination with message id {message.MessageId}");
+                // Selection buttons
+                var firstRow = new List<InlineKeyboardButton>();
+
+                // Prev button
+                if (page.PreviousPossible)
+                {
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData("Prev", PreviousData));
+                }
+                else if (page.NextPossible)
+                {
+                    // If next is possible add a spacing button
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                }
+
+                // Middle add button
+                firstRow.Add(InlineKeyboardButton.WithCallbackData($"Add", $"{SelectData}{0}"));
+
+                // Next button
+                if (page.NextPossible)
+                {
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData("Next", NextData));
+                }
+                else if (page.PreviousPossible)
+                {
+                    // if previous is possbile add a spacing button
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                }
+
+                var secondRow = new List<InlineKeyboardButton>
+                {
+                    InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
+                };
+
+                keyboardMarkupData.Add(firstRow);
+                keyboardMarkupData.Add(secondRow);
+
+                var keyboardMarkup = new InlineKeyboardMarkup(keyboardMarkupData);
+
+                var messageText = $"{cache.PageTitle}\n\n{text}";
+                _logger.Trace($"Sending pageination ({messageText.Length})");
+
+                var posterUrl = page.Items[0].GetPosterUrl();
+                if (create)
+                {
+                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+
+                    Message sentMessage;
+                    if (string.IsNullOrEmpty(posterUrl))
+                    {
+                        sentMessage = await _client.SendTextMessageAsync(message.Chat.Id, messageText, parseMode: ParseMode.Html, replyMarkup: keyboardMarkup);
+                    }
+                    else
+                    {
+                        sentMessage = await _client.SendPhotoAsync(
+                            chatId: message.Chat.Id,
+                            photo: page.Items[0].GetPosterUrl(),
+                            parseMode: ParseMode.Html,
+                            caption: messageText,
+                            replyMarkup: keyboardMarkup
+                        );
+                    }
+
+                    cache.MessageId = sentMessage.MessageId;
+                    _logger.Trace($"Sent pagination with message id {sentMessage.MessageId}");
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(posterUrl))
+                    {
+                        await _client.EditMessageMediaAsync(
+                            chatId: message.Chat.Id,
+                            messageId: message.MessageId,
+                            media: new InputMediaPhoto(new InputMedia(page.Items[0].GetPosterUrl()))
+                        );
+                    }
+                    await _client.EditMessageCaptionAsync(message.Chat.Id, message.MessageId, messageText, parseMode: ParseMode.Html);
+
+                    await _client.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, keyboardMarkup);
+                    _logger.Trace($"Updated pagination with message id {message.MessageId}");
+                }
             }
         }
 
