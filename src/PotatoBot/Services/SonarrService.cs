@@ -93,7 +93,7 @@ namespace PotatoBot.Services
             };
         }
 
-        public List<QueueItem> GetQueue()
+        public override List<QueueItem> GetQueue()
         {
             _logger.Trace("Fetching download queue");
 

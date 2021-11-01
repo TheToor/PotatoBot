@@ -1,13 +1,12 @@
-﻿using PotatoBot.Modals.API;
+﻿using ByteSizeLib;
+using PotatoBot.API;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
 using PotatoBot.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -28,10 +27,55 @@ namespace PotatoBot.Commands
                 return true;
             }
 
-            var markup = new InlineKeyboardMarkup(keyboardMarkup);
-            var title = LanguageManager.GetTranslation("Commands", "Queue", "Start");
-            await TelegramService.ReplyWithMarkup(this, message, title, markup);
+            if (arguments.Length == 0 || arguments.Length != 2)
+            {
+                var markup = new InlineKeyboardMarkup(keyboardMarkup);
+                var title = LanguageManager.GetTranslation("Commands", "Queue", "Start");
+                await TelegramService.ReplyWithMarkup(this, message, title, markup);
+            }
+            else
+            {
+                await SendQueueItemStatus(message, arguments);
+            }
+
             return true;
+        }
+
+        private static async Task SendQueueItemStatus(Message message, string[] arguments)
+        {
+            var service = Program.ServiceManager.GetAllServices().FirstOrDefault(s => s.Name == arguments[0]);
+            if(service == null || service is not APIBase api)
+            {
+                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
+                return;
+            }
+            if (!uint.TryParse(arguments[1], out var queueItemId))
+            {
+                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
+                return;
+            }
+
+            var queueItem = api.GetQueue().FirstOrDefault(i => i.Id == queueItemId);
+            if(queueItem == null)
+            {
+                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
+                return;
+            }
+
+            var completion = Math.Floor(100f / queueItem.Size * (queueItem.Size - queueItem.SizeLeft)).ToString("000");
+            if (completion == double.NaN.ToString())
+            {
+                completion = "000";
+            }
+
+            var sizeLeft = ByteSize.FromBytes(queueItem.Size - queueItem.SizeLeft);
+            var size = ByteSize.FromBytes(queueItem.Size);
+
+            var text = $"\n\t<b>[{completion}%][{queueItem.Status}]</b>{queueItem.GetQueueTitle()}\n";
+            text += $"Indexer: {queueItem.Indexer}\n";
+            text += $"{(int)Math.Round(sizeLeft.LargestWholeNumberBinaryValue)} {sizeLeft.LargestWholeNumberBinarySymbol}/{(int)Math.Round(size.LargestWholeNumberBinaryValue)} {size.LargestWholeNumberBinarySymbol}\n";
+            text += $"Estimated Completion Time: {queueItem.EstimatedCompletionTime}\n";
+            await TelegramService.SendSimpleMessage(message.Chat.Id, text, Telegram.Bot.Types.Enums.ParseMode.Html);
         }
 
         public async Task<bool> OnCallbackQueryReceived(TelegramBotClient client, CallbackQuery callbackQuery)
@@ -55,28 +99,7 @@ namespace PotatoBot.Commands
             }
 
             var searchTypeString = searchType.ToString();
-            var queue = new List<QueueItem>();
-
-            switch (searchType)
-            {
-                case SearchType.Series:
-                    {
-                        queue = SonarrService.SelectMany(s => s.GetQueue()).Cast<QueueItem>().ToList();
-                    }
-                    break;
-
-                case SearchType.Movie:
-                    {
-                        queue = RadarrService.SelectMany(r => r.GetQueue()).Cast<QueueItem>().ToList();
-                    }
-                    break;
-
-                case SearchType.Artist:
-                    {
-                        queue = LidarrService.SelectMany(a => a.GetQueue()).Cast<QueueItem>().ToList();
-                    }
-                    break;
-            }
+            var queue = Program.ServiceManager.GetAllServices().Where(s => s is APIBase).Cast<APIBase>().SelectMany(s => s.GetQueue()).ToList();
 
             if (queue?.Count == 0)
             {
@@ -94,7 +117,7 @@ namespace PotatoBot.Commands
                         completion = "000";
                     }
 
-                    queueText += $"\n\t<b>[{completion}%][{item.Status}]</b> {item.GetQueueTitle()}";
+                    queueText += $"\n\t<b>[{completion}%][{item.Status}]</b>{item.GetQueueTitle()} /queue_{item.API.Name}_{item.Id}";
                 }
 
                 await TelegramService.SendSimpleMessage(message.Chat.Id, queueText, Telegram.Bot.Types.Enums.ParseMode.Html);

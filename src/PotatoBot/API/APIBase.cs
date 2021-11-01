@@ -12,7 +12,7 @@ using System.Text;
 
 namespace PotatoBot.API
 {
-    public class APIBase
+    public abstract class APIBase
     {
         public string Name => _settings.Name ?? "Unknown";
         public EntertainmentSettings Settings => _settings;
@@ -54,6 +54,8 @@ namespace PotatoBot.API
         {
             return GetRequest<List<LanguageProfile>>(APIEndPoints.LanguageProfile);
         }
+
+        public abstract List<QueueItem> GetQueue();
 
         private static HttpClient GetHttpClient()
         {

@@ -1,14 +1,11 @@
-﻿using NLog.Fluent;
-using NodaTime;
-using PotatoBot.Services;
-using System;
+﻿using PotatoBot.Services;
 using System.Collections.Generic;
 
 namespace PotatoBot.Managers
 {
     internal class ServiceManager
     {
-        private List<SonarrService> _sonarr = new List<SonarrService>();
+        private readonly List<SonarrService> _sonarr = new();
         internal List<SonarrService> Sonarr
         {
             get
@@ -17,7 +14,7 @@ namespace PotatoBot.Managers
             }
         }
 
-        private List<RadarrService> _radarr = new List<RadarrService>();
+        private readonly List<RadarrService> _radarr = new();
         internal List<RadarrService> Radarr
         {
             get
@@ -26,7 +23,7 @@ namespace PotatoBot.Managers
             }
         }
 
-        private List<LidarrService> _lidarr = new List<LidarrService>();
+        private readonly List<LidarrService> _lidarr = new();
         internal List<LidarrService> Lidarr
         {
             get
@@ -38,10 +35,10 @@ namespace PotatoBot.Managers
         internal TelegramService TelegramService { get; } = new TelegramService();
         internal StatisticsService StatisticsService { get; } = new StatisticsService();
 
-        private List<IService> _services = new List<IService>();
+        private readonly List<IService> _services = new();
 
-        private List<SABnzbdService> _sabNzbdServices = new List<SABnzbdService>();
-        private List<PlexService> _plexServices = new List<PlexService>();
+        private readonly List<SABnzbdService> _sabNzbdServices = new();
+        private readonly List<PlexService> _plexServices = new();
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -184,6 +181,11 @@ namespace PotatoBot.Managers
                     _logger.Warn($"Failed to stop {service.Name}");
                 }
             }
+        }
+
+        internal List<IService> GetAllServices()
+        {
+            return _services;
         }
 
         internal List<SABnzbdService> GetSABnzbdServices()
