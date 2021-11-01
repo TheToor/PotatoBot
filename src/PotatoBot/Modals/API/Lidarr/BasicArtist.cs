@@ -15,7 +15,7 @@ namespace PotatoBot.Modals.API.Lidarr
 
             ArtistName = artist.ArtistName;
             Statistics = artist.Statistics;
-            Poster = artist.Images?.FirstOrDefault((i) => i.CoverType == "poster");
+            Poster = artist.Images?.FirstOrDefault((i) => i.CoverType == MediaCoverTypes.Poster);
         }
     }
 }

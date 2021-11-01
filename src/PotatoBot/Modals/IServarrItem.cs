@@ -7,5 +7,7 @@
         ushort Year { get; set; }
         
         string PageTitle { get; }
+
+        string GetPosterUrl();
     }
 }

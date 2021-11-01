@@ -17,7 +17,7 @@ namespace PotatoBot.Modals.API.Radarr
 
             Title = movie.Title;
             SizeOnDisk = movie.SizeOnDisk;
-            Poster = movie.Images?.FirstOrDefault((i) => i.CoverType == "poster");
+            Poster = movie.Images?.FirstOrDefault((i) => i.CoverType == MediaCoverTypes.Poster);
             Studio = movie.Studio;
             Runtime = movie.Runtime;
         }

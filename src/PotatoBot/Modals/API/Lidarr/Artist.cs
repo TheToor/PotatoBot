@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace PotatoBot.Modals.API.Lidarr
 {
@@ -37,5 +38,18 @@ namespace PotatoBot.Modals.API.Lidarr
         public ArtistsStatistics Statistics { get; set; }
 
         public List<Image> Images { get; set; } = new List<Image>();
+
+        public string GetPosterUrl()
+        {
+            if (Images.Count > 0)
+            {
+                if (Images.Any(i => i.CoverType == MediaCoverTypes.Poster))
+                {
+                    return Images.FirstOrDefault(i => i.CoverType == MediaCoverTypes.Poster)?.RemoteUrl;
+                }
+                return Images.First().RemoteUrl;
+            }
+            return string.Empty;
+        }
     }
 }

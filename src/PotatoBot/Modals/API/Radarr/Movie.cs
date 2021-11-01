@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace PotatoBot.Modals.API.Radarr
 {
@@ -57,6 +58,19 @@ namespace PotatoBot.Modals.API.Radarr
         public int GetHashCode([DisallowNull] Movie obj)
         {
             return TMDBId.GetHashCode() ^ IMDBId.GetHashCode();
+        }
+
+        public string GetPosterUrl()
+        {
+            if (Images.Count > 0)
+            {
+                if (Images.Any(i => i.CoverType == MediaCoverTypes.Poster))
+                {
+                    return Images.FirstOrDefault(i => i.CoverType == MediaCoverTypes.Poster)?.RemoteUrl;
+                }
+                return Images.First().RemoteUrl;
+            }
+            return string.Empty;
         }
     }
 }

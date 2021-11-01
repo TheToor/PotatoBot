@@ -15,7 +15,7 @@ namespace PotatoBot.Modals.API.Sonarr
 
             Title = series.Title;
             Statistics = series.Statistics;
-            Poster = series.Images.FirstOrDefault((i) => i.CoverType == "poster");
+            Poster = series.Images.FirstOrDefault((i) => i.CoverType == MediaCoverTypes.Poster);
         }
     }
 }
