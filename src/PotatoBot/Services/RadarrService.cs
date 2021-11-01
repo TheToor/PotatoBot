@@ -13,7 +13,7 @@ namespace PotatoBot.Services
 {
     public class RadarrService : APIBase, IService, IServarr
     {
-        public ServarrType Type => ServarrType.Radarr;
+        public override ServarrType Type => ServarrType.Radarr;
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 

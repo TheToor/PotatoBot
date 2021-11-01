@@ -1,5 +1,6 @@
 ﻿using ByteSizeLib;
 using PotatoBot.API;
+using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
 using PotatoBot.Services;
@@ -86,20 +87,20 @@ namespace PotatoBot.Commands
 
             await client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
 
-            if (!Enum.TryParse<SearchType>(messageData, out var searchType))
+            if (!Enum.TryParse<ServarrType>(messageData, out var searchType))
             {
-                _logger.Warn($"Failed to parse {messageData} to {nameof(SearchType)}");
+                _logger.Warn($"Failed to parse {messageData} to {nameof(ServarrType)}");
                 return true;
             }
 
-            if (searchType == SearchType.None)
+            if (searchType == ServarrType.Unknown)
             {
                 _logger.Warn($"User {message.Chat.Username} somehow wants to show the queue for nothing.");
                 return true;
             }
 
             var searchTypeString = searchType.ToString();
-            var queue = Program.ServiceManager.GetAllServices().Where(s => s is APIBase).Cast<APIBase>().SelectMany(s => s.GetQueue()).ToList();
+            var queue = Program.ServiceManager.GetAllServices().Where(s => s is APIBase apiBase && apiBase.Type == searchType).Cast<APIBase>().SelectMany(s => s.GetQueue()).ToList();
 
             if (queue?.Count == 0)
             {

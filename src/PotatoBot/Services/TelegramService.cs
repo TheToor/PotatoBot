@@ -393,7 +393,7 @@ namespace PotatoBot.Services
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
-                    InlineKeyboardButton.WithCallbackData("Movies", $"{(int)SearchType.Movie}")
+                    InlineKeyboardButton.WithCallbackData("Movies", $"{(int)ServarrType.Radarr}")
                 });
             }
 
@@ -401,7 +401,7 @@ namespace PotatoBot.Services
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
-                    InlineKeyboardButton.WithCallbackData("Series", $"{(int)SearchType.Series}")
+                    InlineKeyboardButton.WithCallbackData("Series", $"{(int)ServarrType.Sonarr}")
                 });
             }
 
@@ -409,7 +409,7 @@ namespace PotatoBot.Services
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
-                    InlineKeyboardButton.WithCallbackData("Artists", $"{(int)SearchType.Artist}")
+                    InlineKeyboardButton.WithCallbackData("Artists", $"{(int)ServarrType.Lidarr}")
                 });
             }
             return keyboardMarkup;

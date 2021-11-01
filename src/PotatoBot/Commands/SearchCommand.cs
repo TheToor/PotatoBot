@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -35,7 +34,7 @@ namespace PotatoBot.Commands
             var title = LanguageManager.GetTranslation("Commands", "Search", "Start");
             await TelegramService.ReplyWithMarkupAndData(this, message, title, markup, new SearchData()
             {
-                SelectedSearch = SearchType.None
+                SelectedSearch = ServarrType.Unknown
             });
             return true;
         }
@@ -46,7 +45,7 @@ namespace PotatoBot.Commands
             var message = callbackQuery.Message;
             var cacheData = TelegramService.GetCachedData<SearchData>(message);
 
-            if(cacheData.SelectedSearch == SearchType.None)
+            if(cacheData.SelectedSearch == ServarrType.Unknown)
             {
                 return await HandleSearchSelection(client, message, messageData, cacheData);
             }
@@ -55,9 +54,9 @@ namespace PotatoBot.Commands
 
         private async Task<bool> HandleSearchSelection(TelegramBotClient client, Message message, string messageData, SearchData cacheData)
         {
-            if(!Enum.TryParse<SearchType>(messageData, out var selectedSearch))
+            if(!Enum.TryParse<ServarrType>(messageData, out var selectedSearch))
             {
-                _logger.Warn($"Failed to parase {messageData} to {nameof(SearchType)}");
+                _logger.Warn($"Failed to parase {messageData} to {nameof(ServarrType)}");
                 return true;
             }
 
@@ -68,7 +67,7 @@ namespace PotatoBot.Commands
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
             switch (selectedSearch)
             {
-                case SearchType.Movie:
+                case ServarrType.Radarr:
                     {
                         foreach(var radarr in Program.ServiceManager.Radarr)
                         {
@@ -80,7 +79,7 @@ namespace PotatoBot.Commands
                     }
                     break;
 
-                case SearchType.Series:
+                case ServarrType.Sonarr:
                     {
                         foreach (var sonarr in Program.ServiceManager.Sonarr)
                         {
@@ -92,7 +91,7 @@ namespace PotatoBot.Commands
                     }
                     break;
 
-                case SearchType.Artist:
+                case ServarrType.Lidarr:
                     {
                         foreach (var lidarr in Program.ServiceManager.Lidarr)
                         {
@@ -117,13 +116,13 @@ namespace PotatoBot.Commands
             var service = default(IServarr);
             switch(cacheData.SelectedSearch)
             {
-                case SearchType.Movie:
+                case ServarrType.Radarr:
                     service = RadarrService.First(r => r.Name == messageData);
                     break;
-                case SearchType.Series:
+                case ServarrType.Sonarr:
                     service = SonarrService.First(s => s.Name == messageData);
                     break;
-                case SearchType.Artist:
+                case ServarrType.Lidarr:
                     service = LidarrService.First(l => l.Name == messageData);
                     break;
             }

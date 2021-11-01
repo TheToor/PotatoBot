@@ -49,30 +49,34 @@
 			"Start": [
 				"What can I search for the lazy bastard today?"
 			],
-
-			"Selected": [
-				"So your fat ass wants to search for {0}. Here we goooo!"
+			
+			"Selection": [
+				"Which service do you want to use for your absolute shitter of a query?"
 			],
 
-			"NoMovie": [
+			"Selected": [
+				"So your fat ass wants to search for {0} in {1}. Here we goooo!"
+			],
+
+			"NoRadarr": [
 				"You actually did it. I didn't find shit for '{0}'. You can be proud of yourself.",
 				"Nothing found for '{0}'. Maybe try searching for something useful."
 			],
-			"Movie": [
+			"Radarr": [
 				"Found <b>{0}</b> Movies for ya"
 			],
 
-			"NoSeries": [
+			"NoSonarr": [
 				"You fucked it up. Didn't find shit for '{0}'."
 			],
-			"Series": [
+			"Sonarr": [
 				"Found <b>{0}</b> Series for ya"
 			],
 
-			"NoArtist": [
+			"NoLidarr": [
 				"Didn't find anything for '{0}'. Try better next time"
 			],
-			"Artist": [
+			"Lidarr": [
 				"Found <b>{0}</b> Artists for ya"
 			],
 
@@ -104,22 +108,22 @@
 				"Can't get that queue. Guess why.",
 				"Welp. No. That thing has no queue"
 			],
-			"NoMovie": [
+			"NoRadarr": [
 				"No movies currently downloading. Go add some!"
 			],
-			"NoSeries": [
+			"NoSonarr": [
 				"No series currently downloading. Go add some!"
 			],
-			"NoArtist": [
+			"NoLidarr": [
 				"No songs currently downloading. Go add some!"
 			],
-			"Movie": [
+			"Radarr": [
 				"<b>{0}</b> movies are currently downloading"
 			],
-			"Series": [
+			"Sonarr": [
 				"<b>{0}</b> episodes currently downloading"
 			],
-			"Artist": [
+			"Radarr": [
 				"<b>{0}</b> songs currently downloading"
 			]
 		},
