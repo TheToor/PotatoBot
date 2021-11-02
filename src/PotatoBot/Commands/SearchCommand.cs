@@ -1,4 +1,5 @@
-﻿using PotatoBot.Managers;
+﻿using PotatoBot.API;
+using PotatoBot.Managers;
 using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
@@ -56,7 +57,7 @@ namespace PotatoBot.Commands
         {
             if(!Enum.TryParse<ServarrType>(messageData, out var selectedSearch))
             {
-                _logger.Warn($"Failed to parase {messageData} to {nameof(ServarrType)}");
+                _logger.Warn($"Failed to parse {messageData} to {nameof(ServarrType)}");
                 return true;
             }
 
@@ -65,43 +66,12 @@ namespace PotatoBot.Commands
 
             var title = Program.LanguageManager.GetTranslation("Commands", "Search", "Selection");
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-            switch (selectedSearch)
+            foreach(var service in Program.ServiceManager.GetAllServices().Where(s => s is APIBase apiBase && apiBase.Type == selectedSearch))
             {
-                case ServarrType.Radarr:
-                    {
-                        foreach(var radarr in Program.ServiceManager.Radarr)
-                        {
-                            keyboardMarkup.Add(new List<InlineKeyboardButton>()
-                            {
-                                InlineKeyboardButton.WithCallbackData(radarr.Name, radarr.Name)
-                            });
-                        }
-                    }
-                    break;
-
-                case ServarrType.Sonarr:
-                    {
-                        foreach (var sonarr in Program.ServiceManager.Sonarr)
-                        {
-                            keyboardMarkup.Add(new List<InlineKeyboardButton>()
-                            {
-                                InlineKeyboardButton.WithCallbackData(sonarr.Name, sonarr.Name)
-                            });
-                        }
-                    }
-                    break;
-
-                case ServarrType.Lidarr:
-                    {
-                        foreach (var lidarr in Program.ServiceManager.Lidarr)
-                        {
-                            keyboardMarkup.Add(new List<InlineKeyboardButton>()
-                            {
-                                InlineKeyboardButton.WithCallbackData(lidarr.Name, lidarr.Name)
-                            });
-                        }
-                    }
-                    break;
+                keyboardMarkup.Add(new List<InlineKeyboardButton>()
+                {
+                    InlineKeyboardButton.WithCallbackData(service.Name, service.Name)
+                });
             }
 
             var markup = new InlineKeyboardMarkup(keyboardMarkup);
@@ -113,18 +83,16 @@ namespace PotatoBot.Commands
 
         private async Task<bool> HandleServiceSelection(TelegramBotClient client, Message message, string messageData, SearchData cacheData)
         {
-            var service = default(IServarr);
-            switch(cacheData.SelectedSearch)
+            var service = Program.ServiceManager.GetAllServices().FirstOrDefault(s =>
+                s is APIBase apiBase &&
+                apiBase.Type == cacheData.SelectedSearch &&
+                apiBase.Name == messageData
+            ) as IServarr;
+
+            if(service == null)
             {
-                case ServarrType.Radarr:
-                    service = RadarrService.First(r => r.Name == messageData);
-                    break;
-                case ServarrType.Sonarr:
-                    service = SonarrService.First(s => s.Name == messageData);
-                    break;
-                case ServarrType.Lidarr:
-                    service = LidarrService.First(l => l.Name == messageData);
-                    break;
+                _logger.Warn($"Failed to find service of type {cacheData.SelectedSearch} with name {messageData}");
+                return false;
             }
 
             cacheData.API = service;
