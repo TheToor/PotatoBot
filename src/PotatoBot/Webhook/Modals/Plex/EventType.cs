@@ -1,23 +1,23 @@
 ﻿namespace PotatoBot.WebHook.Modals.Plex
 {
-    public enum EventType
-    {
-        // Content Events
-        NewOnDeck,
-        NewInLibrary,
+	public enum EventType
+	{
+		// Content Events
+		NewOnDeck,
+		NewInLibrary,
 
-        // Playback Events
-        Play,
-        Pause,
-        Resume,
-        Stop,
-        Scrobble,
-        Rate,
+		// Playback Events
+		Play,
+		Pause,
+		Resume,
+		Stop,
+		Scrobble,
+		Rate,
 
-        // Server Events
-        DatabaseBackup,
-        DatabaseCorrupted,
-        NewDevice,
-        PlaybackStarted
-    }
+		// Server Events
+		DatabaseBackup,
+		DatabaseCorrupted,
+		NewDevice,
+		PlaybackStarted
+	}
 }

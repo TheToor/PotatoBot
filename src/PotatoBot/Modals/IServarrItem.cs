@@ -1,13 +1,13 @@
 ﻿namespace PotatoBot.Modals
 {
-    public interface IServarrItem
-    {
-        string Title { get; set; }
-        string Path { get; set; }
-        ushort Year { get; set; }
-        
-        string PageTitle { get; }
+	public interface IServarrItem
+	{
+		string Title { get; set; }
+		string Path { get; set; }
+		ushort Year { get; set; }
 
-        string GetPosterUrl();
-    }
+		string PageTitle { get; }
+
+		string GetPosterUrl();
+	}
 }

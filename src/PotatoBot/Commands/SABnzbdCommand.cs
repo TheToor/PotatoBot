@@ -9,117 +9,111 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Commands
 {
-    [Command("sab", Description = "Controls SAB servers")]
-    internal class SABnzbdCommand : Service, ICommand
-    {
-        internal enum SABnzbdCommandMode
-        {
-            Status,
-            Pause,
-            Resume
-        }
+	[Command("sab", Description = "Controls SAB servers")]
+	internal class SABnzbdCommand : Service, ICommand
+	{
+		internal enum SABnzbdCommandMode
+		{
+			Status,
+			Pause,
+			Resume
+		}
 
-        public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
-        {
-            if(arguments.Length == 0 || !Enum.TryParse(arguments[0], true, out SABnzbdCommandMode command))
-            {
-                await TelegramService.SimpleReplyToMessage(
-                    message,
-                    LanguageManager.GetTranslation("Commands", "SABnzbd", "CommandNotFound")
-                );
-                return true;
-            }
+		public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
+		{
+			if(arguments.Length == 0 || !Enum.TryParse(arguments[0], true, out SABnzbdCommandMode command))
+			{
+				await TelegramService.SimpleReplyToMessage(
+					message,
+					LanguageManager.GetTranslation("Commands", "SABnzbd", "CommandNotFound")
+				);
+				return true;
+			}
 
-            var servers = Program.ServiceManager.GetSABnzbdServices();
-            switch (command)
-            {
-                case SABnzbdCommandMode.Status:
-                    return await ProcessStatusCommand(message, servers);
+			var servers = Program.ServiceManager.GetSABnzbdServices();
+			return command switch
+			{
+				SABnzbdCommandMode.Status => await ProcessStatusCommand(message, servers),
+				SABnzbdCommandMode.Pause => await ProcessPauseCommand(message, servers),
+				SABnzbdCommandMode.Resume => await ProcessResumeCommand(message, servers),
+				_ => true,
+			};
+		}
 
-                case SABnzbdCommandMode.Pause:
-                    return await ProcessPauseCommand(message, servers);
+		private static async Task<bool> ProcessStatusCommand(Message message, List<SABnzbdService> servers)
+		{
+			var responseText = string.Format(
+				LanguageManager.GetTranslation("Commands", "SABnzbd", "Status", "Title"),
+				servers.Count
+			);
 
-                case SABnzbdCommandMode.Resume:
-                    return await ProcessResumeCommand(message, servers);
-            }
+			foreach(var server in servers)
+			{
+				// Queue returns queue and fullstatus
+				var response = await server.GetQueue();
+				if(response == null)
+				{
+					continue;
+				}
 
-            return true;
-        }
+				// response.Status if using server.GetStatus() !
+				var status = response.Queue;
 
-        private static async Task<bool> ProcessStatusCommand(Message message, List<SABnzbdService> servers)
-        {
-            var responseText = string.Format(
-                LanguageManager.GetTranslation("Commands", "SABnzbd", "Status", "Title"),
-                servers.Count
-            );
+				responseText += $"<b>{server.Name}</b>\n";
+				responseText += string.Format(
+					LanguageManager.GetTranslation("Commands", "SABnzbd", "Status", "Text"),
+					status.Paused ? status.Paused : status.PausedAll,
+					status.Version,
+					status.LoadAverage,
+					status.Diskspace1Norm,
+					status.SizeLeft,
+					status.TimeLeft,
+					status.EstimatedRemainingTime
+				);
+				responseText += "\n\n";
+			}
 
-            foreach(var server in servers)
-            {
-                // Queue returns queue and fullstatus
-                var response = await server.GetQueue();
-                if(response == null)
-                {
-                    continue;
-                }
+			await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
 
-                // response.Status if using server.GetStatus() !
-                var status = response.Queue;
+			return true;
+		}
 
-                responseText += $"<b>{server.Name}</b>\n";
-                responseText += string.Format(
-                    LanguageManager.GetTranslation("Commands", "SABnzbd", "Status", "Text"),
-                    status.Paused ? status.Paused : status.PausedAll,
-                    status.Version,
-                    status.LoadAverage,
-                    status.Diskspace1Norm,
-                    status.SizeLeft,
-                    status.TimeLeft,
-                    status.EstimatedRemainingTime
-                );
-                responseText += "\n\n";
-            }
+		private static async Task<bool> ProcessPauseCommand(Message message, List<SABnzbdService> servers)
+		{
+			var responseText = string.Format(
+				LanguageManager.GetTranslation("Commands", "SABnzbd", "Pause"),
+				servers.Count
+			);
 
-            await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
+			foreach(var server in servers)
+			{
+				var response = await server.PauseQueue();
 
-            return true;
-        }
+				responseText += $"{server.Name}: {response} \n";
+			}
 
-        private static async Task<bool> ProcessPauseCommand(Message message, List<SABnzbdService> servers)
-        {
-            var responseText = string.Format(
-                LanguageManager.GetTranslation("Commands", "SABnzbd", "Pause"),
-                servers.Count
-            );
+			await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
 
-            foreach(var server in servers)
-            {
-                var response = await server.PauseQueue();
+			return true;
+		}
 
-                responseText += $"{server.Name}: {response} \n";
-            }
+		private static async Task<bool> ProcessResumeCommand(Message message, List<SABnzbdService> servers)
+		{
+			var responseText = string.Format(
+				LanguageManager.GetTranslation("Commands", "SABnzbd", "Resume"),
+				servers.Count
+			);
 
-            await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
+			foreach(var server in servers)
+			{
+				var response = await server.ResumeQueue();
 
-            return true;
-        }
+				responseText += $"{server.Name}: {response} \n";
+			}
 
-        private static async Task<bool> ProcessResumeCommand(Message message, List<SABnzbdService> servers)
-        {
-            var responseText = string.Format(
-                LanguageManager.GetTranslation("Commands", "SABnzbd", "Resume"),
-                servers.Count
-            );
+			await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
 
-            foreach (var server in servers)
-            {
-                var response = await server.ResumeQueue();
-
-                responseText += $"{server.Name}: {response} \n";
-            }
-
-            await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
-
-            return true;
-        }
-    }
+			return true;
+		}
+	}
 }

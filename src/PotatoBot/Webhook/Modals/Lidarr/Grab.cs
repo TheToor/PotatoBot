@@ -2,9 +2,9 @@
 
 namespace PotatoBot.Webhook.Modals.Lidarr
 {
-    public class Grab : LidarrRequestBase
-    {
-        public List<Album> Albums { get; set; }
-        public Release Release { get; set; }
-    }
+	public class Grab : LidarrRequestBase
+	{
+		public List<Album> Albums { get; set; }
+		public Release Release { get; set; }
+	}
 }

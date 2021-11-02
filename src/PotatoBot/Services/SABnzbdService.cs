@@ -10,113 +10,113 @@ using System.Threading.Tasks;
 
 namespace PotatoBot.Services
 {
-    public class SABnzbdService : IService
-    {
-        public string Name { get; }
+	public class SABnzbdService : IService
+	{
+		public string Name { get; }
 
-        private const string _apiUrl = "sabnzbd/api";
-        private readonly string _baseUrl;
+		private const string ApiUrl = "sabnzbd/api";
+		private readonly string _baseUrl;
 
-        private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+		private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        internal SABnzbdService(SABnzbdSettings settings)
-        {
-            Name = settings.Name;
+		internal SABnzbdService(SABnzbdSettings settings)
+		{
+			Name = settings.Name;
 
-            _baseUrl = $"{settings.Url}/{_apiUrl}?output=json&apikey={settings.APIKey}";
-        }
+			_baseUrl = $"{settings.Url}/{ApiUrl}?output=json&apikey={settings.APIKey}";
+		}
 
-        public bool Start()
-        {
-            return true;
-        }
+		public bool Start()
+		{
+			return true;
+		}
 
-        public bool Stop()
-        {
-            return true;
-        }
+		public bool Stop()
+		{
+			return true;
+		}
 
-        private static HttpClient GetHttpClient()
-        {
-            var client = new HttpClient();
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json")
-            );
-            client.DefaultRequestHeaders.Add("User-Agent", Program.Namespace);
-            return client;
-        }
+		private static HttpClient GetHttpClient()
+		{
+			var client = new HttpClient();
+			client.DefaultRequestHeaders.Accept.Clear();
+			client.DefaultRequestHeaders.Accept.Add(
+				new MediaTypeWithQualityHeaderValue("application/json")
+			);
+			client.DefaultRequestHeaders.Add("User-Agent", Program.Namespace);
+			return client;
+		}
 
-        protected async Task<T> GetRequest<T>(SABnzbdRequestMode requestMode, RequestBase getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
-        {
-            var url = $"{_baseUrl}&mode={requestMode}";
+		protected async Task<T> GetRequest<T>(SABnzbdRequestMode requestMode, RequestBase getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
+		{
+			var url = $"{_baseUrl}&mode={requestMode}";
 
-            if (getRequest != null)
-            {
-                url += $"&{getRequest.ToGet()}";
-            }
+			if(getRequest != null)
+			{
+				url += $"&{getRequest.ToGet()}";
+			}
 
-            try
-            {
-                using (var client = GetHttpClient())
-                {
-                    _logger.Trace($"Sending request to '{url}'");
+			try
+			{
+				using(var client = GetHttpClient())
+				{
+					_logger.Trace($"Sending request to '{url}'");
 
-                    var response = await client.GetAsync(url);
-                    if (response.StatusCode != expectedStatusCode)
-                    {
-                        _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
-                    }
+					var response = await client.GetAsync(url);
+					if(response.StatusCode != expectedStatusCode)
+					{
+						_logger.Warn($"Unexpected Status Code: {response.StatusCode}");
+					}
 
-                    var json = response.Content.ReadAsStringAsync().Result;
-                    if (string.IsNullOrEmpty(json))
-                    {
-                        _logger.Warn("Empty response received");
-                        return default;
-                    }
+					var json = response.Content.ReadAsStringAsync().Result;
+					if(string.IsNullOrEmpty(json))
+					{
+						_logger.Warn("Empty response received");
+						return default;
+					}
 
-                    try
-                    {
-                        return JsonConvert.DeserializeObject<T>(json);
-                    }
-                    catch(Exception ex)
-                    {
-                        _logger.Error(ex, "Failed to parse response");
-                        return default;
-                    }
-                }
-            }
-            catch(Exception ex)
-            {
-                _logger.Warn(ex, $"Failed to fetch from {url}");
-                return default;
-            }
-        }
+					try
+					{
+						return JsonConvert.DeserializeObject<T>(json);
+					}
+					catch(Exception ex)
+					{
+						_logger.Error(ex, "Failed to parse response");
+						return default;
+					}
+				}
+			}
+			catch(Exception ex)
+			{
+				_logger.Warn(ex, $"Failed to fetch from {url}");
+				return default;
+			}
+		}
 
-        internal async Task<DynamicRoot<ServerStatus>> GetStatus()
-        {
-            return await GetRequest<DynamicRoot<ServerStatus>>(SABnzbdRequestMode.fullstatus);
-        }
+		internal async Task<DynamicRoot<ServerStatus>> GetStatus()
+		{
+			return await GetRequest<DynamicRoot<ServerStatus>>(SABnzbdRequestMode.fullstatus);
+		}
 
-        internal async Task<bool> PauseQueue()
-        {
-            var response = await GetRequest<DynamicRoot<bool>>(SABnzbdRequestMode.pause);
-            return response.Status;
-        }
+		internal async Task<bool> PauseQueue()
+		{
+			var response = await GetRequest<DynamicRoot<bool>>(SABnzbdRequestMode.pause);
+			return response.Status;
+		}
 
-        internal async Task<bool> ResumeQueue()
-        {
-            var response = await GetRequest<DynamicRoot<bool>>(SABnzbdRequestMode.resume);
-            return response.Status;
-        }
+		internal async Task<bool> ResumeQueue()
+		{
+			var response = await GetRequest<DynamicRoot<bool>>(SABnzbdRequestMode.resume);
+			return response.Status;
+		}
 
-        internal async Task<DynamicRoot<SABQueue>> GetQueue(uint start = 0, uint limit = 1)
-        {
-            return await GetRequest<DynamicRoot<SABQueue>>(SABnzbdRequestMode.queue, new RequestSABQueue
-            {
-                Start = start,
-                Limit = limit
-            });
-        }
-    }
+		internal async Task<DynamicRoot<SABQueue>> GetQueue(uint start = 0, uint limit = 1)
+		{
+			return await GetRequest<DynamicRoot<SABQueue>>(SABnzbdRequestMode.queue, new RequestSABQueue
+			{
+				Start = start,
+				Limit = limit
+			});
+		}
+	}
 }
