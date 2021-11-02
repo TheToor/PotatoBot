@@ -1,5 +1,9 @@
 {
 	"Name": "EN Insulting",
+	
+	"Radarr": "Movie",
+	"Sonarr": "Series",
+	"Lidarr": "Artist",
 
 	"GeneralError": [
 		"You fucked it up mate",

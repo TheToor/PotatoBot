@@ -132,7 +132,7 @@ namespace PotatoBot.Commands
 
             var title = string.Format(
                 Program.LanguageManager.GetTranslation("Commands", "Search", "Selected"),
-                cacheData.SelectedSearch.ToString(),
+                Program.LanguageManager.GetTranslation(cacheData.SelectedSearch.ToString()),
                 (service as IService).Name
             );
 
