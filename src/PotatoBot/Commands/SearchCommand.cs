@@ -83,13 +83,14 @@ namespace PotatoBot.Commands
 
         private async Task<bool> HandleServiceSelection(TelegramBotClient client, Message message, string messageData, SearchData cacheData)
         {
-            var service = Program.ServiceManager.GetAllServices().FirstOrDefault(s =>
-                s is APIBase apiBase &&
-                apiBase.Type == cacheData.SelectedSearch &&
-                apiBase.Name == messageData
-            ) as IServarr;
-
-            if(service == null)
+            if (
+                Program.ServiceManager.GetAllServices().FirstOrDefault(s =>
+                     s is APIBase apiBase &&
+                     apiBase.Type == cacheData.SelectedSearch &&
+                     apiBase.Name == messageData
+                )
+                is not IServarr service
+            )
             {
                 _logger.Warn($"Failed to find service of type {cacheData.SelectedSearch} with name {messageData}");
                 return false;
