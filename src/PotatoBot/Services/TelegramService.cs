@@ -297,27 +297,19 @@ namespace PotatoBot.Services
             _logger.Trace($"Updating pageination of message {message.MessageId}");
 
             var cache = GetCache(message);
-            var text = string.Empty;
-
             var page = cache.PageItemList.TakePaged(cache.Page, cache.PageSize);
-
-            if (!Program.Settings.AddPicturesToSearch)
-            {
-                for (var i = 0; i < page.Items.Count; i++)
-                {
-                    text += $"<b>{i + 1}:</b> " + page.Items[i].PageTitle;
-                }
-            }
-            else if(page.Items?.Count > 0)
-            {
-                text += page.Items[0].PageTitle;
-            }
 
             _logger.Trace("Building button layout ...");
 
             var keyboardMarkupData = new List<List<InlineKeyboardButton>>();
             if (!Program.Settings.AddPicturesToSearch)
             {
+                var text = string.Empty;
+                for (var i = 0; i < page.Items.Count; i++)
+                {
+                    text += $"<b>{i + 1}:</b> " + page.Items[i].PageTitle;
+                }
+
                 // Selection buttons
                 var firstRow = new List<InlineKeyboardButton>();
                 for (var i = 0; i < page.Items.Count; i++)
@@ -386,6 +378,8 @@ namespace PotatoBot.Services
             }
             else
             {
+                var text = page.Items[0].PageTitle;
+
                 // Selection buttons
                 var firstRow = new List<InlineKeyboardButton>();
 
