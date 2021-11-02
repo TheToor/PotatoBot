@@ -18,7 +18,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1812:VersionCommand is an internal class that is apparently never instantiated.If so, remove the code from the assembly.If this class is intended to contain only static members, make it static (Shared in Visual Basic)",
     Justification = "Class will be dynamically created during runtime",
     Scope = "namespaceanddescendants",
-    Target = "PotatoBot.Commands"
+    Target = "~N:PotatoBot.Commands"
 )]
 
 [assembly: SuppressMessage(
@@ -26,7 +26,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1305:Specify IFormatProvider",
     Justification = "Not required",
     Scope = "namespaceanddescendants",
-    Target = "PotatoBot"
+    Target = "~N:PotatoBot"
 )]
 
 [assembly: SuppressMessage(
@@ -34,7 +34,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1307:Specify StringComparison",
     Justification = "Not required",
     Scope = "namespaceanddescendants",
-    Target = "PotatoBot"
+    Target = "~N:PotatoBot"
 )]
 
 [assembly: SuppressMessage(
@@ -42,7 +42,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1304:Specify CultureInfo",
     Justification = "<Pending>",
     Scope = "namespaceanddescendants",
-    Target = "PotatoBot"
+    Target = "~N:PotatoBot"
 )]
 
 [assembly: SuppressMessage(
@@ -50,7 +50,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1031:Do not catch general exception types",
     Justification = "Not required",
     Scope = "namespaceanddescendants",
-    Target = "PotatoBot"
+    Target = "~N:PotatoBot"
 )]
 
 [assembly: SuppressMessage(
@@ -58,12 +58,19 @@ using System.Diagnostics.CodeAnalysis;
     "CA2007:Consider calling ConfigureAwait on the awaited task",
     Justification = "<Pending>",
     Scope = "namespaceanddescendants",
-    Target = "PotatoBot"
+    Target = "~N:PotatoBot"
 )]
 [assembly: SuppressMessage(
     "Microsoft.Usage",
     "CA2227:Collection properties should be read only",
     Justification = "<Pending>",
     Scope = "namespaceanddescendants",
-    Target = "PotatoBot.Modals"
+    Target = "~N:PotatoBot.Modals"
+)]
+[assembly: SuppressMessage(
+    "Style",
+    "IDE0057:Use range operator",
+    Justification = "Looks ugly",
+    Scope = "namespaceanddescendants",
+    Target = "~N:PotatoBot"
 )]
