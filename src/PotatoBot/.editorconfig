@@ -41,7 +41,7 @@ csharp_space_after_cast = false
 #require a space before the colon for bases or interfaces in a type declaration
 csharp_space_after_colon_in_inheritance_clause = true
 #require a space after a keyword in a control flow statement such as a for loop
-csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_after_keywords_in_control_flow_statements =false
 #require a space before the colon for bases or interfaces in a type declaration
 csharp_space_before_colon_in_inheritance_clause = true
 #remove space within empty argument list parentheses
@@ -125,8 +125,8 @@ dotnet_style_qualification_for_field = false:suggestion
 dotnet_style_qualification_for_method = false:suggestion
 #prefer properties not to be prefaced with this. or Me. in Visual Basic
 dotnet_style_qualification_for_property = false:suggestion
-csharp_indent_braces=true
-csharp_space_between_method_declaration_name_and_open_parenthesis=true
+csharp_indent_braces=false
+csharp_space_between_method_declaration_name_and_open_parenthesis=false
 
 [*.{cs,vb}]
 indent_style=tab
