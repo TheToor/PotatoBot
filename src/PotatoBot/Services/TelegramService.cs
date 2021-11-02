@@ -363,14 +363,28 @@ namespace PotatoBot.Services
                 if (create)
                 {
                     Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-                    var sentMessage = await _client.SendTextMessageAsync(message.Chat.Id, messageText, parseMode: ParseMode.Html, replyMarkup: keyboardMarkup); ;
+                    var sentMessage = await _client.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: messageText,
+                        parseMode: ParseMode.Html,
+                        replyMarkup: keyboardMarkup
+                    );
                     cache.MessageId = sentMessage.MessageId;
                     _logger.Trace($"Sent pagination with message id {sentMessage.MessageId}");
                 }
                 else
                 {
-                    await _client.EditMessageTextAsync(message.Chat.Id, message.MessageId, messageText, parseMode: ParseMode.Html);
-                    await _client.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, keyboardMarkup);
+                    await _client.EditMessageTextAsync(
+                        chatId: message.Chat.Id,
+                        messageId: message.MessageId,
+                        text: messageText,
+                        parseMode: ParseMode.Html
+                    );
+                    await _client.EditMessageReplyMarkupAsync(
+                        chatId: message.Chat.Id,
+                        messageId: message.MessageId,
+                        replyMarkup: keyboardMarkup
+                    );
                     _logger.Trace($"Updated pagination with message id {message.MessageId}");
                 }
             }
@@ -427,7 +441,12 @@ namespace PotatoBot.Services
                     Message sentMessage;
                     if (string.IsNullOrEmpty(posterUrl))
                     {
-                        sentMessage = await _client.SendTextMessageAsync(message.Chat.Id, messageText, parseMode: ParseMode.Html, replyMarkup: keyboardMarkup);
+                        sentMessage = await _client.SendTextMessageAsync(
+                            chatId: message.Chat.Id,
+                            text: messageText,
+                            parseMode: ParseMode.Html,
+                            replyMarkup: keyboardMarkup
+                        );
                     }
                     else
                     {
@@ -453,9 +472,20 @@ namespace PotatoBot.Services
                             media: new InputMediaPhoto(new InputMedia(page.Items[0].GetPosterUrl()))
                         );
                     }
-                    await _client.EditMessageCaptionAsync(message.Chat.Id, message.MessageId, messageText, parseMode: ParseMode.Html);
 
-                    await _client.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, keyboardMarkup);
+                    await _client.EditMessageCaptionAsync(
+                        chatId: message.Chat.Id,
+                        messageId: message.MessageId,
+                        caption: messageText,
+                        parseMode: ParseMode.Html
+                    );
+
+                    await _client.EditMessageReplyMarkupAsync(
+                        chatId: message.Chat.Id,
+                        messageId: message.MessageId,
+                        replyMarkup: keyboardMarkup
+                    );
+
                     _logger.Trace($"Updated pagination with message id {message.MessageId}");
                 }
             }
@@ -671,7 +701,6 @@ namespace PotatoBot.Services
                 if(message.Text.StartsWith("/", StringComparison.InvariantCultureIgnoreCase))
                 {
                     // Command
-
                     Program.ServiceManager?.StatisticsService?.IncreaseCommandsReceived();
 
                     _logger.Trace("Detected command");
