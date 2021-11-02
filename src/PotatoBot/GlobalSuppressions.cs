@@ -74,3 +74,10 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:PotatoBot"
 )]
+[assembly: SuppressMessage(
+    "Performance",
+    "CA1822:Mark members as static",
+    Justification = "Not possible in Startup file",
+    Scope = "namespace",
+    Target = "~N:PotatoBot.Webhook"
+)]
