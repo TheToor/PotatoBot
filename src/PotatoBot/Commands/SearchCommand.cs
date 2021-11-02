@@ -50,7 +50,7 @@ namespace PotatoBot.Commands
             {
                 return await HandleSearchSelection(client, message, messageData, cacheData);
             }
-            return await HandleServiceSelection(client, message, messageData, cacheData);
+            return await HandleServiceSelection(message, messageData, cacheData);
         }
 
         private async Task<bool> HandleSearchSelection(TelegramBotClient client, Message message, string messageData, SearchData cacheData)
@@ -81,7 +81,7 @@ namespace PotatoBot.Commands
             return true;
         }
 
-        private async Task<bool> HandleServiceSelection(TelegramBotClient client, Message message, string messageData, SearchData cacheData)
+        private async Task<bool> HandleServiceSelection(Message message, string messageData, SearchData cacheData)
         {
             if (
                 Program.ServiceManager.GetAllServices().FirstOrDefault(s =>
