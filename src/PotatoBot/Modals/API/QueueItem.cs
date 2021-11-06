@@ -25,10 +25,11 @@ namespace PotatoBot.Modals.API
 		public ulong SizeLeft { get; set; }
 		// This should be an enum
 		public string Status { get; set; }
-		public List<StatusMessage> StatusMessages { get; set; }
 		public string TimeLeft { get; set; }
-		public string TrackedDownloadState { get; set; }
-		public string TrackedDownloadStatus { get; set; }
+
+		public TrackedDownloadState TrackedDownloadState { get; set; }
+		public TrackedDownloadStatus TrackedDownloadStatus { get; set; }
+		public List<TrackedDownloadStatusMessage> StatusMessages { get; set; }
 
 		public QueueItem(APIBase api)
 		{

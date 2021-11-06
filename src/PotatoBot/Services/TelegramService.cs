@@ -239,10 +239,16 @@ namespace PotatoBot.Services
 			CacheOrUpdate(sentMessage, data);
 			return sentMessage;
 		}
-		internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string title, IReplyMarkup markup)
+		internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string text, IReplyMarkup markup, ParseMode parseMode = ParseMode.Default)
 		{
 			Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-			var sentMessage = await _client.SendTextMessageAsync(message.Chat, title, replyMarkup: markup, replyToMessageId: (message.From.IsBot ? 0 : message.MessageId));
+			var sentMessage = await _client.SendTextMessageAsync(
+				chatId: message.Chat,
+				text: text,
+				replyMarkup: markup,
+				replyToMessageId: message.From.IsBot ? 0 : message.MessageId,
+				parseMode: parseMode
+			);
 			var cache = GetCache(sentMessage);
 			cache.QueryCallbackInstance = caller;
 			return sentMessage;

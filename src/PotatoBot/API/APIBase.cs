@@ -2,6 +2,7 @@
 using PotatoBot.Modals;
 using PotatoBot.Modals.API;
 using PotatoBot.Modals.API.Requests;
+using PotatoBot.Modals.API.Requests.DELETE;
 using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
@@ -59,6 +60,11 @@ namespace PotatoBot.API
 
 		public abstract List<QueueItem> GetQueue();
 
+		internal virtual bool RemoveFromQueue(RemoveQueueItem request)
+		{
+			return DeleteRequest($"{APIEndPoints.Queue}/{request.Id}", request);
+		}
+
 		private static HttpClient GetHttpClient()
 		{
 			var client = new HttpClient();
@@ -70,10 +76,37 @@ namespace PotatoBot.API
 			return client;
 		}
 
+		protected bool DeleteRequest(string endpoint, RequestBase getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
+		{
+			var url = $"{_settings.Url}/{_apiUrl}/{endpoint}?apikey={_settings.APIKey}";
+			if(getRequest != null)
+			{
+				url += $"&{getRequest.ToGet()}";
+			}
+
+			using var client = GetHttpClient();
+			try
+			{
+				_logger.Trace($"Sending request to '{url}'");
+
+				var response = client.DeleteAsync(url).Result;
+				if(response.StatusCode != expectedStatusCode)
+				{
+					_logger.Warn($"Unexpected Status Code: {response.StatusCode}");
+					return false;
+				}
+				return true;
+			}
+			catch(Exception ex)
+			{
+				_logger.Error(ex, $"Failed to process request to {endpoint}");
+				return false;
+			}
+		}
+
 		protected T GetRequest<T>(string endpoint, RequestBase getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
 		{
 			var url = $"{_settings.Url}/{_apiUrl}/{endpoint}?apikey={_settings.APIKey}";
-
 			if(getRequest != null)
 			{
 				url += $"&{getRequest.ToGet()}";
@@ -106,7 +139,7 @@ namespace PotatoBot.API
 			}
 		}
 
-		internal Tuple<T, HttpStatusCode> PostRequest<T>(string endpoint, object body, params HttpStatusCode[] expectedStatusCode)
+		protected Tuple<T, HttpStatusCode> PostRequest<T>(string endpoint, object body, params HttpStatusCode[] expectedStatusCode)
 		{
 			var url = $"{_settings.Url}/{_apiUrl}/{endpoint}?apikey={_settings.APIKey}";
 
