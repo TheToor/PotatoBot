@@ -87,7 +87,7 @@ namespace PotatoBot.Modals.API.Radarr
 				}
 				return Images.First().RemoteUrl;
 			}
-			return string.Empty;
+			return null;
 		}
 	}
 }

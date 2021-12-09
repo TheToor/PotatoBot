@@ -71,8 +71,11 @@ namespace PotatoBot.Modals.API.SABnzbd
 		[JsonProperty("configfn")]
 		public string Configfn { get; set; }
 
+		/// <summary>
+		/// Orphaned Jobs
+		/// </summary>
 		[JsonProperty("folders")]
-		public List<object> Folders { get; set; }
+		public List<string> Folders { get; set; }
 
 		[JsonProperty("have_warnings")]
 		public string HaveWarnings { get; set; }

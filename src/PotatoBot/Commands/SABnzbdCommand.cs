@@ -3,6 +3,7 @@ using PotatoBot.Modals.Commands;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -16,12 +17,17 @@ namespace PotatoBot.Commands
 		{
 			Status,
 			Pause,
-			Resume
+			Resume,
+			Delete
 		}
 
 		public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
 		{
-			if(arguments.Length == 0 || !Enum.TryParse(arguments[0], true, out SABnzbdCommandMode command))
+			if(
+				arguments.Length == 0 ||
+				!Enum.TryParse(arguments[0], true, out SABnzbdCommandMode command) ||
+				( command == SABnzbdCommandMode.Delete && arguments.Length != 2 )
+			)
 			{
 				await TelegramService.SimpleReplyToMessage(
 					message,
@@ -36,6 +42,7 @@ namespace PotatoBot.Commands
 				SABnzbdCommandMode.Status => await ProcessStatusCommand(message, servers),
 				SABnzbdCommandMode.Pause => await ProcessPauseCommand(message, servers),
 				SABnzbdCommandMode.Resume => await ProcessResumeCommand(message, servers),
+				SABnzbdCommandMode.Delete => await ProcessDeleteCommand(message, servers, arguments[1]),
 				_ => true,
 			};
 		}
@@ -57,19 +64,27 @@ namespace PotatoBot.Commands
 				}
 
 				// response.Status if using server.GetStatus() !
-				var status = response.Queue;
+				var queue = response.Queue;
 
 				responseText += $"<b>{server.Name}</b>\n";
 				responseText += string.Format(
 					LanguageManager.GetTranslation("Commands", "SABnzbd", "Status", "Text"),
-					status.Paused ? status.Paused : status.PausedAll,
-					status.Version,
-					status.LoadAverage,
-					status.Diskspace1Norm,
-					status.SizeLeft,
-					status.TimeLeft,
-					status.EstimatedRemainingTime
+					queue.Paused ? queue.Paused : queue.PausedAll,
+					queue.Version,
+					queue.LoadAverage,
+					queue.Diskspace1Norm,
+					queue.SizeLeft,
+					queue.TimeLeft,
+					queue.EstimatedRemainingTime
 				);
+
+				var status = await server.GetStatus();
+				if(status.Status?.Folders?.Count > 0)
+				{
+					responseText += "\n\n<b>Orphaned Jobs</b>\n";
+					responseText += string.Join("\n", status.Status.Folders);
+					responseText += $"\n/sab_delete_{server.Name}";
+				}
 				responseText += "\n\n";
 			}
 
@@ -113,6 +128,25 @@ namespace PotatoBot.Commands
 
 			await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
 
+			return true;
+		}
+
+		private static async Task<bool> ProcessDeleteCommand(Message message, List<SABnzbdService> servers, string server)
+		{
+			var selectedServer = servers.FirstOrDefault(s => s.Name == server);
+			if(selectedServer == null)
+			{
+				return false;
+			}
+
+			if(await selectedServer.DeleteOrphanedQueue())
+			{
+				await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "SABnzbd", "DeleteSuccess"));
+			}
+			else
+			{
+				await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "SABnzbd", "DeleteFailed"));
+			}
 			return true;
 		}
 	}

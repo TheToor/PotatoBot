@@ -93,6 +93,7 @@ namespace PotatoBot.Services
 			}
 		}
 
+		// http://192.168.0.5:8080/api?mode=status&name=delete_all_orphan&output=json
 		internal async Task<DynamicRoot<ServerStatus>> GetStatus()
 		{
 			return await GetRequest<DynamicRoot<ServerStatus>>(SABnzbdRequestMode.fullstatus);
@@ -107,6 +108,12 @@ namespace PotatoBot.Services
 		internal async Task<bool> ResumeQueue()
 		{
 			var response = await GetRequest<DynamicRoot<bool>>(SABnzbdRequestMode.resume);
+			return response.Status;
+		}
+
+		internal async Task<bool> DeleteOrphanedQueue()
+		{
+			var response = await GetRequest<DynamicRoot<bool>>(SABnzbdRequestMode.status, new RequestDeleteOrphanSABJobs());
 			return response.Status;
 		}
 

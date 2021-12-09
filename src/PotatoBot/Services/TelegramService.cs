@@ -25,6 +25,8 @@ namespace PotatoBot.Services
 		private const string DisabledData = "Disabled";
 		private const string CancelData = "Cancel";
 
+		private const string MissingImageUrl = "https://thetvdb.com/images/missing/movie.jpg";
+
 		private const ushort MaxMessageLength = 4096;
 
 		public string Name => "Telegram";
@@ -447,22 +449,36 @@ namespace PotatoBot.Services
 					Message sentMessage;
 					if(string.IsNullOrEmpty(posterUrl))
 					{
-						sentMessage = await _client.SendTextMessageAsync(
+						sentMessage = await _client.SendPhotoAsync(
 							chatId: message.Chat.Id,
-							text: messageText,
+							photo: MissingImageUrl,
 							parseMode: ParseMode.Html,
+							caption: messageText,
 							replyMarkup: keyboardMarkup
 						);
 					}
 					else
 					{
-						sentMessage = await _client.SendPhotoAsync(
-							chatId: message.Chat.Id,
-							photo: page.Items[0].GetPosterUrl(),
-							parseMode: ParseMode.Html,
-							caption: messageText,
-							replyMarkup: keyboardMarkup
-						);
+						try
+						{
+							sentMessage = await _client.SendPhotoAsync(
+								chatId: message.Chat.Id,
+								photo: page.Items[0].GetPosterUrl(),
+								parseMode: ParseMode.Html,
+								caption: messageText,
+								replyMarkup: keyboardMarkup
+							);
+						}
+						catch (Exception)
+						{
+							sentMessage = await _client.SendPhotoAsync(
+								chatId: message.Chat.Id,
+								photo: MissingImageUrl,
+								parseMode: ParseMode.Html,
+								caption: messageText,
+								replyMarkup: keyboardMarkup
+							);
+						}
 					}
 
 					cache.MessageId = sentMessage.MessageId;
@@ -470,12 +486,20 @@ namespace PotatoBot.Services
 				}
 				else
 				{
-					if(!string.IsNullOrEmpty(posterUrl))
+					try
 					{
 						await _client.EditMessageMediaAsync(
 							chatId: message.Chat.Id,
 							messageId: message.MessageId,
-							media: new InputMediaPhoto(new InputMedia(page.Items[0].GetPosterUrl()))
+							media: new InputMediaPhoto(new InputMedia(posterUrl ?? MissingImageUrl))
+						);
+					}
+					catch (Exception)
+					{
+						await _client.EditMessageMediaAsync(
+							chatId: message.Chat.Id,
+							messageId: message.MessageId,
+							media: new InputMediaPhoto(new InputMedia(MissingImageUrl))
 						);
 					}
 

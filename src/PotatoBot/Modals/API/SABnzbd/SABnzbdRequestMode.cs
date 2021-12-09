@@ -9,6 +9,8 @@
 		// Resumes the queue
 		resume,
 		// Get queue status (& fullstats?)
-		queue
+		queue,
+		// Server status
+		status
 	}
 }

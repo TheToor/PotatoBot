@@ -56,7 +56,7 @@ namespace PotatoBot.Modals.API.Lidarr
 				}
 				return Images.First().RemoteUrl;
 			}
-			return string.Empty;
+			return null;
 		}
 	}
 }

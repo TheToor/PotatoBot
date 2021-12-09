@@ -88,7 +88,7 @@ namespace PotatoBot.Modals.API.Sonarr
 				}
 				return Images.First().RemoteUrl;
 			}
-			return string.Empty;
+			return null;
 		}
 	}
 }
