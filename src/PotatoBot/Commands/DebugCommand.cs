@@ -29,59 +29,59 @@ namespace PotatoBot.Commands
 			switch(debugCommand)
 			{
 				case "log":
+				{
+					if(arguments.Length != 2)
 					{
-						if(arguments.Length != 2)
-						{
-							return true;
-						}
+						return true;
+					}
 
-						var level = arguments[1];
+					var level = arguments[1];
 
-						if(level == "0")
-						{
-							LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Error);
-							await TelegramService.SimpleReplyToMessage(message, "Loglevel set to ERROR");
-						}
-						else if(level == "1")
-						{
-							LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Warn);
-							await TelegramService.SimpleReplyToMessage(message, "Loglevel set to WARN");
-						}
-						else if(level == "2")
-						{
-							LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Info);
-							await TelegramService.SimpleReplyToMessage(message, "Loglevel set to INFO");
-						}
-						else
-						{
-							await TelegramService.SimpleReplyToMessage(message, "Unsupported Loglevel (0 = Error, 1 = Warn, 2 = Info)");
-						}
+					if(level == "0")
+					{
+						LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Error);
+						await TelegramService.SimpleReplyToMessage(message, "Loglevel set to ERROR");
+					}
+					else if(level == "1")
+					{
+						LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Warn);
+						await TelegramService.SimpleReplyToMessage(message, "Loglevel set to WARN");
+					}
+					else if(level == "2")
+					{
+						LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Info);
+						await TelegramService.SimpleReplyToMessage(message, "Loglevel set to INFO");
+					}
+					else
+					{
+						await TelegramService.SimpleReplyToMessage(message, "Unsupported Loglevel (0 = Error, 1 = Warn, 2 = Info)");
 					}
 					break;
+				}
 
 				case "longmessage":
+				{
+					var testMessage = "";
+					for(int i = 0; i < 256; i++)
 					{
-						var testMessage = "";
-						for(int i = 0; i < 256; i++)
-						{
-							testMessage += new string(i.ToString().Last(), 58);
-							testMessage += "\n";
-						}
-						await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
+						testMessage += new string(i.ToString().Last(), 58);
+						testMessage += "\n";
 					}
+					await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
 					break;
+				}
 
 				case "parametertest":
+				{
+					var testMessage = "";
+					foreach(var argument in arguments)
 					{
-						var testMessage = "";
-						foreach(var argument in arguments)
-						{
-							testMessage += "Arg: " + argument;
-							testMessage += "\n";
-						}
-						await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
+						testMessage += "Arg: " + argument;
+						testMessage += "\n";
 					}
+					await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
 					break;
+				}
 			}
 
 			return true;
