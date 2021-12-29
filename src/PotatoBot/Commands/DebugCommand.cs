@@ -1,6 +1,8 @@
 ﻿using PotatoBot.Managers;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Services;
+using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -55,6 +57,21 @@ namespace PotatoBot.Commands
 					else
 					{
 						await TelegramService.SimpleReplyToMessage(message, "Unsupported Loglevel (0 = Error, 1 = Warn, 2 = Info)");
+					}
+					break;
+				}
+
+				case "logfile":
+				{
+					var currentLog = Path.Combine(Program.LogManager.LogDirectory, $"PotatoServer-{DateTime.Now.Date.ToString("yyyy-MM-dd")}.log");
+					if(System.IO.File.Exists(currentLog))
+					{
+						using var file = System.IO.File.Open(currentLog, FileMode.Open);
+						await client.SendDocumentAsync(message.Chat.Id, new Telegram.Bot.Types.InputFiles.InputOnlineFile(file, "TelegramBot.log"));
+					}
+					else
+					{
+						await TelegramService.SimpleReplyToMessage(message, "No log found");
 					}
 					break;
 				}
