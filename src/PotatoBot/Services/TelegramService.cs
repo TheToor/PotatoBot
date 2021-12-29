@@ -204,6 +204,11 @@ namespace PotatoBot.Services
 
 		internal async Task<Message> SimpleReplyToMessage(Message message, string text, ParseMode parseMode = ParseMode.MarkdownV2)
 		{
+			foreach(var character in _charactersToEscape)
+			{
+				text = text.Replace(character, $"\\{character}");
+			}
+
 			_logger.Trace($"Sending '{text}' to {message.From.Username}");
 
 			Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
