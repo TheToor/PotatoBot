@@ -204,9 +204,12 @@ namespace PotatoBot.Services
 
 		internal async Task<Message> SimpleReplyToMessage(Message message, string text, ParseMode parseMode = ParseMode.MarkdownV2)
 		{
-			foreach(var character in _charactersToEscape)
+			if(parseMode != ParseMode.Html)
 			{
-				text = text.Replace(character, $"\\{character}");
+				foreach(var character in _charactersToEscape)
+				{
+					text = text.Replace(character, $"\\{character}");
+				}
 			}
 
 			_logger.Trace($"Sending '{text}' to {message.From.Username}");
