@@ -101,7 +101,7 @@ namespace PotatoBot.Services
 					await Task.Delay(5000);
 
 					_logger.Trace("Starting ...");
-					_client.StartReceiving(new DefaultUpdateHandler(HandleUpdateAsync, HandleErrorAsync), _botCancellationTokenSource.Token);
+					_client.StartReceiving(HandleUpdateAsync, HandleErrorAsync, new ReceiverOptions(), _botCancellationTokenSource.Token);
 					_isReceiving = true;
 				});
 
@@ -202,7 +202,7 @@ namespace PotatoBot.Services
 			return _settings.Admins.Contains(message.From.Id);
 		}
 
-		internal async Task<Message> SimpleReplyToMessage(Message message, string text, ParseMode parseMode = ParseMode.Default)
+		internal async Task<Message> SimpleReplyToMessage(Message message, string text, ParseMode parseMode = ParseMode.MarkdownV2)
 		{
 			_logger.Trace($"Sending '{text}' to {message.From.Username}");
 
@@ -241,7 +241,7 @@ namespace PotatoBot.Services
 			CacheOrUpdate(sentMessage, data);
 			return sentMessage;
 		}
-		internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string text, IReplyMarkup markup, ParseMode parseMode = ParseMode.Default)
+		internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string text, IReplyMarkup markup, ParseMode parseMode = ParseMode.MarkdownV2)
 		{
 			Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
 			var sentMessage = await _client.SendTextMessageAsync(
