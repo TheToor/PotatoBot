@@ -178,7 +178,7 @@ namespace PotatoBot.Commands
 			}
 
 			var searchTypeString = searchType.ToString();
-			var queue = Program.ServiceManager.GetAllServices().Where(s => s is APIBase apiBase && apiBase.Type == searchType).Cast<APIBase>().SelectMany(s => s.GetQueue()).ToList();
+			var queue = Program.ServiceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == searchType).Cast<APIBase>().SelectMany(s => s.GetQueue()).ToList();
 
 			if(queue?.Count == 0)
 			{

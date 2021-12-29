@@ -5,6 +5,7 @@ namespace PotatoBot.Modals
 {
 	public interface IServarr
 	{
+		string Name { get; }
 		ServarrType Type { get; }
 
 		IEnumerable<IServarrItem> GetAll();

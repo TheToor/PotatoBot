@@ -4,15 +4,17 @@ using PotatoBot.Modals.API;
 using PotatoBot.Modals.API.Radarr;
 using PotatoBot.Modals.API.Requests;
 using PotatoBot.Modals.API.Requests.POST;
+using PotatoBot.Modals.API.Servarr;
 using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PotatoBot.Services
 {
-	public class RadarrService : APIBase, IService, IServarr
+	public class RadarrService : APIBase, IService, IServarr, IServarrSupportsDiscovery
 	{
-		public override ServarrType Type => ServarrType.Radarr;
+		public ServarrType Type => ServarrType.Radarr;
 
 		private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -100,6 +102,21 @@ namespace PotatoBot.Services
 				list.Add(record);
 			}
 			return list;
+		}
+
+		public IEnumerable<IServarrItem> GetDiscoveryQueue()
+		{
+			_logger.Trace("Fetching discovery queue");
+
+			var response = GetRequest<List<Movie>>(APIEndPoints.RadarrEndpoints.ImportList, new ImportList());
+			if(response != null)
+			{
+				_logger.Trace($"Fetched {response.Count} movies as response. Filtering");
+				var filtered = response.Where(m => !m.IsExcluded && !m.IsExisting && m.IsRecommendation);
+				_logger.Trace($"Returning {filtered.Count()} filtered movies");
+				return filtered;
+			}
+			return null;
 		}
 	}
 }

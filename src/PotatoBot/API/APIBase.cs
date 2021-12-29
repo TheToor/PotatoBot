@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using PotatoBot.Modals;
 using PotatoBot.Modals.API;
 using PotatoBot.Modals.API.Requests;
 using PotatoBot.Modals.API.Requests.DELETE;
@@ -18,7 +17,6 @@ namespace PotatoBot.API
 	{
 		public string Name => _settings.Name ?? "Unknown";
 		public EntertainmentSettings Settings => _settings;
-		public abstract ServarrType Type { get; }
 
 		private readonly EntertainmentSettings _settings;
 		private readonly string _apiUrl;

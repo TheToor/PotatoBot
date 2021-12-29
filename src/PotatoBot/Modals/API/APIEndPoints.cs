@@ -14,6 +14,8 @@
 			public const string Profile = "profile";
 			public const string Movie = "movie";
 			public const string Lookup = "movie/lookup";
+
+			public const string ImportList = "importlist/movie";
 		}
 
 		public static class SonarrEndpoints

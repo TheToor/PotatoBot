@@ -277,7 +277,7 @@ namespace PotatoBot.Services
 			cache.PageItemList = list;
 			cache.PageSelectionFunction = selectionFunction;
 
-			await UpdatePageination(message.ReplyToMessage, true);
+			await UpdatePageination(message.ReplyToMessage ?? message, true);
 		}
 
 		internal IServarrItem GetPageinationResult(Message message, int selectedIndex)
@@ -536,10 +536,16 @@ namespace PotatoBot.Services
 			}
 		}
 
-		internal static List<List<InlineKeyboardButton>> GetDefaultEntertainmentInlineKeyboardButtons()
+		internal static List<List<InlineKeyboardButton>> GetDefaultEntertainmentInlineKeyboardButtons(bool supportDiscovery = false)
 		{
 			var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-			if(Program.ServiceManager.Radarr?.Count > 0)
+			var allowedServices = Program.ServiceManager.GetAllServices().Where(s => (s as IServarr) is not null);
+			if(supportDiscovery)
+			{
+				allowedServices = allowedServices.Where(s => (s as IServarrSupportsDiscovery) is not null);
+			}
+
+			if(Program.ServiceManager.Radarr?.Count > 0 && Program.ServiceManager.Radarr.Any((s) => allowedServices.Contains(s)))
 			{
 				keyboardMarkup.Add(new List<InlineKeyboardButton>
 				{
@@ -547,7 +553,7 @@ namespace PotatoBot.Services
 				});
 			}
 
-			if(Program.ServiceManager.Sonarr?.Count > 0)
+			if(Program.ServiceManager.Sonarr?.Count > 0 && Program.ServiceManager.Sonarr.Any((s) => allowedServices.Contains(s)))
 			{
 				keyboardMarkup.Add(new List<InlineKeyboardButton>
 				{
@@ -555,7 +561,7 @@ namespace PotatoBot.Services
 				});
 			}
 
-			if(Program.ServiceManager.Lidarr?.Count > 0)
+			if(Program.ServiceManager.Lidarr?.Count > 0 && Program.ServiceManager.Lidarr.Any((s) => allowedServices.Contains(s)))
 			{
 				keyboardMarkup.Add(new List<InlineKeyboardButton>
 				{

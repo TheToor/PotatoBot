@@ -1,5 +1,4 @@
-﻿using PotatoBot.API;
-using PotatoBot.Managers;
+﻿using PotatoBot.Managers;
 using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
@@ -14,7 +13,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PotatoBot.Commands
 {
-	[Command("search", Description = "Searched for new things to add")]
+	[Command("search", Description = "Search for new things to add")]
 	internal class SearchCommand : Service, ICommand, IReplyCallback, IQueryCallback
 	{
 		public string UniqueIdentifier => "search";
@@ -66,7 +65,7 @@ namespace PotatoBot.Commands
 
 			var title = Program.LanguageManager.GetTranslation("Commands", "Search", "Selection");
 			var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-			foreach(var service in Program.ServiceManager.GetAllServices().Where(s => s is APIBase apiBase && apiBase.Type == selectedSearch))
+			foreach(var service in Program.ServiceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == selectedSearch))
 			{
 				keyboardMarkup.Add(new List<InlineKeyboardButton>()
 				{
@@ -85,7 +84,7 @@ namespace PotatoBot.Commands
 		{
 			if(
 				Program.ServiceManager.GetAllServices().FirstOrDefault(s =>
-					 s is APIBase apiBase &&
+					 s is IServarr apiBase &&
 					 apiBase.Type == cacheData.SelectedSearch &&
 					 apiBase.Name == messageData
 				)

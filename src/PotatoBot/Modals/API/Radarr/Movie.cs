@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace PotatoBot.Modals.API.Radarr
 {
-	public class Movie : IServarrItem, IEqualityComparer<Movie>
+	public class Movie : IServarrItem, IDiscoveryItem, IEqualityComparer<Movie>
 	{
 		public int Id { get; set; }
 		// Radarr does not (yet?) have languge profiles. Language is specified inside the quality profile
@@ -41,6 +41,10 @@ namespace PotatoBot.Modals.API.Radarr
 		public DateTime Added { get; set; }
 		public Rating Ratings { get; set; }
 		public List<AlternativeTitle> AlternativeTitles { get; set; }
+
+		public bool IsExcluded { get; set; }
+		public bool IsExisting { get; set; }
+		public bool IsRecommendation { get; set; }
 
 		public bool Equals([AllowNull] Movie x, [AllowNull] Movie y)
 		{
@@ -79,14 +83,30 @@ namespace PotatoBot.Modals.API.Radarr
 
 		public string GetPosterUrl()
 		{
+			Image selectedImage = default;
+
 			if(Images.Count > 0)
 			{
 				if(Images.Any(i => i.CoverType == MediaCoverTypes.Poster))
 				{
-					return Images.FirstOrDefault(i => i.CoverType == MediaCoverTypes.Poster)?.RemoteUrl;
+					selectedImage = Images.FirstOrDefault(i => i.CoverType == MediaCoverTypes.Poster);
 				}
-				return Images.First().RemoteUrl;
+				selectedImage = Images.First();
 			}
+
+			if(selectedImage != null)
+			{
+				if(!string.IsNullOrEmpty(selectedImage.RemoteUrl))
+				{
+					return selectedImage.RemoteUrl;
+				}
+				else if(selectedImage.Url.StartsWith("http"))
+				{
+					// In case of discovery the remote url is stored in the url ??????????????????????????????
+					return selectedImage.Url;
+				}
+			}
+
 			return null;
 		}
 	}
