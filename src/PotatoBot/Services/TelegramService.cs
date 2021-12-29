@@ -444,6 +444,11 @@ namespace PotatoBot.Services
 				var keyboardMarkup = new InlineKeyboardMarkup(keyboardMarkupData);
 
 				var messageText = $"{cache.PageTitle}\n\n{text}";
+				if(messageText.Length >= 200)
+				{
+					messageText = $"{messageText.Substring(0, 190)} ...";
+				}
+
 				_logger.Trace($"Sending pageination ({messageText.Length})");
 
 				var posterUrl = page.Items[0].GetPosterUrl();
