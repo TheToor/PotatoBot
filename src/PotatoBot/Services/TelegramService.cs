@@ -18,897 +18,897 @@ using Telegram.Bot.Types.ReplyMarkups;
 namespace PotatoBot.Services
 {
     internal class TelegramService : IService
-	{
-		private const string PreviousData = "Previous";
-		private const string NextData = "Next";
-		private const string SelectData = "Select";
-		private const string DisabledData = "Disabled";
-		private const string CancelData = "Cancel";
-
-		private const string MissingImageUrl = "https://thetvdb.com/images/missing/movie.jpg";
-
-		private const ushort MaxMessageLength = 4096;
-
-		public string Name => "Telegram";
-
-		private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
-
-		private static TelegramSettings _settings => Program.Settings.Telegram;
-
-		private TelegramBotClient _client;
-
-		private CommandManager _commandManager;
-
-		// Thread lock for cache
-		private readonly object _cacheLock = new();
-		// Cache to store data "inside" of a telegram chat
-		private Dictionary<long, Cache> _cache = new();
-		// Timer to invalidate cache
-		private System.Timers.Timer _cacheTimer;
-		// Time until a message "expires" in hours
-		private readonly uint _cacheInvalidationTime = 24;
-
-		private static bool _isReceiving;
-		private readonly CancellationTokenSource _botCancellationTokenSource = new();
-
-		private readonly List<long> _users;
-
-		// Characters that need to be escaped with an \
-		private readonly string[] _charactersToEscape = new string[]
-		{
-			"_", /* "*",*/ "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"
-		};
-
-		internal TelegramService()
-		{
-			_users = _settings.Admins.Union(_settings.Users).ToList();
-		}
-
-		public bool Start()
-		{
-			try
-			{
-				_logger.Trace("Setting up bot ...");
-				_client = new TelegramBotClient(_settings.BotToken);
-
-				_logger.Trace("Getting bot information ...");
-				var info = _client.GetMeAsync().Result;
-				_logger.Info($"Connected as {info.FirstName} {info.LastName} ({info.Username})");
-
-				_logger.Trace("Initializing command manager ...");
-				_commandManager = new CommandManager();
-
-				_logger.Trace("Setting up telegram bot ...");
-				var commands = _commandManager.Commands
-					.Select((c) => new BotCommand()
-					{
-						Command = c.Name,
-						Description = c.Description
-					});
-				_client.SetMyCommandsAsync(commands);
-
-				_logger.Trace("Initializing cache ...");
-				_cacheTimer = new System.Timers.Timer(1000 * 60 * 60)
-				{
-					AutoReset = true
-				};
-				_cacheTimer.Elapsed += ValidateCache;
-				_cacheTimer.Start();
-
-				// Add additional delay before we start receiving
-				Task.Factory.StartNew(async () =>
-				{
-					await Task.Delay(5000);
-
-					_logger.Trace("Starting ...");
-					_client.StartReceiving(HandleUpdateAsync, HandleErrorAsync, new ReceiverOptions(), _botCancellationTokenSource.Token);
-					_isReceiving = true;
-				});
-
-				_logger.Info($"Successfully initialized {Name} Service");
-				return true;
-			}
-			catch(Exception ex)
-			{
-				_logger.Error(ex, $"Failed to start {Name} Service");
-				return false;
-			}
-		}
-
-		public bool Stop()
-		{
-			_isReceiving = false;
-			_cacheTimer.Stop();
-			_cacheTimer.Dispose();
-			_botCancellationTokenSource.Cancel();
-			return true;
-		}
-
-		internal async Task SendSimpleMessage(ChatId chatId, string message, ParseMode parseMode, bool disableNotification = false)
-		{
-			if(message.Length > MaxMessageLength)
-			{
-				var messages = SplitMessage(message);
-
-				foreach(var splittedMessage in messages)
-				{
-					await _client.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
-				}
-			}
-			else
-			{
-				await _client.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
-			}
-		}
-
-		private static List<string> SplitMessage(string message)
-		{
-			var messages = new List<string>();
-
-			for(int i = MaxMessageLength; i > 0; i--)
-			{
-				if(message[i] == '\n')
-				{
-					// Split by EOL
-					messages.Add(message.Substring(0, i));
-					// Remove splitted message from message
-					message = message.Substring(i, message.Length - i);
-					// Reset the loop
-					i = message.Length > MaxMessageLength ? MaxMessageLength : message.Length;
-
-					if(message.Length == 0)
-					{
-						// End loop if we "packed" all messages
-						break;
-					}
-				}
-			}
-
-			return messages;
-		}
-
-		internal async Task SendToAll(string message, bool silent = true)
-		{
-			foreach(var chat in _users)
-			{
-				Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-				await _client.SendTextMessageAsync(chat, message, ParseMode.Html, disableNotification: silent);
-			}
-		}
-
-		internal async Task SendToAdmin(string message)
-		{
-			if(!_isReceiving)
-			{
-				return;
-			}
-
-			foreach(var character in _charactersToEscape)
-			{
-				message = message.Replace(character, $"\\{character}");
-			}
-
-			_logger.Trace($"Sending '{message}' to admins");
-
-			foreach(var chat in _settings.Admins)
-			{
-				Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-				await _client.SendTextMessageAsync(chat, message, ParseMode.MarkdownV2);
-			}
-		}
-
-		internal static bool IsFromAdmin(Message message)
-		{
-			return _settings.Admins.Contains(message.From.Id);
-		}
-
-		internal async Task<Message> SimpleReplyToMessage(Message message, string text, ParseMode parseMode = ParseMode.MarkdownV2)
-		{
-			if(parseMode != ParseMode.Html)
-			{
-				foreach(var character in _charactersToEscape)
-				{
-					text = text.Replace(character, $"\\{character}");
-				}
-			}
-
-			_logger.Trace($"Sending '{text}' to {message.From.Username}");
-
-			Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-			return await _client.SendTextMessageAsync(message.Chat, text, replyToMessageId: message.MessageId, parseMode: parseMode);
-		}
-
-		internal async Task<Message> ForceReply(IReplyCallback caller, Message message, string title)
-		{
-			var cache = GetCache(message);
-			cache.ForceReply = true;
-			cache.ForceReplyInstance = caller;
-
-			Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-			var sentMessage = await _client.SendTextMessageAsync(message.Chat.Id, title, replyMarkup: new ForceReplyMarkup());
-			cache.MessageId = sentMessage.MessageId;
-
-			if(message.From.IsBot)
-			{
-				await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-			}
-
-			_logger.Trace($"[{sentMessage.MessageId}] {message.Chat.Username}: {title}");
-
-			return sentMessage;
-		}
-
-		internal async Task<Message> ReplyWithMarkupAndData(IQueryCallback caller, Message message, string title, IReplyMarkup markup, IData data)
-		{
-			if(message.From.IsBot)
-			{
-				await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-			}
-
-			var sentMessage = await ReplyWithMarkup(caller, message, title, markup);
-			CacheOrUpdate(sentMessage, data);
-			return sentMessage;
-		}
-		internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string text, IReplyMarkup markup, ParseMode parseMode = ParseMode.MarkdownV2)
-		{
-			Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-			var sentMessage = await _client.SendTextMessageAsync(
-				chatId: message.Chat,
-				text: text,
-				replyMarkup: markup,
-				replyToMessageId: message.From.IsBot ? 0 : message.MessageId,
-				parseMode: parseMode
-			);
-			var cache = GetCache(sentMessage);
-			cache.QueryCallbackInstance = caller;
-			return sentMessage;
-		}
-
-		internal async Task ReplyWithPageination(
-			Message message,
-			string title,
-			IEnumerable<IServarrItem> list,
-			Func<TelegramBotClient, Message, int, Task<bool>> selectionFunction
-		)
-		{
-			_logger.Trace($"Starting pageination for message {message.MessageId} in chat {message.Chat.Id}");
-
-			var cache = GetCache(message);
-
-			_logger.Trace("Preparing page ...");
-			cache.PageTitle = title;
-			cache.Page = 0;
-			if(Program.Settings.AddPicturesToSearch)
-			{
-				cache.PageSize = 1;
-			}
-			cache.PageItemList = list;
-			cache.PageSelectionFunction = selectionFunction;
-
-			await UpdatePageination(message.ReplyToMessage ?? message, true);
-		}
-
-		internal IServarrItem GetPageinationResult(Message message, int selectedIndex)
-		{
-			var cache = GetCache(message);
-
-			if(cache.PageItemList == null)
-			{
-				return default;
-			}
-
-			var page = cache.PageItemList.TakePaged(cache.Page, cache.PageSize);
-			if(selectedIndex < 0 || selectedIndex >= page.Items.Count)
-			{
-				return default;
-			}
-
-			return page.Items[selectedIndex];
-		}
-
-		internal async Task UpdatePageination(Message message, bool create = false)
-		{
-			_logger.Trace($"Updating pageination of message {message.MessageId}");
-
-			var cache = GetCache(message);
-			var page = cache.PageItemList.TakePaged(cache.Page, cache.PageSize);
-
-			_logger.Trace("Building button layout ...");
-
-			var keyboardMarkupData = new List<List<InlineKeyboardButton>>();
-			if(!Program.Settings.AddPicturesToSearch)
-			{
-				var text = string.Empty;
-				for(var i = 0; i < page.Items.Count; i++)
-				{
-					text += $"<b>{i + 1}:</b> " + page.Items[i].PageTitle;
-				}
-
-				// Selection buttons
-				var firstRow = new List<InlineKeyboardButton>();
-				for(var i = 0; i < page.Items.Count; i++)
-				{
-					firstRow.Add(InlineKeyboardButton.WithCallbackData($"Add {i + 1}", $"{SelectData}{i}"));
-				}
-
-				if(page.Items.Count != cache.PageSize)
-				{
-					// Add filler buttons if required
-					for(var i = page.Items.Count; i < cache.PageSize; i++)
-					{
-						firstRow.Add(InlineKeyboardButton.WithCallbackData($" ", $"{DisabledData}"));
-					}
-				}
-
-				// Prev/Next buttons
-				var secondRow = new List<InlineKeyboardButton>();
-				if(page.PreviousPossible)
-				{
-					secondRow.Add(InlineKeyboardButton.WithCallbackData("<<", PreviousData));
-				}
-				else if(page.NextPossible)
-				{
-					// If next is possible add a spacing button
-					secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
-				}
-
-				if(page.NextPossible)
-				{
-					secondRow.Add(InlineKeyboardButton.WithCallbackData(">>", NextData));
-				}
-				else if(page.PreviousPossible)
-				{
-					// if previous is possbile add a spacing button
-					secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
-				}
-
-				var thirdRow = new List<InlineKeyboardButton>
-				{
-					InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
-				};
-
-				keyboardMarkupData.Add(firstRow);
-				keyboardMarkupData.Add(secondRow);
-				keyboardMarkupData.Add(thirdRow);
-
-				var keyboardMarkup = new InlineKeyboardMarkup(keyboardMarkupData);
-
-				var messageText = $"{cache.PageTitle}\n\n{text}";
-				_logger.Trace($"Sending pageination ({messageText.Length})");
-
-				if(create)
-				{
-					Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-					var sentMessage = await _client.SendTextMessageAsync(
-						chatId: message.Chat.Id,
-						text: messageText,
-						parseMode: ParseMode.Html,
-						replyMarkup: keyboardMarkup
-					);
-					cache.MessageId = sentMessage.MessageId;
-					_logger.Trace($"Sent pagination with message id {sentMessage.MessageId}");
-				}
-				else
-				{
-					await _client.EditMessageTextAsync(
-						chatId: message.Chat.Id,
-						messageId: message.MessageId,
-						text: messageText,
-						parseMode: ParseMode.Html
-					);
-					await _client.EditMessageReplyMarkupAsync(
-						chatId: message.Chat.Id,
-						messageId: message.MessageId,
-						replyMarkup: keyboardMarkup
-					);
-					_logger.Trace($"Updated pagination with message id {message.MessageId}");
-				}
-			}
-			else
-			{
-				var text = page.Items[0].PageTitle;
-
-				// Selection buttons
-				var firstRow = new List<InlineKeyboardButton>();
-
-				// Prev button
-				if(page.PreviousPossible)
-				{
-					firstRow.Add(InlineKeyboardButton.WithCallbackData("Prev", PreviousData));
-				}
-				else if(page.NextPossible)
-				{
-					// If next is possible add a spacing button
-					firstRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
-				}
-
-				// Middle add button
-				firstRow.Add(InlineKeyboardButton.WithCallbackData($"Add", $"{SelectData}{0}"));
-
-				// Next button
-				if(page.NextPossible)
-				{
-					firstRow.Add(InlineKeyboardButton.WithCallbackData("Next", NextData));
-				}
-				else if(page.PreviousPossible)
-				{
-					// if previous is possbile add a spacing button
-					firstRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
-				}
-
-				var secondRow = new List<InlineKeyboardButton>
-				{
-					InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
-				};
-
-				keyboardMarkupData.Add(firstRow);
-				keyboardMarkupData.Add(secondRow);
-
-				var keyboardMarkup = new InlineKeyboardMarkup(keyboardMarkupData);
-
-				var messageText = $"{cache.PageTitle}\n\n{text}";
-				if(messageText.Length >= 200)
-				{
-					messageText = $"{messageText.Substring(0, 190)} ...";
-				}
-
-				_logger.Trace($"Sending pageination ({messageText.Length})");
-
-				var posterUrl = page.Items[0].GetPosterUrl();
-				if(create)
-				{
-					Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-
-					Message sentMessage;
-					if(string.IsNullOrEmpty(posterUrl))
-					{
-						sentMessage = await _client.SendPhotoAsync(
-							chatId: message.Chat.Id,
-							photo: MissingImageUrl,
-							parseMode: ParseMode.Html,
-							caption: messageText,
-							replyMarkup: keyboardMarkup
-						);
-					}
-					else
-					{
-						try
-						{
-							sentMessage = await _client.SendPhotoAsync(
-								chatId: message.Chat.Id,
-								photo: page.Items[0].GetPosterUrl(),
-								parseMode: ParseMode.Html,
-								caption: messageText,
-								replyMarkup: keyboardMarkup
-							);
-						}
-						catch (Exception)
-						{
-							sentMessage = await _client.SendPhotoAsync(
-								chatId: message.Chat.Id,
-								photo: MissingImageUrl,
-								parseMode: ParseMode.Html,
-								caption: messageText,
-								replyMarkup: keyboardMarkup
-							);
-						}
-					}
-
-					cache.MessageId = sentMessage.MessageId;
-					_logger.Trace($"Sent pagination with message id {sentMessage.MessageId}");
-				}
-				else
-				{
-					try
-					{
-						await _client.EditMessageMediaAsync(
-							chatId: message.Chat.Id,
-							messageId: message.MessageId,
-							media: new InputMediaPhoto(new InputMedia(posterUrl ?? MissingImageUrl))
-						);
-					}
-					catch (Exception)
-					{
-						await _client.EditMessageMediaAsync(
-							chatId: message.Chat.Id,
-							messageId: message.MessageId,
-							media: new InputMediaPhoto(new InputMedia(MissingImageUrl))
-						);
-					}
-
-					await _client.EditMessageCaptionAsync(
-						chatId: message.Chat.Id,
-						messageId: message.MessageId,
-						caption: messageText,
-						parseMode: ParseMode.Html
-					);
-
-					await _client.EditMessageReplyMarkupAsync(
-						chatId: message.Chat.Id,
-						messageId: message.MessageId,
-						replyMarkup: keyboardMarkup
-					);
-
-					_logger.Trace($"Updated pagination with message id {message.MessageId}");
-				}
-			}
-		}
-
-		internal T GetCachedData<T>(Message message) where T : IData
-		{
-			lock(_cacheLock)
-			{
-				if(_cache.ContainsKey(message.Chat.Id))
-				{
-					var cache = _cache[message.Chat.Id];
-					cache.LastAccessed = DateTime.Now;
-					return (T)cache.Data;
-				}
-
-				return default;
-			}
-		}
-
-		internal static List<List<InlineKeyboardButton>> GetDefaultEntertainmentInlineKeyboardButtons(bool supportDiscovery = false)
-		{
-			var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-			var allowedServices = Program.ServiceManager.GetAllServices().Where(s => (s as IServarr) is not null);
-			if(supportDiscovery)
-			{
-				allowedServices = allowedServices.Where(s => (s as IServarrSupportsDiscovery) is not null);
-			}
-
-			if(Program.ServiceManager.Radarr?.Count > 0 && Program.ServiceManager.Radarr.Any((s) => allowedServices.Contains(s)))
-			{
-				keyboardMarkup.Add(new List<InlineKeyboardButton>
-				{
-					InlineKeyboardButton.WithCallbackData("Movies", $"{(int)ServarrType.Radarr}")
-				});
-			}
-
-			if(Program.ServiceManager.Sonarr?.Count > 0 && Program.ServiceManager.Sonarr.Any((s) => allowedServices.Contains(s)))
-			{
-				keyboardMarkup.Add(new List<InlineKeyboardButton>
-				{
-					InlineKeyboardButton.WithCallbackData("Series", $"{(int)ServarrType.Sonarr}")
-				});
-			}
-
-			if(Program.ServiceManager.Lidarr?.Count > 0 && Program.ServiceManager.Lidarr.Any((s) => allowedServices.Contains(s)))
-			{
-				keyboardMarkup.Add(new List<InlineKeyboardButton>
-				{
-					InlineKeyboardButton.WithCallbackData("Artists", $"{(int)ServarrType.Lidarr}")
-				});
-			}
-			return keyboardMarkup;
-		}
-
-		internal Cache GetCache(Message message)
-		{
-			lock(_cacheLock)
-			{
-				if(_cache.ContainsKey(message.Chat.Id))
-				{
-					var cache = _cache[message.Chat.Id];
-					cache.LastAccessed = DateTime.Now;
-					return cache;
-				}
-				else
-				{
-					var cache = new Cache()
-					{
-						ChatId = message.Chat.Id,
-						MessageId = message.MessageId,
-					};
-					_cache.Add(message.Chat.Id, cache);
-					return cache;
-				}
-			}
-		}
-
-		private void CacheOrUpdate(Message message, IData data)
-		{
-			lock(_cacheLock)
-			{
-				if(_cache.ContainsKey(message.Chat.Id))
-				{
-					var cache = _cache[message.Chat.Id];
-					cache.Data = data;
-					cache.ChatId = message.Chat.Id;
-					cache.MessageId = message.MessageId;
-
-					cache.LastAccessed = DateTime.Now;
-				}
-				else
-				{
-					_cache.Add(message.Chat.Id, new Cache
-					{
-						Data = data,
-						ChatId = message.Chat.Id,
-						MessageId = message.MessageId
-					});
-				}
-			}
-		}
-
-		private void ValidateCache(object sender, System.Timers.ElapsedEventArgs e)
-		{
-			_logger.Trace("Validating cache ...");
-
-			lock(_cacheLock)
-			{
-				var newCachedRequired = false;
-				var newCache = new Dictionary<long, Cache>();
-				foreach(var cacheItem in _cache)
-				{
-					var key = cacheItem.Key;
-					var value = cacheItem.Value;
-
-					if(value.LastAccessed.AddHours(_cacheInvalidationTime) < DateTime.Now)
-					{
-						// Item is expired
-						newCachedRequired = true;
-						// Delete message since the data is gone so it shouldn't be used anymore
-						_client.DeleteMessageAsync(value.ChatId, value.MessageId);
-						continue;
-					}
-
-					newCache.Add(key, value);
-				}
-
-				if(newCachedRequired)
-				{
-					_cache = newCache;
-				}
-			}
-		}
-
-		private static bool IsValidUser(long userId)
-		{
-			if(_settings.Users.Contains(userId) || _settings.Admins.Contains(userId))
-			{
-				return true;
-			}
-			return false;
-		}
-
-		private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
-		{
-			var handler = update.Type switch
-			{
-				UpdateType.Message => OnNewMessage(update.Message),
-				UpdateType.CallbackQuery => OnCallbackQueryReceived(update.CallbackQuery),
-				_ => HandleUnknownUpdate(update)
-			};
-
-			try
-			{
-				await handler;
-			}
-			catch(Exception ex)
-			{
-				await HandleErrorAsync(botClient, ex, cancellationToken);
-			}
-		}
+    {
+        private const string PreviousData = "Previous";
+        private const string NextData = "Next";
+        private const string SelectData = "Select";
+        private const string DisabledData = "Disabled";
+        private const string CancelData = "Cancel";
+
+        private const string MissingImageUrl = "https://thetvdb.com/images/missing/movie.jpg";
+
+        private const ushort MaxMessageLength = 4096;
+
+        public string Name => "Telegram";
+
+        private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+
+        private static TelegramSettings _settings => Program.Settings.Telegram;
+
+        private TelegramBotClient _client;
+
+        private CommandManager _commandManager;
+
+        // Thread lock for cache
+        private readonly object _cacheLock = new();
+        // Cache to store data "inside" of a telegram chat
+        private Dictionary<long, Cache> _cache = new();
+        // Timer to invalidate cache
+        private System.Timers.Timer _cacheTimer;
+        // Time until a message "expires" in hours
+        private readonly uint _cacheInvalidationTime = 24;
+
+        private static bool _isReceiving;
+        private readonly CancellationTokenSource _botCancellationTokenSource = new();
+
+        private readonly List<long> _users;
+
+        // Characters that need to be escaped with an \
+        private readonly string[] _charactersToEscape = new string[]
+        {
+            "_", /* "*",*/ "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"
+        };
+
+        internal TelegramService()
+        {
+            _users = _settings.Admins.Union(_settings.Users).ToList();
+        }
+
+        public bool Start()
+        {
+            try
+            {
+                _logger.Trace("Setting up bot ...");
+                _client = new TelegramBotClient(_settings.BotToken);
+
+                _logger.Trace("Getting bot information ...");
+                var info = _client.GetMeAsync().Result;
+                _logger.Info($"Connected as {info.FirstName} {info.LastName} ({info.Username})");
+
+                _logger.Trace("Initializing command manager ...");
+                _commandManager = new CommandManager();
+
+                _logger.Trace("Setting up telegram bot ...");
+                var commands = _commandManager.Commands
+                    .Select((c) => new BotCommand()
+                    {
+                        Command = c.Name,
+                        Description = c.Description
+                    });
+                _client.SetMyCommandsAsync(commands);
+
+                _logger.Trace("Initializing cache ...");
+                _cacheTimer = new System.Timers.Timer(1000 * 60 * 60)
+                {
+                    AutoReset = true
+                };
+                _cacheTimer.Elapsed += ValidateCache;
+                _cacheTimer.Start();
+
+                // Add additional delay before we start receiving
+                Task.Factory.StartNew(async () =>
+                {
+                    await Task.Delay(5000);
+
+                    _logger.Trace("Starting ...");
+                    _client.StartReceiving(HandleUpdateAsync, HandleErrorAsync, new ReceiverOptions(), _botCancellationTokenSource.Token);
+                    _isReceiving = true;
+                });
+
+                _logger.Info($"Successfully initialized {Name} Service");
+                return true;
+            }
+            catch(Exception ex)
+            {
+                _logger.Error(ex, $"Failed to start {Name} Service");
+                return false;
+            }
+        }
+
+        public bool Stop()
+        {
+            _isReceiving = false;
+            _cacheTimer.Stop();
+            _cacheTimer.Dispose();
+            _botCancellationTokenSource.Cancel();
+            return true;
+        }
+
+        internal async Task SendSimpleMessage(ChatId chatId, string message, ParseMode parseMode, bool disableNotification = false)
+        {
+            if(message.Length > MaxMessageLength)
+            {
+                var messages = SplitMessage(message);
+
+                foreach(var splittedMessage in messages)
+                {
+                    await _client.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
+                }
+            }
+            else
+            {
+                await _client.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
+            }
+        }
+
+        private static List<string> SplitMessage(string message)
+        {
+            var messages = new List<string>();
+
+            for(int i = MaxMessageLength; i > 0; i--)
+            {
+                if(message[i] == '\n')
+                {
+                    // Split by EOL
+                    messages.Add(message.Substring(0, i));
+                    // Remove splitted message from message
+                    message = message.Substring(i, message.Length - i);
+                    // Reset the loop
+                    i = message.Length > MaxMessageLength ? MaxMessageLength : message.Length;
+
+                    if(message.Length == 0)
+                    {
+                        // End loop if we "packed" all messages
+                        break;
+                    }
+                }
+            }
+
+            return messages;
+        }
+
+        internal async Task SendToAll(string message, bool silent = true)
+        {
+            foreach(var chat in _users)
+            {
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                await _client.SendTextMessageAsync(chat, message, ParseMode.Html, disableNotification: silent);
+            }
+        }
+
+        internal async Task SendToAdmin(string message)
+        {
+            if(!_isReceiving)
+            {
+                return;
+            }
+
+            foreach(var character in _charactersToEscape)
+            {
+                message = message.Replace(character, $"\\{character}");
+            }
+
+            _logger.Trace($"Sending '{message}' to admins");
+
+            foreach(var chat in _settings.Admins)
+            {
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                await _client.SendTextMessageAsync(chat, message, ParseMode.MarkdownV2);
+            }
+        }
+
+        internal static bool IsFromAdmin(Message message)
+        {
+            return _settings.Admins.Contains(message.From.Id);
+        }
+
+        internal async Task<Message> SimpleReplyToMessage(Message message, string text, ParseMode parseMode = ParseMode.MarkdownV2)
+        {
+            if(parseMode != ParseMode.Html)
+            {
+                foreach(var character in _charactersToEscape)
+                {
+                    text = text.Replace(character, $"\\{character}");
+                }
+            }
+
+            _logger.Trace($"Sending '{text}' to {message.From.Username}");
+
+            Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+            return await _client.SendTextMessageAsync(message.Chat, text, replyToMessageId: message.MessageId, parseMode: parseMode);
+        }
+
+        internal async Task<Message> ForceReply(IReplyCallback caller, Message message, string title)
+        {
+            var cache = GetCache(message);
+            cache.ForceReply = true;
+            cache.ForceReplyInstance = caller;
+
+            Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+            var sentMessage = await _client.SendTextMessageAsync(message.Chat.Id, title, replyMarkup: new ForceReplyMarkup());
+            cache.MessageId = sentMessage.MessageId;
+
+            if(message.From.IsBot)
+            {
+                await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+            }
+
+            _logger.Trace($"[{sentMessage.MessageId}] {message.Chat.Username}: {title}");
+
+            return sentMessage;
+        }
+
+        internal async Task<Message> ReplyWithMarkupAndData(IQueryCallback caller, Message message, string title, IReplyMarkup markup, IData data)
+        {
+            if(message.From.IsBot)
+            {
+                await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+            }
+
+            var sentMessage = await ReplyWithMarkup(caller, message, title, markup);
+            CacheOrUpdate(sentMessage, data);
+            return sentMessage;
+        }
+        internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string text, IReplyMarkup markup, ParseMode parseMode = ParseMode.MarkdownV2)
+        {
+            Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+            var sentMessage = await _client.SendTextMessageAsync(
+                chatId: message.Chat,
+                text: text,
+                replyMarkup: markup,
+                replyToMessageId: message.From.IsBot ? 0 : message.MessageId,
+                parseMode: parseMode
+            );
+            var cache = GetCache(sentMessage);
+            cache.QueryCallbackInstance = caller;
+            return sentMessage;
+        }
+
+        internal async Task ReplyWithPageination(
+            Message message,
+            string title,
+            IEnumerable<IServarrItem> list,
+            Func<TelegramBotClient, Message, int, Task<bool>> selectionFunction
+        )
+        {
+            _logger.Trace($"Starting pageination for message {message.MessageId} in chat {message.Chat.Id}");
+
+            var cache = GetCache(message);
+
+            _logger.Trace("Preparing page ...");
+            cache.PageTitle = title;
+            cache.Page = 0;
+            if(Program.Settings.AddPicturesToSearch)
+            {
+                cache.PageSize = 1;
+            }
+            cache.PageItemList = list;
+            cache.PageSelectionFunction = selectionFunction;
+
+            await UpdatePageination(message.ReplyToMessage ?? message, true);
+        }
+
+        internal IServarrItem GetPageinationResult(Message message, int selectedIndex)
+        {
+            var cache = GetCache(message);
+
+            if(cache.PageItemList == null)
+            {
+                return default;
+            }
+
+            var page = cache.PageItemList.TakePaged(cache.Page, cache.PageSize);
+            if(selectedIndex < 0 || selectedIndex >= page.Items.Count)
+            {
+                return default;
+            }
+
+            return page.Items[selectedIndex];
+        }
+
+        internal async Task UpdatePageination(Message message, bool create = false)
+        {
+            _logger.Trace($"Updating pageination of message {message.MessageId}");
+
+            var cache = GetCache(message);
+            var page = cache.PageItemList.TakePaged(cache.Page, cache.PageSize);
+
+            _logger.Trace("Building button layout ...");
+
+            var keyboardMarkupData = new List<List<InlineKeyboardButton>>();
+            if(!Program.Settings.AddPicturesToSearch)
+            {
+                var text = string.Empty;
+                for(var i = 0; i < page.Items.Count; i++)
+                {
+                    text += $"<b>{i + 1}:</b> " + page.Items[i].PageTitle;
+                }
+
+                // Selection buttons
+                var firstRow = new List<InlineKeyboardButton>();
+                for(var i = 0; i < page.Items.Count; i++)
+                {
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData($"Add {i + 1}", $"{SelectData}{i}"));
+                }
+
+                if(page.Items.Count != cache.PageSize)
+                {
+                    // Add filler buttons if required
+                    for(var i = page.Items.Count; i < cache.PageSize; i++)
+                    {
+                        firstRow.Add(InlineKeyboardButton.WithCallbackData($" ", $"{DisabledData}"));
+                    }
+                }
+
+                // Prev/Next buttons
+                var secondRow = new List<InlineKeyboardButton>();
+                if(page.PreviousPossible)
+                {
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData("<<", PreviousData));
+                }
+                else if(page.NextPossible)
+                {
+                    // If next is possible add a spacing button
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                }
+
+                if(page.NextPossible)
+                {
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData(">>", NextData));
+                }
+                else if(page.PreviousPossible)
+                {
+                    // if previous is possbile add a spacing button
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                }
+
+                var thirdRow = new List<InlineKeyboardButton>
+                {
+                    InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
+                };
+
+                keyboardMarkupData.Add(firstRow);
+                keyboardMarkupData.Add(secondRow);
+                keyboardMarkupData.Add(thirdRow);
+
+                var keyboardMarkup = new InlineKeyboardMarkup(keyboardMarkupData);
+
+                var messageText = $"{cache.PageTitle}\n\n{text}";
+                _logger.Trace($"Sending pageination ({messageText.Length})");
+
+                if(create)
+                {
+                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                    var sentMessage = await _client.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: messageText,
+                        parseMode: ParseMode.Html,
+                        replyMarkup: keyboardMarkup
+                    );
+                    cache.MessageId = sentMessage.MessageId;
+                    _logger.Trace($"Sent pagination with message id {sentMessage.MessageId}");
+                }
+                else
+                {
+                    await _client.EditMessageTextAsync(
+                        chatId: message.Chat.Id,
+                        messageId: message.MessageId,
+                        text: messageText,
+                        parseMode: ParseMode.Html
+                    );
+                    await _client.EditMessageReplyMarkupAsync(
+                        chatId: message.Chat.Id,
+                        messageId: message.MessageId,
+                        replyMarkup: keyboardMarkup
+                    );
+                    _logger.Trace($"Updated pagination with message id {message.MessageId}");
+                }
+            }
+            else
+            {
+                var text = page.Items[0].PageTitle;
+
+                // Selection buttons
+                var firstRow = new List<InlineKeyboardButton>();
+
+                // Prev button
+                if(page.PreviousPossible)
+                {
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData("Prev", PreviousData));
+                }
+                else if(page.NextPossible)
+                {
+                    // If next is possible add a spacing button
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                }
+
+                // Middle add button
+                firstRow.Add(InlineKeyboardButton.WithCallbackData($"Add", $"{SelectData}{0}"));
+
+                // Next button
+                if(page.NextPossible)
+                {
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData("Next", NextData));
+                }
+                else if(page.PreviousPossible)
+                {
+                    // if previous is possbile add a spacing button
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                }
+
+                var secondRow = new List<InlineKeyboardButton>
+                {
+                    InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
+                };
+
+                keyboardMarkupData.Add(firstRow);
+                keyboardMarkupData.Add(secondRow);
+
+                var keyboardMarkup = new InlineKeyboardMarkup(keyboardMarkupData);
+
+                var messageText = $"{cache.PageTitle}\n\n{text}";
+                if(messageText.Length >= 200)
+                {
+                    messageText = $"{messageText.Substring(0, 190)} ...";
+                }
+
+                _logger.Trace($"Sending pageination ({messageText.Length})");
+
+                var posterUrl = page.Items[0].GetPosterUrl();
+                if(create)
+                {
+                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+
+                    Message sentMessage;
+                    if(string.IsNullOrEmpty(posterUrl))
+                    {
+                        sentMessage = await _client.SendPhotoAsync(
+                            chatId: message.Chat.Id,
+                            photo: MissingImageUrl,
+                            parseMode: ParseMode.Html,
+                            caption: messageText,
+                            replyMarkup: keyboardMarkup
+                        );
+                    }
+                    else
+                    {
+                        try
+                        {
+                            sentMessage = await _client.SendPhotoAsync(
+                                chatId: message.Chat.Id,
+                                photo: page.Items[0].GetPosterUrl(),
+                                parseMode: ParseMode.Html,
+                                caption: messageText,
+                                replyMarkup: keyboardMarkup
+                            );
+                        }
+                        catch(Exception)
+                        {
+                            sentMessage = await _client.SendPhotoAsync(
+                                chatId: message.Chat.Id,
+                                photo: MissingImageUrl,
+                                parseMode: ParseMode.Html,
+                                caption: messageText,
+                                replyMarkup: keyboardMarkup
+                            );
+                        }
+                    }
+
+                    cache.MessageId = sentMessage.MessageId;
+                    _logger.Trace($"Sent pagination with message id {sentMessage.MessageId}");
+                }
+                else
+                {
+                    try
+                    {
+                        await _client.EditMessageMediaAsync(
+                            chatId: message.Chat.Id,
+                            messageId: message.MessageId,
+                            media: new InputMediaPhoto(new InputMedia(posterUrl ?? MissingImageUrl))
+                        );
+                    }
+                    catch(Exception)
+                    {
+                        await _client.EditMessageMediaAsync(
+                            chatId: message.Chat.Id,
+                            messageId: message.MessageId,
+                            media: new InputMediaPhoto(new InputMedia(MissingImageUrl))
+                        );
+                    }
+
+                    await _client.EditMessageCaptionAsync(
+                        chatId: message.Chat.Id,
+                        messageId: message.MessageId,
+                        caption: messageText,
+                        parseMode: ParseMode.Html
+                    );
+
+                    await _client.EditMessageReplyMarkupAsync(
+                        chatId: message.Chat.Id,
+                        messageId: message.MessageId,
+                        replyMarkup: keyboardMarkup
+                    );
+
+                    _logger.Trace($"Updated pagination with message id {message.MessageId}");
+                }
+            }
+        }
+
+        internal T GetCachedData<T>(Message message) where T : IData
+        {
+            lock(_cacheLock)
+            {
+                if(_cache.ContainsKey(message.Chat.Id))
+                {
+                    var cache = _cache[message.Chat.Id];
+                    cache.LastAccessed = DateTime.Now;
+                    return (T)cache.Data;
+                }
+
+                return default;
+            }
+        }
+
+        internal static List<List<InlineKeyboardButton>> GetDefaultEntertainmentInlineKeyboardButtons(bool supportDiscovery = false)
+        {
+            var keyboardMarkup = new List<List<InlineKeyboardButton>>();
+            var allowedServices = Program.ServiceManager.GetAllServices().Where(s => (s as IServarr) is not null);
+            if(supportDiscovery)
+            {
+                allowedServices = allowedServices.Where(s => (s as IServarrSupportsDiscovery) is not null);
+            }
+
+            if(Program.ServiceManager.Radarr?.Count > 0 && Program.ServiceManager.Radarr.Any((s) => allowedServices.Contains(s)))
+            {
+                keyboardMarkup.Add(new List<InlineKeyboardButton>
+                {
+                    InlineKeyboardButton.WithCallbackData("Movies", $"{(int)ServarrType.Radarr}")
+                });
+            }
+
+            if(Program.ServiceManager.Sonarr?.Count > 0 && Program.ServiceManager.Sonarr.Any((s) => allowedServices.Contains(s)))
+            {
+                keyboardMarkup.Add(new List<InlineKeyboardButton>
+                {
+                    InlineKeyboardButton.WithCallbackData("Series", $"{(int)ServarrType.Sonarr}")
+                });
+            }
+
+            if(Program.ServiceManager.Lidarr?.Count > 0 && Program.ServiceManager.Lidarr.Any((s) => allowedServices.Contains(s)))
+            {
+                keyboardMarkup.Add(new List<InlineKeyboardButton>
+                {
+                    InlineKeyboardButton.WithCallbackData("Artists", $"{(int)ServarrType.Lidarr}")
+                });
+            }
+            return keyboardMarkup;
+        }
+
+        internal Cache GetCache(Message message)
+        {
+            lock(_cacheLock)
+            {
+                if(_cache.ContainsKey(message.Chat.Id))
+                {
+                    var cache = _cache[message.Chat.Id];
+                    cache.LastAccessed = DateTime.Now;
+                    return cache;
+                }
+                else
+                {
+                    var cache = new Cache()
+                    {
+                        ChatId = message.Chat.Id,
+                        MessageId = message.MessageId,
+                    };
+                    _cache.Add(message.Chat.Id, cache);
+                    return cache;
+                }
+            }
+        }
+
+        private void CacheOrUpdate(Message message, IData data)
+        {
+            lock(_cacheLock)
+            {
+                if(_cache.ContainsKey(message.Chat.Id))
+                {
+                    var cache = _cache[message.Chat.Id];
+                    cache.Data = data;
+                    cache.ChatId = message.Chat.Id;
+                    cache.MessageId = message.MessageId;
+
+                    cache.LastAccessed = DateTime.Now;
+                }
+                else
+                {
+                    _cache.Add(message.Chat.Id, new Cache
+                    {
+                        Data = data,
+                        ChatId = message.Chat.Id,
+                        MessageId = message.MessageId
+                    });
+                }
+            }
+        }
+
+        private void ValidateCache(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            _logger.Trace("Validating cache ...");
+
+            lock(_cacheLock)
+            {
+                var newCachedRequired = false;
+                var newCache = new Dictionary<long, Cache>();
+                foreach(var cacheItem in _cache)
+                {
+                    var key = cacheItem.Key;
+                    var value = cacheItem.Value;
+
+                    if(value.LastAccessed.AddHours(_cacheInvalidationTime) < DateTime.Now)
+                    {
+                        // Item is expired
+                        newCachedRequired = true;
+                        // Delete message since the data is gone so it shouldn't be used anymore
+                        _client.DeleteMessageAsync(value.ChatId, value.MessageId);
+                        continue;
+                    }
+
+                    newCache.Add(key, value);
+                }
+
+                if(newCachedRequired)
+                {
+                    _cache = newCache;
+                }
+            }
+        }
+
+        private static bool IsValidUser(long userId)
+        {
+            if(_settings.Users.Contains(userId) || _settings.Admins.Contains(userId))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        {
+            var handler = update.Type switch
+            {
+                UpdateType.Message => OnNewMessage(update.Message),
+                UpdateType.CallbackQuery => OnCallbackQueryReceived(update.CallbackQuery),
+                _ => HandleUnknownUpdate(update)
+            };
+
+            try
+            {
+                await handler;
+            }
+            catch(Exception ex)
+            {
+                await HandleErrorAsync(botClient, ex, cancellationToken);
+            }
+        }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
-		private async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
-		{
-			_logger.Warn($"Error in TelegramManager: {exception}");
-			return;
-		}
+        private async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        {
+            _logger.Warn($"Error in TelegramManager: {exception}");
+            return;
+        }
 
-		private static async Task HandleUnknownUpdate(Update update)
-		{
-			_logger.Debug($"Received unknown message of type {update.Type}");
-			return;
-		}
+        private static async Task HandleUnknownUpdate(Update update)
+        {
+            _logger.Debug($"Received unknown message of type {update.Type}");
+            return;
+        }
 
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
-		private async Task OnNewMessage(Message message)
-		{
-			try
-			{
-				var user = message.From;
+        private async Task OnNewMessage(Message message)
+        {
+            try
+            {
+                var user = message.From;
 
-				_logger.Trace($"Received new message from [{user.Id}] {user.Username}: {message.Text}");
+                _logger.Trace($"Received new message from [{user.Id}] {user.Username}: {message.Text}");
 
-				Program.ServiceManager?.StatisticsService?.IncreaseMessagesReveived();
+                Program.ServiceManager?.StatisticsService?.IncreaseMessagesReveived();
 
-				// Discard messages from bots
-				if(message.From.IsBot)
-				{
-					_logger.Trace("Discarding bot message");
-					return;
-				}
+                // Discard messages from bots
+                if(message.From.IsBot)
+                {
+                    _logger.Trace("Discarding bot message");
+                    return;
+                }
 
-				// Discard forwarded messages
-				if(message.ForwardFrom != null || message.ForwardFromChat != null)
-				{
-					_logger.Trace("Discarding forwarded message");
-					return;
-				}
+                // Discard forwarded messages
+                if(message.ForwardFrom != null || message.ForwardFromChat != null)
+                {
+                    _logger.Trace("Discarding forwarded message");
+                    return;
+                }
 
-				// Discard non text messages
-				if(message.Type != MessageType.Text)
-				{
-					_logger.Trace($"Discarding non-text message ({message.Type})");
-					return;
-				}
+                // Discard non text messages
+                if(message.Type != MessageType.Text)
+                {
+                    _logger.Trace($"Discarding non-text message ({message.Type})");
+                    return;
+                }
 
-				// Discard message from non users
-				if(!IsValidUser(user.Id))
-				{
-					_logger.Trace("Discarding messafe from non whitelisted sender");
-					await SimpleReplyToMessage(message, $"<b>Not Registered</b>.\nPlease ask an administrator to whitelist your id: '{user.Id}'");
-					return;
-				}
+                // Discard message from non users
+                if(!IsValidUser(user.Id))
+                {
+                    _logger.Trace("Discarding messafe from non whitelisted sender");
+                    await SimpleReplyToMessage(message, $"<b>Not Registered</b>.\nPlease ask an administrator to whitelist your id: '{user.Id}'");
+                    return;
+                }
 
-				if(message.Text.StartsWith("/", StringComparison.InvariantCultureIgnoreCase))
-				{
-					// Command
-					Program.ServiceManager?.StatisticsService?.IncreaseCommandsReceived();
+                if(message.Text.StartsWith("/", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // Command
+                    Program.ServiceManager?.StatisticsService?.IncreaseCommandsReceived();
 
-					_logger.Trace("Detected command");
-					await _commandManager.ProcessMessage(_client, message);
-				}
-				else
-				{
-					// Reply ?
-					_logger.Trace("Detected message");
+                    _logger.Trace("Detected command");
+                    await _commandManager.ProcessMessage(_client, message);
+                }
+                else
+                {
+                    // Reply ?
+                    _logger.Trace("Detected message");
 
-					// Force reply possible
-					if(message.ReplyToMessage != null)
-					{
-						var replyToMessageId = message.ReplyToMessage.MessageId;
-						_logger.Trace($"Message {message.MessageId} is a reply to {replyToMessageId}. Checking for Force Reply ...");
+                    // Force reply possible
+                    if(message.ReplyToMessage != null)
+                    {
+                        var replyToMessageId = message.ReplyToMessage.MessageId;
+                        _logger.Trace($"Message {message.MessageId} is a reply to {replyToMessageId}. Checking for Force Reply ...");
 
-						lock(_cacheLock)
-						{
-							if(_cache.ContainsKey(message.Chat.Id))
-							{
-								var cache = GetCache(message.ReplyToMessage);
-								if(cache.MessageId == replyToMessageId)
-								{
-									_logger.Trace($"Detected {replyToMessageId} as reply. Invoking action ...");
-									// Reset ForceReply flag
-									cache.ForceReply = false;
-									// Invoke Event Handler
-									cache.ForceReplyInstance.OnReplyReceived(_client, message);
-								}
-							}
-							else
-							{
-								_logger.Trace($"Not awaiting a reply to {replyToMessageId}");
-							}
-						}
-					}
-					else
-					{
-						_logger.Trace("Message is not a reply. Stopping further processing");
-					}
-				}
-			}
-			catch(Exception ex)
-			{
-				_logger.Error(ex, "Failed to process message");
-				Program.ServiceManager?.StatisticsService?.IncreaseMessagesSent();
-				await _client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"), replyToMessageId: message.MessageId);
-			}
-		}
+                        lock(_cacheLock)
+                        {
+                            if(_cache.ContainsKey(message.Chat.Id))
+                            {
+                                var cache = GetCache(message.ReplyToMessage);
+                                if(cache.MessageId == replyToMessageId)
+                                {
+                                    _logger.Trace($"Detected {replyToMessageId} as reply. Invoking action ...");
+                                    // Reset ForceReply flag
+                                    cache.ForceReply = false;
+                                    // Invoke Event Handler
+                                    cache.ForceReplyInstance.OnReplyReceived(_client, message);
+                                }
+                            }
+                            else
+                            {
+                                _logger.Trace($"Not awaiting a reply to {replyToMessageId}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.Trace("Message is not a reply. Stopping further processing");
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.Error(ex, "Failed to process message");
+                Program.ServiceManager?.StatisticsService?.IncreaseMessagesSent();
+                await _client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"), replyToMessageId: message.MessageId);
+            }
+        }
 
-		private async Task OnCallbackQueryReceived(CallbackQuery callbackQuery)
-		{
-			try
-			{
-				_logger.Trace($"Received CallbackQuery from {callbackQuery.From.Username}");
+        private async Task OnCallbackQueryReceived(CallbackQuery callbackQuery)
+        {
+            try
+            {
+                _logger.Trace($"Received CallbackQuery from {callbackQuery.From.Username}");
 
-				var data = callbackQuery.Data;
-				var message = callbackQuery.Message;
+                var data = callbackQuery.Data;
+                var message = callbackQuery.Message;
 
-				lock(_cache)
-				{
-					if(_cache.ContainsKey(message.Chat.Id))
-					{
-						var cache = _cache[message.Chat.Id];
+                lock(_cache)
+                {
+                    if(_cache.ContainsKey(message.Chat.Id))
+                    {
+                        var cache = _cache[message.Chat.Id];
 
-						if(HandlePagination(message, cache, data))
-						{
-							return;
-						}
+                        if(HandlePagination(message, cache, data))
+                        {
+                            return;
+                        }
 
-						var task = cache.QueryCallbackInstance.OnCallbackQueryReceived(_client, callbackQuery);
-						task.Wait();
+                        var task = cache.QueryCallbackInstance.OnCallbackQueryReceived(_client, callbackQuery);
+                        task.Wait();
 
-						if(!task.Result)
-						{
-							_logger.Warn($"Failed to execute callback for '{cache.QueryCallbackInstance}'");
-						}
-					}
-					else
-					{
-						_logger.Debug($"No callback found for message {message.MessageId}");
-						_client.DeleteMessageAsync(message.Chat, message.MessageId);
-					}
-				}
-			}
-			catch(Exception ex)
-			{
-				_logger.Error(ex, "Failed to process CallbackQuery");
-				Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-				await _client.SendTextMessageAsync(callbackQuery.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"));
-			}
-		}
+                        if(!task.Result)
+                        {
+                            _logger.Warn($"Failed to execute callback for '{cache.QueryCallbackInstance}'");
+                        }
+                    }
+                    else
+                    {
+                        _logger.Debug($"No callback found for message {message.MessageId}");
+                        _client.DeleteMessageAsync(message.Chat, message.MessageId);
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.Error(ex, "Failed to process CallbackQuery");
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                await _client.SendTextMessageAsync(callbackQuery.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"));
+            }
+        }
 
-		private bool HandlePagination(Message message, Cache cache, string data)
-		{
-			if(data == DisabledData)
-			{
-				_logger.Trace("Stupid user clicked on disabled button ... Ignoring the twat");
-				return true;
-			}
+        private bool HandlePagination(Message message, Cache cache, string data)
+        {
+            if(data == DisabledData)
+            {
+                _logger.Trace("Stupid user clicked on disabled button ... Ignoring the twat");
+                return true;
+            }
 
-			if(data == NextData || data == PreviousData)
-			{
-				if(data == NextData)
-				{
-					cache.Page++;
-				}
-				else
-				{
-					cache.Page--;
-				}
+            if(data == NextData || data == PreviousData)
+            {
+                if(data == NextData)
+                {
+                    cache.Page++;
+                }
+                else
+                {
+                    cache.Page--;
+                }
 
-				var updateTask = UpdatePageination(message);
-				updateTask.Wait();
+                var updateTask = UpdatePageination(message);
+                updateTask.Wait();
 
-				// Do not invoke any further tasks
-				return true;
-			}
+                // Do not invoke any further tasks
+                return true;
+            }
 
-			if(data == CancelData)
-			{
-				// Cancel Pagination
-				_logger.Trace("Cancellation requested");
+            if(data == CancelData)
+            {
+                // Cancel Pagination
+                _logger.Trace("Cancellation requested");
 
-				_client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+                _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
 
-				return true;
-			}
+                return true;
+            }
 
-			if(data.StartsWith(SelectData))
-			{
-				var selection = data.Substring(SelectData.Length, data.Length - SelectData.Length);
-				if(!int.TryParse(selection, out var selectedIndex))
-				{
-					// How ?
-					_logger.Warn($"Failed to parse '{selection}' to int");
-					_client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-				}
+            if(data.StartsWith(SelectData))
+            {
+                var selection = data.Substring(SelectData.Length, data.Length - SelectData.Length);
+                if(!int.TryParse(selection, out var selectedIndex))
+                {
+                    // How ?
+                    _logger.Warn($"Failed to parse '{selection}' to int");
+                    _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+                }
 
-				try
-				{
-					var task = cache.PageSelectionFunction(_client, message, selectedIndex);
-					task.Wait();
+                try
+                {
+                    var task = cache.PageSelectionFunction(_client, message, selectedIndex);
+                    task.Wait();
 
-					if(!task.Result)
-					{
-						_logger.Warn("Failed to process selection");
-					}
-				}
-				catch(Exception ex)
-				{
-					_logger.Error(ex, "Failed to execute selection function");
-					_client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-				}
+                    if(!task.Result)
+                    {
+                        _logger.Warn("Failed to process selection");
+                    }
+                }
+                catch(Exception ex)
+                {
+                    _logger.Error(ex, "Failed to execute selection function");
+                    _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+                }
 
-				return true;
-			}
+                return true;
+            }
 
-			return false;
-		}
-	}
+            return false;
+        }
+    }
 }

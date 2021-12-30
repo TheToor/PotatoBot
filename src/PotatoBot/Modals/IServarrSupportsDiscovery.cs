@@ -3,7 +3,7 @@
 namespace PotatoBot.Modals
 {
     internal interface IServarrSupportsDiscovery
-	{
-		IEnumerable<IServarrItem> GetDiscoveryQueue();
-	}
+    {
+        IEnumerable<IServarrItem> GetDiscoveryQueue();
+    }
 }
