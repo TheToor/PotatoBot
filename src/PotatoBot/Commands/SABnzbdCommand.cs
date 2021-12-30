@@ -10,7 +10,7 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Commands
 {
-	[Command("sab", Description = "Controls SAB servers")]
+    [Command("sab", Description = "Controls SAB servers")]
 	internal class SABnzbdCommand : Service, ICommand
 	{
 		internal enum SABnzbdCommandMode

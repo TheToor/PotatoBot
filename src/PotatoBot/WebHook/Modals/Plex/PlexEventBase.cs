@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.WebHook.Modals.Plex
 {
-	public class PlexEventBase
+    public class PlexEventBase
 	{
 		private string _event;
 		public string Event

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace PotatoBot.Modals.API.Lidarr
 {
-	public class Artist : IServarrItem
+    public class Artist : IServarrItem
 	{
 		public string Title
 		{

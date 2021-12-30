@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace PotatoBot.Managers
 {
-	internal class LanguageManager
+    internal class LanguageManager
 	{
 		private static string ActiveLanguagePath => Path.Combine(Directory.GetCurrentDirectory(), "Language", "active.json");
 

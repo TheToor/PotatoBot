@@ -9,7 +9,7 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Managers
 {
-	internal class CommandManager
+    internal class CommandManager
 	{
 		internal List<Command> Commands = new();
 

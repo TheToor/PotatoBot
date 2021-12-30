@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Webhook.Modals.Sonarr
 {
-	public class Series
+    public class Series
 	{
 		public int Id { get; set; }
 		public string Title { get; set; }

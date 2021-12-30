@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Webhook.Modals.Radarr
 {
-	public class DownloadUpgrade : RequestBase
+    public class DownloadUpgrade : RequestBase
 	{
 		public Movie Movie { get; set; }
 		public RemoteMovie RemoteMovie { get; set; }

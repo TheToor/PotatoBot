@@ -13,7 +13,7 @@ using System.Text;
 
 namespace PotatoBot.API
 {
-	public abstract class APIBase
+    public abstract class APIBase
 	{
 		public string Name => _settings.Name ?? "Unknown";
 		public EntertainmentSettings Settings => _settings;

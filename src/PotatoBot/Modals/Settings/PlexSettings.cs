@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.Settings
 {
-	public class PlexSettings
+    public class PlexSettings
 	{
 		public bool Enabled { get; set; }
 

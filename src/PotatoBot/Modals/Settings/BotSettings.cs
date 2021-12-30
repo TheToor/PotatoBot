@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.Settings
 {
-	public class BotSettings
+    public class BotSettings
 	{
 		public TelegramSettings Telegram { get; set; } = new TelegramSettings();
 

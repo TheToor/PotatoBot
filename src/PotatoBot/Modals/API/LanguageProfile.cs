@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API
 {
-	public class LanguageProfile
+    public class LanguageProfile
 	{
 		public uint Id { get; set; }
 		public string Name { get; set; }

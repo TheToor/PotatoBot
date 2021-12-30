@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API.Lidarr
 {
-	public class Album
+    public class Album
 	{
 		public ulong ArstidId { get; set; }
 

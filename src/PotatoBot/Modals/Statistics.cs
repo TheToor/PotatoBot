@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals
 {
-	public class Statistics
+    public class Statistics
 	{
 		public long MessagesSent { get; set; }
 		public long MessagesReveived { get; set; }

@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace PotatoBot
 {
-	internal class Program
+    internal class Program
 	{
 		internal static BotSettings Settings;
 

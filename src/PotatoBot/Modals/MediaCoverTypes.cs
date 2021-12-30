@@ -1,7 +1,7 @@
 ﻿namespace PotatoBot.Modals
 {
-	// https://github.com/Sonarr/Sonarr/blob/0a2b109a3fe101e260b623d0768240ef8b7a47ae/src/NzbDrone.Core/MediaCover/MediaCover.cs
-	public enum MediaCoverTypes
+    // https://github.com/Sonarr/Sonarr/blob/0a2b109a3fe101e260b623d0768240ef8b7a47ae/src/NzbDrone.Core/MediaCover/MediaCover.cs
+    public enum MediaCoverTypes
 	{
 		Unknown = 0,
 		Poster = 1,

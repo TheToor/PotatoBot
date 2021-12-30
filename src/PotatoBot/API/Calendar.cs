@@ -6,7 +6,7 @@ using System.Text;
 
 namespace PotatoBot.API
 {
-	[Route("[controller]", Name = "Calendar")]
+    [Route("[controller]", Name = "Calendar")]
 	public class Calendar : Controller
 	{
 		internal static readonly List<APIBase> Calendars = new List<APIBase>();

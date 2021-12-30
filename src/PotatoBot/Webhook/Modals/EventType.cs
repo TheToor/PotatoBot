@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Webhook.Modals
 {
-	public enum EventType
+    public enum EventType
 	{
 		Grab,
 		Download,

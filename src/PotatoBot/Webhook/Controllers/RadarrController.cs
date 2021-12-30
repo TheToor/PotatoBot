@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace PotatoBot.Webhook.Controllers
 {
-	[Route("webhook/[controller]", Name = "Radarr")]
+    [Route("webhook/[controller]", Name = "Radarr")]
 	public class RadarrController : Controller
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();

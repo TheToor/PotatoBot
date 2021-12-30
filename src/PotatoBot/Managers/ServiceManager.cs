@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Managers
 {
-	internal class ServiceManager
+    internal class ServiceManager
 	{
 		private readonly List<SonarrService> _sonarr = new();
 		internal List<SonarrService> Sonarr => _sonarr;

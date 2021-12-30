@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Requests
 {
-	public class RequestEpisode : RequestBase
+    public class RequestEpisode : RequestBase
 	{
 		public ulong SeriesId { get; set; }
 

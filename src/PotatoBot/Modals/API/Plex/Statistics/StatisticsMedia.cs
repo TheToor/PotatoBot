@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API.Plex.Statistics
 {
-	[XmlRoot(ElementName = "StatisticsMedia")]
+    [XmlRoot(ElementName = "StatisticsMedia")]
 	public class StatisticsMedia
 	{
 		[XmlAttribute(AttributeName = "accountID")]

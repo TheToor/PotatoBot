@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals
 {
-	public enum ServarrType
+    public enum ServarrType
 	{
 		Unknown,
 		Radarr,

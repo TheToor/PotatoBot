@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Webhook.Modals.Sonarr
 {
-	public class DownloadUpgrade : RequestBase
+    public class DownloadUpgrade : RequestBase
 	{
 		public Series Series { get; set; }
 		public List<Episode> Episodes { get; set; }

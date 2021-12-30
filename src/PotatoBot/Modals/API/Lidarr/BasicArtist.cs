@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace PotatoBot.Modals.API.Lidarr
 {
-	public class BasicArtist
+    public class BasicArtist
 	{
 		public string ArtistName { get; set; }
 		public ArtistsStatistics Statistics { get; set; }

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace PotatoBot.Modals.API.Radarr
 {
-	public class BasicMovie
+    public class BasicMovie
 	{
 		public string Title { get; set; }
 		public long SizeOnDisk { get; set; }

@@ -1,7 +1,7 @@
 ﻿using System;
 namespace PotatoBot.Webhook.Modals.Sonarr
 {
-	public class Episode
+    public class Episode
 	{
 		public int Id { get; set; }
 		public int EpisodeNumber { get; set; }

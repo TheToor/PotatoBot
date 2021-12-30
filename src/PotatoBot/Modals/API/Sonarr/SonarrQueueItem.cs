@@ -3,7 +3,7 @@ using PotatoBot.Services;
 
 namespace PotatoBot.Modals.API.Sonarr
 {
-	public class SonarrQueueItem : QueueItem
+    public class SonarrQueueItem : QueueItem
 	{
 		public ulong EpisodeId { get; set; }
 		public ulong SeriesId { get; set; }

@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API.Plex
 {
-	public class Roles
+    public class Roles
 	{
 		public List<object> roles { get; set; }
 	}

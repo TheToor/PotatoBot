@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.Settings
 {
-	public class SABnzbdSettings
+    public class SABnzbdSettings
 	{
 		public bool Enabled { get; set; }
 

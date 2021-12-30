@@ -12,7 +12,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PotatoBot.Commands
 {
-	[Command("discover", Description = "Discover new things")]
+    [Command("discover", Description = "Discover new things")]
 	internal class DiscoverCommand : Service, ICommand, IQueryCallback
 	{
 		public string UniqueIdentifier => "discover";

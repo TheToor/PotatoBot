@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace PotatoBot.Modals.API.Sonarr
 {
-	public class BasicSeries
+    public class BasicSeries
 	{
 		public string Title { get; set; }
 		public SeriesStatistics Statistics { get; set; }

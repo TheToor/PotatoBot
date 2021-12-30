@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Webhook.Modals.Lidarr
 {
-	public class Release
+    public class Release
 	{
 		public string Quality { get; set; }
 		public int QualityVersion { get; set; }

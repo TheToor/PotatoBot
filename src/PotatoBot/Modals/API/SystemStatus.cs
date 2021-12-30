@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API
 {
-	public class SystemStatus
+    public class SystemStatus
 	{
 		public string Version { get; set; }
 		public string BuildTime { get; set; }

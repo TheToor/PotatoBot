@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Radarr
 {
-	public class AlternativeTitle
+    public class AlternativeTitle
 	{
 		public string SourceType { get; set; }
 		public uint MovieId { get; set; }

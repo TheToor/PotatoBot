@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.Commands.Data
 {
-	public class DiscoveryData : IData
+    public class DiscoveryData : IData
 	{
 		public ServarrType SelectedSearch { get; set; }
 		public IServarr API { get; set; }

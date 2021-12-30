@@ -8,7 +8,7 @@ using System.Reflection;
 
 namespace PotatoBot.Managers
 {
-	[Target("Telegram")]
+    [Target("Telegram")]
 	public sealed class TelegramTarget : TargetWithLayout
 	{
 		public TelegramTarget()

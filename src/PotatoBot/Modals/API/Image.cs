@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API
 {
-	public class Image
+    public class Image
 	{
 		// This should be an enum
 		public MediaCoverTypes CoverType { get; set; }

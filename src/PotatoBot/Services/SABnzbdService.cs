@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace PotatoBot.Services
 {
-	public class SABnzbdService : IService
+    public class SABnzbdService : IService
 	{
 		public string Name { get; }
 

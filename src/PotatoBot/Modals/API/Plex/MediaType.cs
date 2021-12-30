@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Plex
 {
-	public enum MediaType
+    public enum MediaType
 	{
 		Unknown,
 

@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Requests.DELETE
 {
-	public class RemoveQueueItem : RequestBase
+    public class RemoveQueueItem : RequestBase
 	{
 
 		public uint Id { get; set; }

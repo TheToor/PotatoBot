@@ -10,7 +10,7 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Commands
 {
-	[Command("storage", Description = "Show free storage")]
+    [Command("storage", Description = "Show free storage")]
 	internal class StorageCommand : Service, ICommand
 	{
 		public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)

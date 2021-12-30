@@ -3,7 +3,7 @@ using PotatoBot.Services;
 
 namespace PotatoBot.Modals.API.Lidarr
 {
-	public class LidarrQueueItem : QueueItem
+    public class LidarrQueueItem : QueueItem
 	{
 		public ulong ArtistId { get; set; }
 		public ulong AlbumId { get; set; }

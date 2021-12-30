@@ -3,7 +3,7 @@ using PotatoBot.Services;
 
 namespace PotatoBot.Modals.API.Requests.POST
 {
-	public class AddMovie : Movie
+    public class AddMovie : Movie
 	{
 		public string RootFolderPath { get; set; }
 		public string MinimumAvailability { get; set; }

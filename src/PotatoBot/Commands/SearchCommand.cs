@@ -13,7 +13,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PotatoBot.Commands
 {
-	[Command("search", Description = "Search for new things to add")]
+    [Command("search", Description = "Search for new things to add")]
 	internal class SearchCommand : Service, ICommand, IReplyCallback, IQueryCallback
 	{
 		public string UniqueIdentifier => "search";

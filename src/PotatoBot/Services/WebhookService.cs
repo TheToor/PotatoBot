@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace PotatoBot.Services
 {
-	public class WebhookService : IService
+    public class WebhookService : IService
 	{
 		public string Name => "Webhook Endpoint";
 

@@ -5,7 +5,7 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Commands
 {
-	[Command("version", Description = "Shows current version of the PotatoBot")]
+    [Command("version", Description = "Shows current version of the PotatoBot")]
 	internal class VersionCommand : Service, ICommand
 	{
 		public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)

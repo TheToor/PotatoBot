@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.SABnzbd
 {
-	public enum SABnzbdRequestMode
+    public enum SABnzbdRequestMode
 	{
 		// Gets full server status
 		fullstatus,

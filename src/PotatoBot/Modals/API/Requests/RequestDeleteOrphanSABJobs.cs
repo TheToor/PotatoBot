@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Requests
 {
-	public class RequestDeleteOrphanSABJobs : RequestBase
+    public class RequestDeleteOrphanSABJobs : RequestBase
 	{
 		public override string ToGet()
 		{

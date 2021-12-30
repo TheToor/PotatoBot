@@ -7,7 +7,7 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Modals.Commands
 {
-	public class Cache
+    public class Cache
 	{
 		public DateTime Created { get; } = DateTime.Now;
 		public DateTime LastAccessed { get; set; } = DateTime.Now;

@@ -17,7 +17,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PotatoBot.Services
 {
-	internal class TelegramService : IService
+    internal class TelegramService : IService
 	{
 		private const string PreviousData = "Previous";
 		private const string NextData = "Next";

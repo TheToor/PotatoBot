@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Modals.Commands
 {
-	internal class Service
+    internal class Service
 	{
 		internal static LanguageManager LanguageManager => Program.LanguageManager;
 		internal static TelegramService TelegramService => Program.ServiceManager.TelegramService;

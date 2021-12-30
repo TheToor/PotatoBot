@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Requests
 {
-	public class LookupRequest : RequestBase
+    public class LookupRequest : RequestBase
 	{
 		public string SearchTerm { get; set; }
 		public override string ToGet()

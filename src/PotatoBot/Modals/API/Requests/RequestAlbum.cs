@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Requests
 {
-	public class RequestAlbum : RequestBase
+    public class RequestAlbum : RequestBase
 	{
 		public ulong ArtistId { get; set; }
 

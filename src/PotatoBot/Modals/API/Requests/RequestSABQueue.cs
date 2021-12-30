@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Requests
 {
-	public class RequestSABQueue : RequestBase
+    public class RequestSABQueue : RequestBase
 	{
 		public uint Start { get; set; }
 		public uint Limit { get; set; }

@@ -3,7 +3,7 @@ using PotatoBot.Services;
 
 namespace PotatoBot.Modals.API.Requests.POST
 {
-	public class AddSeries : Series
+    public class AddSeries : Series
 	{
 		// Additinal properties required for add
 		public string RootFolderPath { get; set; }

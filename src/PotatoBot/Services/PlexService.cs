@@ -13,7 +13,7 @@ using System.Xml.Serialization;
 
 namespace PotatoBot.Services
 {
-	internal class PlexService : IService
+    internal class PlexService : IService
 	{
 		public string Name { get; }
 

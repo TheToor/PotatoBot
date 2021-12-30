@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals
 {
-	public interface IServarrItem
+    public interface IServarrItem
 	{
 		string Title { get; set; }
 		string Path { get; set; }

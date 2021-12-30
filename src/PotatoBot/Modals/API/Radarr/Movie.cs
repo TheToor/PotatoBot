@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace PotatoBot.Modals.API.Radarr
 {
-	public class Movie : IServarrItem, IDiscoveryItem, IEqualityComparer<Movie>
+    public class Movie : IServarrItem, IDiscoveryItem, IEqualityComparer<Movie>
 	{
 		public int Id { get; set; }
 		// Radarr does not (yet?) have languge profiles. Language is specified inside the quality profile

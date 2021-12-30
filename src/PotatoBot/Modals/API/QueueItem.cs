@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Modals.API
 {
-	public abstract class QueueItem
+    public abstract class QueueItem
 	{
 		public uint Id { get; set; }
 		public APIBase API { get; set; }

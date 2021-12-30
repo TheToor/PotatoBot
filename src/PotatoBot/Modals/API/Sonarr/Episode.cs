@@ -3,7 +3,7 @@ using System;
 
 namespace PotatoBot.Modals.API.Sonarr
 {
-	public class Episode
+    public class Episode
 	{
 		public SonarrService API { get; set; }
 		public Episode(SonarrService api)

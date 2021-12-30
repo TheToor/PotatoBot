@@ -3,7 +3,7 @@ using PotatoBot.Services;
 
 namespace PotatoBot.Modals.API.Requests.POST
 {
-	public class AddArtist : Artist
+    public class AddArtist : Artist
 	{
 		public ArtistAddOptions AddOptions { get; set; }
 

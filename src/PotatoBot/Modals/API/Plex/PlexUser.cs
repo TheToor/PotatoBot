@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Modals.API.Plex
 {
-	public class PlexUser
+    public class PlexUser
 	{
 		public int Id { get; set; }
 		public string Uuid { get; set; }

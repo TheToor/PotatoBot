@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Lidarr
 {
-	public class ArtistsStatistics : MediaStatistics
+    public class ArtistsStatistics : MediaStatistics
 	{
 		public uint AlbumCount { get; set; }
 		public float PercentOfTracks { get; set; }

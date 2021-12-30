@@ -4,7 +4,7 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Modals.Commands
 {
-	public interface IQueryCallback
+    public interface IQueryCallback
 	{
 		Task<bool> OnCallbackQueryReceived(TelegramBotClient client, CallbackQuery callbackQuery);
 	}

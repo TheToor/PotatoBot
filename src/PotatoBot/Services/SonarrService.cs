@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Services
 {
-	public class SonarrService : APIBase, IService, IServarr
+    public class SonarrService : APIBase, IService, IServarr
 	{
 		public ServarrType Type => ServarrType.Sonarr;
 

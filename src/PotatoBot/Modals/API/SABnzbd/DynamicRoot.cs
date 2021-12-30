@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API.SABnzbd
 {
-	public class DynamicRoot<T>
+    public class DynamicRoot<T>
 	{
 		[JsonProperty("status")]
 		public T Status { get; set; }

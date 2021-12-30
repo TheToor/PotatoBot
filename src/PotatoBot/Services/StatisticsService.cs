@@ -5,7 +5,7 @@ using System.IO;
 
 namespace PotatoBot.Services
 {
-	public class StatisticsService : IService
+    public class StatisticsService : IService
 	{
 		public string Name => "Statistics";
 

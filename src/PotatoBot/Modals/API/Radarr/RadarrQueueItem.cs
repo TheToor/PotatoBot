@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API.Radarr
 {
-	public class RadarrQueueItem : QueueItem
+    public class RadarrQueueItem : QueueItem
 	{
 		public Movie Movie { get; set; }
 

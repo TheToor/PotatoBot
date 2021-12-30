@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API.Plex.Statistics
 {
-	[XmlRoot(ElementName = "Device")]
+    [XmlRoot(ElementName = "Device")]
 	public class StatisticDevice
 	{
 		[XmlAttribute(AttributeName = "id")]

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace PotatoBot.Extensions
 {
-	public class PageResult<T>
+    public class PageResult<T>
 	{
 		public int Start { get; set; }
 		public int End { get; set; }

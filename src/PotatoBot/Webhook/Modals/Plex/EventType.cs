@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.WebHook.Modals.Plex
 {
-	public enum EventType
+    public enum EventType
 	{
 		// Content Events
 		NewOnDeck,

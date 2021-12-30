@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.WebHook.Modals.Plex
 {
-	public enum MetaDataType
+    public enum MetaDataType
 	{
 		Movie,
 		Episode,

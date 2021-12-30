@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace PotatoBot.Modals.API.Plex
 {
-	[XmlRoot(ElementName = "MediaContainer")]
+    [XmlRoot(ElementName = "MediaContainer")]
 	public class MediaContainer
 	{
 		[XmlElement(ElementName = "Directory")]

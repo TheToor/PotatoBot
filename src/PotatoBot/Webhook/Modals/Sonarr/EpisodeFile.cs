@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Webhook.Modals.Sonarr
 {
-	public class EpisodeFile
+    public class EpisodeFile
 	{
 		public int Id { get; set; }
 		public string RelativePath { get; set; }

@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Services
 {
-	internal interface IService
+    internal interface IService
 	{
 		string Name { get; }
 		bool Start();

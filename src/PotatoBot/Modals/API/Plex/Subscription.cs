@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API.Plex
 {
-	public class Subscription
+    public class Subscription
 	{
 		public bool Active { get; set; }
 		public string Status { get; set; }

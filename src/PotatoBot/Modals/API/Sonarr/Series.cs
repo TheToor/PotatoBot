@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace PotatoBot.Modals.API.Sonarr
 {
-	public class Series : IServarrItem, IEqualityComparer<Series>
+    public class Series : IServarrItem, IEqualityComparer<Series>
 	{
 		public ulong Id { get; set; }
 		public uint LanguageProfileId { get; set; }

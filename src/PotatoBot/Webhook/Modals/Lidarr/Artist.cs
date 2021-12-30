@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Webhook.Modals.Lidarr
 {
-	public class Artist
+    public class Artist
 	{
 		public int Id { get; set; }
 		public string Name { get; set; }

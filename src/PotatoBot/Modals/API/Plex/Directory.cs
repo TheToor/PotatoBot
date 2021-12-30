@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API.Plex
 {
-	[XmlRoot(ElementName = "Directory")]
+    [XmlRoot(ElementName = "Directory")]
 	public class Directory
 	{
 		[XmlElement(ElementName = "Location")]

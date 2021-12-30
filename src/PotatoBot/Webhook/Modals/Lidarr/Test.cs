@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Webhook.Modals.Lidarr
 {
-	public class Test : Grab
+    public class Test : Grab
 	{
 
 	}

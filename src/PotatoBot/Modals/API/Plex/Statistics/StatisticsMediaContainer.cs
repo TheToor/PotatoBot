@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace PotatoBot.Modals.API.Plex.Statistics
 {
-	[XmlRoot(ElementName = "MediaContainer")]
+    [XmlRoot(ElementName = "MediaContainer")]
 	public class StatisticsMediaContainer
 	{
 		[XmlElement(ElementName = "Account")]

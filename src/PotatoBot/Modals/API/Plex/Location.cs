@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API.Plex
 {
-	[XmlRoot(ElementName = "Location")]
+    [XmlRoot(ElementName = "Location")]
 	public class Location
 	{
 		[XmlAttribute(AttributeName = "id")]

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Modals.API.SABnzbd
 {
-	public class SABQueue : ServerStatus
+    public class SABQueue : ServerStatus
 	{
 		[JsonProperty("noofslots_total")]
 		public int NoofslotsTotal { get; set; }

@@ -12,7 +12,7 @@ using System.Linq;
 
 namespace PotatoBot.Services
 {
-	public class RadarrService : APIBase, IService, IServarr, IServarrSupportsDiscovery
+    public class RadarrService : APIBase, IService, IServarr, IServarrSupportsDiscovery
 	{
 		public ServarrType Type => ServarrType.Radarr;
 

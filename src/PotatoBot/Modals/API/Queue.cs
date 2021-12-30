@@ -2,7 +2,7 @@
 
 namespace PotatoBot.Modals.API
 {
-	public class Queue<T>
+    public class Queue<T>
 	{
 		public uint Page { get; set; }
 		public uint PageSize { get; set; }

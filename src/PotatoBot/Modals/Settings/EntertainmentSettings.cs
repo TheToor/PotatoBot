@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.Settings
 {
-	public class EntertainmentSettings
+    public class EntertainmentSettings
 	{
 		public bool Enabled { get; set; }
 		public bool EnableCalendar { get; set; }

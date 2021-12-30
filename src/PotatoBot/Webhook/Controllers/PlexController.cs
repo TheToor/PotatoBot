@@ -7,7 +7,7 @@ using System.Net;
 
 namespace PotatoBot.Webhook.Controllers
 {
-	[Route("webhook/[controller]", Name = "Plex")]
+    [Route("webhook/[controller]", Name = "Plex")]
 	public class PlexController : Controller
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();

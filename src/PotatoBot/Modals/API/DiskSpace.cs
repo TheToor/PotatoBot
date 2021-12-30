@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API
 {
-	public class DiskSpace
+    public class DiskSpace
 	{
 		public string Path { get; set; }
 		public string Label { get; set; }

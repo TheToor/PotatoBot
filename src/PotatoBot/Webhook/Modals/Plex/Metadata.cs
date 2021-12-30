@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.WebHook.Modals.Plex
 {
-	public class Metadata
+    public class Metadata
 	{
 		public string Guid { get; set; }
 		public string Key { get; set; }

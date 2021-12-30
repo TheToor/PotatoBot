@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PotatoBot.API
 {
-	[Route("[controller]", Name = "Preview")]
+    [Route("[controller]", Name = "Preview")]
 	public class Preview : Controller
 	{
 		internal static Dictionary<string, object> CachedPreviewResponse;

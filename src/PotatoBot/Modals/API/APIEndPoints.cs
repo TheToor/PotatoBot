@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API
 {
-	public static class APIEndPoints
+    public static class APIEndPoints
 	{
 		public const string SystemStatus = "system/status";
 		public const string Calendar = "calendar";

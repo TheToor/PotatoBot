@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Webhook.Modals.Radarr
 {
-	public class MovieFile
+    public class MovieFile
 	{
 		public int Id { get; set; }
 		public string RelativePath { get; set; }

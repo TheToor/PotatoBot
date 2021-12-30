@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Modals.API.SABnzbd
 {
-	public class Server
+    public class Server
 	{
 		[JsonProperty("servertotalconn")]
 		public int ServerTotalConnections { get; set; }

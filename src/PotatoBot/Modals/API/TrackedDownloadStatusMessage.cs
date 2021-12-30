@@ -2,8 +2,8 @@
 
 namespace PotatoBot.Modals.API
 {
-	// https://github.com/Radarr/Radarr/blob/627ab64fd023269c8bedece61e529329600a3419/src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadStatusMessage.cs
-	public class TrackedDownloadStatusMessage
+    // https://github.com/Radarr/Radarr/blob/627ab64fd023269c8bedece61e529329600a3419/src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadStatusMessage.cs
+    public class TrackedDownloadStatusMessage
 	{
 		public string Title { get; set; }
 		public List<string> Messages { get; set; }

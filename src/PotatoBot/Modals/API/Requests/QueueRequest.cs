@@ -1,6 +1,6 @@
 ﻿namespace PotatoBot.Modals.API.Requests
 {
-	public class QueueRequest : RequestBase
+    public class QueueRequest : RequestBase
 	{
 		public int Page { get; set; } = 1;
 		public int PageSize { get; set; } = 100;

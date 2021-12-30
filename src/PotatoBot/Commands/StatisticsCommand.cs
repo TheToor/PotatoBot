@@ -5,7 +5,7 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Commands
 {
-	[Command("stats", Description = "Shows statistics of the bot")]
+    [Command("stats", Description = "Shows statistics of the bot")]
 	internal class StatisticsCommand : Service, ICommand
 	{
 		public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
