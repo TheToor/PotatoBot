@@ -43,8 +43,14 @@
             public const string Library = "library/sections";
             public const string LibraryUpdate = "library/sections/{0}/refresh";
             public const string LibraryRefresh = "library/sections/{0}/refresh?force=1";
+            public const string AllLibraryRecentlyAdded = "library/recentlyAdded";
+            public const string RecentlyAdded = "hubs/home/recentlyAdded?type={0}&sectionID={1}&contentDirectoryID={1}&X-Plex-Container-Start=0&X-Plex-Container-Size={2}";
 
             public const string MediaStatistics = "statistics/media?timespan=1&at>=0";
+
+            public const string UpdateStatus = "updater/status";
+
+            public const string MediaProviders = "media/providers";
         }
     }
 }

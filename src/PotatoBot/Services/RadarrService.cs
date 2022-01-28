@@ -49,6 +49,14 @@ namespace PotatoBot.Services
             return response;
         }
 
+        public IServarrItem GetById(ulong id)
+        {
+            _logger.Trace($"Fetching {id} ...");
+
+            var response = GetRequest<Movie>($"{APIEndPoints.RadarrEndpoints.Movie}/{id}", failOnUnexpectedStatusCode: true);
+            return response;
+        }
+
         public IEnumerable<IServarrItem> Search(string name)
         {
             _logger.Trace($"Searching movie with name {name} ...");

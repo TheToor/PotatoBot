@@ -52,11 +52,17 @@ namespace PotatoBot.Services
         private readonly CancellationTokenSource _botCancellationTokenSource = new();
 
         private readonly List<long> _users;
+        internal List<long> AllUsers => _users;
 
         // Characters that need to be escaped with an \
         private readonly string[] _charactersToEscape = new string[]
         {
-            "_", /* "*",*/ "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"
+            "_", /* "*",*/ "[", "]", "(", ")", "~", "`", "#", "+", "-", "=", "|", "{", "}", "!"
+        };
+        // Characters that need to be espcaed with an \ when send in Markdown mode (non-HTML)
+        private readonly string[] _charactersToEscapeNonHTML = new string[]
+        {
+            ">", "."
         };
 
         internal TelegramService()
@@ -124,19 +130,43 @@ namespace PotatoBot.Services
             return true;
         }
 
+        private string EscapeMessage(string message, ParseMode parseMode)
+        {
+            foreach(var character in _charactersToEscape)
+            {
+                message = message.Replace(character, $"\\{character}");
+            }
+
+            if(parseMode != ParseMode.Html)
+            {
+                foreach(var character in _charactersToEscapeNonHTML)
+                {
+                    message = message.Replace(character, $"\\{character}");
+                }
+            }
+
+            return message;
+        }
+
         internal async Task SendSimpleMessage(ChatId chatId, string message, ParseMode parseMode, bool disableNotification = false)
         {
+            message = EscapeMessage(message, parseMode);
+
+            _logger.Trace($"Sending '{message}' to {chatId}");
+
             if(message.Length > MaxMessageLength)
             {
                 var messages = SplitMessage(message);
 
                 foreach(var splittedMessage in messages)
                 {
+                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
                     await _client.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
                 }
             }
             else
             {
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
                 await _client.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
             }
         }
@@ -183,10 +213,7 @@ namespace PotatoBot.Services
                 return;
             }
 
-            foreach(var character in _charactersToEscape)
-            {
-                message = message.Replace(character, $"\\{character}");
-            }
+            message = EscapeMessage(message, ParseMode.MarkdownV2);
 
             _logger.Trace($"Sending '{message}' to admins");
 
@@ -204,18 +231,26 @@ namespace PotatoBot.Services
 
         internal async Task<Message> SimpleReplyToMessage(Message message, string text, ParseMode parseMode = ParseMode.MarkdownV2)
         {
-            if(parseMode != ParseMode.Html)
-            {
-                foreach(var character in _charactersToEscape)
-                {
-                    text = text.Replace(character, $"\\{character}");
-                }
-            }
+            text = EscapeMessage(text, parseMode);
 
             _logger.Trace($"Sending '{text}' to {message.From.Username}");
 
-            Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-            return await _client.SendTextMessageAsync(message.Chat, text, replyToMessageId: message.MessageId, parseMode: parseMode);
+            if(text.Length > MaxMessageLength)
+            {
+                Message lastMessage = null;
+                var messages = SplitMessage(text);
+                foreach(var splittedMessage in messages)
+                {
+                    lastMessage = await _client.SendTextMessageAsync(message.Chat, splittedMessage, replyToMessageId: message.MessageId, parseMode: parseMode);
+                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                }
+                return lastMessage;
+            }
+            else
+            {
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                return await _client.SendTextMessageAsync(message.Chat, text, replyToMessageId: message.MessageId, parseMode: parseMode);
+            }
         }
 
         internal async Task<Message> ForceReply(IReplyCallback caller, Message message, string title)

@@ -99,6 +99,12 @@ namespace PotatoBot.Commands
                     await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
                     break;
                 }
+
+                case "watchlist":
+                {
+                    Program.ServiceManager.WatchListService.CheckWatchlist(null, null);
+                    break;
+                }
             }
 
             return true;

@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "PotatoBot": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false,
+      "authenticationMode": "None"
+    }
+  }
+}

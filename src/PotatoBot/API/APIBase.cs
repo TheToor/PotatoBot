@@ -102,7 +102,7 @@ namespace PotatoBot.API
             }
         }
 
-        protected T GetRequest<T>(string endpoint, RequestBase getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
+        protected T GetRequest<T>(string endpoint, RequestBase getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, bool failOnUnexpectedStatusCode = false) where T : class
         {
             var url = $"{_settings.Url}/{_apiUrl}/{endpoint}?apikey={_settings.APIKey}";
             if(getRequest != null)
@@ -119,13 +119,17 @@ namespace PotatoBot.API
                 if(response.StatusCode != expectedStatusCode)
                 {
                     _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
+                    if(failOnUnexpectedStatusCode)
+                    {
+                        return null;
+                    }
                 }
 
                 var json = response.Content.ReadAsStringAsync().Result;
                 if(string.IsNullOrEmpty(json))
                 {
                     _logger.Warn("Empty response received");
-                    return default;
+                    return null;
                 }
 
                 return JsonConvert.DeserializeObject<T>(json);
@@ -133,7 +137,7 @@ namespace PotatoBot.API
             catch(Exception ex)
             {
                 _logger.Error(ex, $"Failed to process request to {endpoint}");
-                return default;
+                return null;
             }
         }
 

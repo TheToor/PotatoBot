@@ -1,4 +1,6 @@
-﻿namespace PotatoBot.Modals.Settings
+﻿using System.Collections.Generic;
+
+namespace PotatoBot.Modals.Settings
 {
     public class PlexSettings
     {
@@ -7,5 +9,7 @@
         public string Name { get; set; }
         public string Url { get; set; }
         public string APIKey { get; set; }
+
+        public Dictionary<string, string> PathOverrides { get; set; } = new();
     }
 }

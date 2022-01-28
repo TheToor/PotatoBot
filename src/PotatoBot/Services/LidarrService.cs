@@ -44,6 +44,14 @@ namespace PotatoBot.Services
             return response;
         }
 
+        public IServarrItem GetById(ulong id)
+        {
+            _logger.Trace($"Fetching {id} ...");
+
+            var response = GetRequest<Artist>($"{APIEndPoints.LidarrEndpoints.Artist}/{id}");
+            return response;
+        }
+
         public IEnumerable<IServarrItem> Search(string name)
         {
             _logger.Trace($"Searching artist with name {name} ...");

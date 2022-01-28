@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NLog;
+using PotatoBot.Modals;
 using PotatoBot.Webhook.Modals;
 using PotatoBot.Webhook.Modals.Sonarr;
 using System;
@@ -49,15 +50,21 @@ namespace PotatoBot.Webhook.Controllers
             return true;
         }
 
-        [Route("")]
+        [Route("{serviceName}")]
         [HttpPost]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string serviceName)
         {
             Program.ServiceManager.StatisticsService.IncreaseWebhooksReceived();
 
             if(!ValidateRequest())
             {
                 return new StatusCodeResult((int)HttpStatusCode.NotAcceptable);
+            }
+
+            var service = Program.ServiceManager.GetAllServices().FirstOrDefault(s => s is IServarr && s.Name == serviceName);
+            if(service == null)
+            {
+                return new StatusCodeResult((int)HttpStatusCode.BadRequest);
             }
 
             using(var streamReader = new StreamReader(Request.Body))
@@ -85,7 +92,9 @@ namespace PotatoBot.Webhook.Controllers
                                 episodes,
                                 grabEvent.Release.Quality,
                                 grabEvent.Release.ReleaseGroup,
-                                $"{Math.Round(size.LargestWholeNumberBinaryValue, 2):0.00} {size.LargestWholeNumberBinarySymbol}"
+                                $"{Math.Round(size.LargestWholeNumberBinaryValue, 2):0.00} {size.LargestWholeNumberBinarySymbol}",
+                                service.Name,
+                                grabEvent.Series.Id
                             )
                         );
                         break;
@@ -111,7 +120,9 @@ namespace PotatoBot.Webhook.Controllers
                             string.Format(
                                 Program.LanguageManager.GetTranslation("Series", eventType),
                                 downloadEvent.Series.Title,
-                                episodes
+                                episodes,
+                                service.Name,
+                                downloadEvent.Series.Id
                             )
                         );
 

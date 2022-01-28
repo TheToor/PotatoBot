@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NLog;
+using PotatoBot.Modals;
 using PotatoBot.Webhook.Modals;
 using PotatoBot.Webhook.Modals.Lidarr;
 using System;
@@ -49,15 +50,21 @@ namespace PotatoBot.Webhook.Controllers
             return true;
         }
 
-        [Route("")]
+        [Route("{serviceName}")]
         [HttpPost]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string serviceName)
         {
             Program.ServiceManager.StatisticsService.IncreaseWebhooksReceived();
 
             if(!ValidateRequest())
             {
                 return new StatusCodeResult((int)HttpStatusCode.NotAcceptable);
+            }
+
+            var service = Program.ServiceManager.GetAllServices().FirstOrDefault(s => s is IServarr && s.Name == serviceName);
+            if(service == null)
+            {
+                return new StatusCodeResult((int)HttpStatusCode.BadRequest);
             }
 
             using(var streamReader = new StreamReader(Request.Body))
@@ -78,7 +85,9 @@ namespace PotatoBot.Webhook.Controllers
                                 grabEvent.Albums.Select((a) => a.Title).Aggregate((i, j) => i + "\n" + j),
                                 grabEvent.Release.Quality,
                                 grabEvent.Release.ReleaseGroup,
-                                $"{Math.Round(size.LargestWholeNumberBinaryValue, 2):0.00} {size.LargestWholeNumberBinarySymbol}"
+                                $"{Math.Round(size.LargestWholeNumberBinaryValue, 2):0.00} {size.LargestWholeNumberBinarySymbol}",
+                                service.Name,
+                                grabEvent.Artist.Id
                             )
                         );
                     }
@@ -97,7 +106,9 @@ namespace PotatoBot.Webhook.Controllers
                         await _telegramManager.SendToAll(
                             string.Format(
                                 Program.LanguageManager.GetTranslation("Artists", eventType),
-                                downloadEvent.Tracks.Select((t) => t.Title).Aggregate((i, j) => i + "\n" + j)
+                                downloadEvent.Tracks.Select((t) => t.Title).Aggregate((i, j) => i + "\n" + j),
+                                service.Name,
+                                downloadEvent.Artist.Id
                             )
                         );
                     }

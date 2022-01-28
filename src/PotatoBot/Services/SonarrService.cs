@@ -56,6 +56,14 @@ namespace PotatoBot.Services
             return response;
         }
 
+        public IServarrItem GetById(ulong id)
+        {
+            _logger.Trace($"Fetching {id} ...");
+
+            var response = GetRequest<Series>($"{APIEndPoints.SonarrEndpoints.Series}/{id}");
+            return response;
+        }
+
         public IEnumerable<IServarrItem> Search(string name)
         {
             _logger.Trace($"Searching for series with name '{name}' ...");

@@ -7,9 +7,7 @@ namespace PotatoBot.Modals.API.Radarr
 {
     public class Movie : IServarrItem, IDiscoveryItem, IEqualityComparer<Movie>
     {
-        public int Id { get; set; }
-        // Radarr does not (yet?) have languge profiles. Language is specified inside the quality profile
-        //public uint LanguageProfileId { get; set; }
+        public ulong Id { get; set; }
         public uint QualityProfileId { get; set; }
 
         public string Title { get; set; }

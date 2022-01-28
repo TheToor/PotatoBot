@@ -16,6 +16,7 @@ namespace PotatoBot.Managers
 
         internal TelegramService TelegramService { get; } = new TelegramService();
         internal StatisticsService StatisticsService { get; } = new StatisticsService();
+        internal WatchListService WatchListService { get; } = new WatchListService();
 
         private readonly List<IService> _services = new();
 
@@ -31,6 +32,7 @@ namespace PotatoBot.Managers
             // TelegramService relies on StatisticsService
             _services.Add(StatisticsService);
             _services.Add(TelegramService);
+            _services.Add(WatchListService);
 
             var settings = Program.Settings;
 
