@@ -17,7 +17,7 @@ using System.Xml.Serialization;
 
 namespace PotatoBot.Services
 {
-    internal class PlexService : IService
+    public class PlexService : IService
     {
         public string Name { get; }
 
@@ -28,12 +28,10 @@ namespace PotatoBot.Services
         private readonly PlexSettings _plexSettings;
         private string _plexToken => _plexSettings.APIKey;
 
-
+        private string _machineIdentifier;
         private MediaContainer _libraries;
         private readonly Dictionary<string, Video> _lastAddedMediaItem = new();
         private readonly Dictionary<string, Modals.API.Plex.Library.Directory> _lastAddedDirectory = new();
-
-        private readonly Dictionary<int, DateTime> _lastAPIRescanInitiated = new();
 
         internal PlexService(PlexSettings plexSettings)
         {
@@ -84,6 +82,8 @@ namespace PotatoBot.Services
                 throw new Exception("TestConnection failed!");
             }
 
+            _machineIdentifier = response.MachineIdentifier;
+
             _logger.Trace("======= System Info =======");
             _logger.Trace($"Name: {response.FriendlyName}");
             _logger.Trace($"Version: {response.Version}");
@@ -97,7 +97,7 @@ namespace PotatoBot.Services
             }
         }
 
-        private void GetLibraries()
+        private List<Modals.API.Plex.Directory> GetLibraries()
         {
             var response = GetXml<MediaContainer>(APIEndPoints.PlexEndpoints.Library);
 
@@ -107,6 +107,20 @@ namespace PotatoBot.Services
             {
                 _logger.Trace($"[{library.Key}][{library.Type}] {library.Title}");
             }
+
+            return response.Directory;
+        }
+
+        private List<Section> GetSections()
+        {
+            var response = GetXml<SectionMediaContainer>(
+                string.Format(
+                    APIEndPoints.PlexEndpoints.Section,
+                    _machineIdentifier
+                )
+            );
+            var sections = response?.Server?.Section ?? throw new Exception("Failed to get sections");
+            return sections;
         }
 
         internal RecentlyAddedResult GetRecentlyAdded()
@@ -174,13 +188,22 @@ namespace PotatoBot.Services
             return newItems;
         }
 
-        private static HttpClient GetHttpClient()
+        private static HttpClient GetHttpClient(bool json = false)
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("text/xml")
-            );
+            if(!json)
+            {
+                client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("text/xml")
+                );
+            }
+            else
+            {
+                client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json")
+                );
+            }
             client.DefaultRequestHeaders.Add("User-Agent", Program.Namespace);
 
             return client;
@@ -188,7 +211,7 @@ namespace PotatoBot.Services
 
         private T GetXml<T>(string endpoint, bool hasParameters = false, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
-            var url = new Uri($"{_plexSettings.Url}/{endpoint}{(hasParameters ? "&" : "?")}X-Plex-Token={_plexToken}");
+            var url = new Uri($"{(endpoint.StartsWith("http") ? "" : $"{_plexSettings.Url}/")}{endpoint}{(hasParameters ? "&" : "?")}X-Plex-Token={_plexToken}");
 
             try
             {
@@ -285,6 +308,72 @@ namespace PotatoBot.Services
             {
                 _logger.Warn($"Invalid response recieved: {response.StatusCode}");
             }
+        }
+
+        internal bool Invite(string email)
+        {
+            var libraries = GetSections().Where(s => _plexSettings.LibrariesToShare.Contains(s.Title)).Select(s => s.Id).Cast<int>();
+
+            // V2 API ?
+            //var parameters = new Dictionary<string, dynamic>()
+            //{
+            //    { "machineIdentifier", _machineIdentifier },
+            //    {
+            //        "librarySectionIds",
+            //        libraries
+            //    },
+            //    {
+            //        "settings",
+            //        new Dictionary<string, string>()
+            //        {
+            //            { "allowSync", "1" },
+            //            { "allowCameraUpload", "0" },
+            //            { "filterMovies", "" },
+            //            { "filterTelevision", "" },
+            //            { "filterMusic", "" }
+            //        }
+            //    },
+            //    { "invitedEmail", email }
+            //};
+
+            var parameters = new Dictionary<string, dynamic>()
+            {
+                { "server_id", _machineIdentifier },
+                { "shared_server", new Dictionary<string, dynamic>()
+                    {
+                        { "library_section_ids", libraries },
+                        { "invited_email", email }
+                    }
+                },
+                { "sharing_settings", new Dictionary<string, string>()
+                    {
+                        { "allowSync", "1" },
+                        { "allowCameraUpload", "0" },
+                        { "filterMovies", "" },
+                        { "filterTelevision", "" },
+                        { "filterMusic", "" }
+                    }
+                }
+            };
+
+            var body = JsonConvert.SerializeObject(parameters);
+            var client = GetHttpClient(true);
+            var response = client.PostAsync(
+                string.Format(
+                    APIEndPoints.PlexEndpoints.Invite,
+                    _machineIdentifier,
+                    $"?X-Plex-Token={_plexToken}"
+                ),
+                new StringContent(body, System.Text.Encoding.UTF8, "application/json")
+            ).Result;
+            if(response.IsSuccessStatusCode)
+            {
+                // V2 API
+                //var responseBody = response.Content.ReadAsStringAsync().Result;
+                //var plexResponse = JsonConvert.DeserializeObject<InviteResponse>(responseBody);
+                return true;
+            }
+            return false;
         }
 
         internal StatisticsMediaContainer GetMediaStatistics()

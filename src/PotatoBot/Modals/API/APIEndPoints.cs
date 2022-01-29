@@ -51,6 +51,12 @@
             public const string UpdateStatus = "updater/status";
 
             public const string MediaProviders = "media/providers";
+
+            // V1 API
+            public const string Invite = "https://plex.tv/api/servers/{0}/shared_servers{1}";
+            // V2 API
+            //public const string Invite = "https://plex.tv/api/v2/shared_servers{1}";
+            public const string Section = "https://plex.tv/api/servers/{0}";
         }
     }
 }

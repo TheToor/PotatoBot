@@ -11,5 +11,7 @@ namespace PotatoBot.Modals.Settings
         public string APIKey { get; set; }
 
         public Dictionary<string, string> PathOverrides { get; set; } = new();
+
+        public List<string> LibrariesToShare { get; set; } = new();
     }
 }
