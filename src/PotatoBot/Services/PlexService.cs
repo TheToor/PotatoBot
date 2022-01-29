@@ -252,28 +252,6 @@ namespace PotatoBot.Services
             }
         }
 
-        private void Get(string endpoint, bool hasParameters = false, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
-        {
-            var url = $"{_plexSettings.Url}/{endpoint}{(hasParameters ? "" : "?")}X-Plex-Token={_plexToken}";
-
-            try
-            {
-                using var client = GetHttpClient();
-                _logger.Trace($"Sending request to {url}");
-
-                var response = client.GetAsync(url).Result;
-
-                if(response.StatusCode != expectedStatusCode)
-                {
-                    _logger.Warn($"Unexpected Status Code: {response.StatusCode}");
-                }
-            }
-            catch(Exception ex)
-            {
-                _logger.Error(ex, $"Failed to get information from endpoint '{endpoint}'");
-            }
-        }
-
         private void GetToken(string username, string password)
         {
             var guid = System.Guid.NewGuid().ToString();
@@ -339,42 +317,6 @@ namespace PotatoBot.Services
                 true
             );
             return response ?? new();
-        }
-
-        internal void RescanMediaLibraries(int[] libraries)
-        {
-            _logger.Trace("Rescanning libraries ...");
-
-            foreach(var library in libraries)
-            {
-                try
-                {
-                    if(_lastAPIRescanInitiated.ContainsKey(library))
-                    {
-                        var lastRescan = _lastAPIRescanInitiated[library];
-                        if(lastRescan.AddMinutes(1) > DateTime.Now)
-                        {
-                            _logger.Trace($"Skipping {library} as last rescan was less than a minute ago");
-                            continue;
-                        }
-
-                        _lastAPIRescanInitiated.Remove(library);
-                    }
-                    _logger.Trace($"Sending request to rescan {library} ...");
-                    Get(
-                        string.Format(
-                            APIEndPoints.PlexEndpoints.LibraryUpdate,
-                            library
-                        )
-                    );
-
-                    _lastAPIRescanInitiated.Add(library, DateTime.Now);
-                }
-                catch(Exception ex)
-                {
-                    _logger.Warn(ex, $"Failed to initiate rescan for {library}");
-                }
-            }
         }
     }
 }
