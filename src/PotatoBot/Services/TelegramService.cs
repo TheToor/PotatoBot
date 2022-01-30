@@ -36,6 +36,7 @@ namespace PotatoBot.Services
         private static TelegramSettings _settings => Program.Settings.Telegram;
 
         private TelegramBotClient _client;
+        private TelegramBotClient _alertClient;
 
         private CommandManager _commandManager;
 
@@ -77,9 +78,14 @@ namespace PotatoBot.Services
                 _logger.Trace("Setting up bot ...");
                 _client = new TelegramBotClient(_settings.BotToken);
 
+                _logger.Trace("Setting up alert bot ...");
+                _alertClient = new TelegramBotClient(_settings.AlertBotToken);
+
                 _logger.Trace("Getting bot information ...");
-                var info = _client.GetMeAsync().Result;
-                _logger.Info($"Connected as {info.FirstName} {info.LastName} ({info.Username})");
+                var botInfo = _client.GetMeAsync().Result;
+                var alertBotInfo = _alertClient.GetMeAsync().Result;
+                _logger.Info($"Connected as {botInfo.FirstName} {botInfo.LastName} ({botInfo.Username})");
+                _logger.Info($"Alerts connected as {alertBotInfo.FirstName} {alertBotInfo.LastName} ({alertBotInfo.Username})");
 
                 _logger.Trace("Initializing command manager ...");
                 _commandManager = new CommandManager();
@@ -168,6 +174,29 @@ namespace PotatoBot.Services
             {
                 Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
                 await _client.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
+            }
+        }
+
+        internal async Task SendSimpleAlertMessage(ChatId chatId, string message, ParseMode parseMode, bool disableNotification = false)
+        {
+            message = EscapeMessage(message, parseMode);
+
+            _logger.Trace($"Sending '{message}' to {chatId}");
+
+            if(message.Length > MaxMessageLength)
+            {
+                var messages = SplitMessage(message);
+
+                foreach(var splittedMessage in messages)
+                {
+                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                    await _alertClient.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
+                }
+            }
+            else
+            {
+                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                await _alertClient.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
             }
         }
 

@@ -167,7 +167,7 @@ namespace PotatoBot.Services
                                 var releaseItem = newItems.NewItems.FirstOrDefault(i => i.Media.Part.File.StartsWith(path));
                                 if(releaseItem != null)
                                 {
-                                    Program.ServiceManager.TelegramService.SendSimpleMessage(
+                                    Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
                                         user,
                                         string.Format(
                                             Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
@@ -184,7 +184,7 @@ namespace PotatoBot.Services
                                 );
                                 if(releaseDirectory != null)
                                 {
-                                    Program.ServiceManager.TelegramService.SendSimpleMessage(
+                                    Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
                                         user,
                                         string.Format(
                                             Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
