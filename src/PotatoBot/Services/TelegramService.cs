@@ -20,10 +20,14 @@ namespace PotatoBot.Services
     internal class TelegramService : IService
     {
         private const string PreviousData = "Previous";
+        private const string PreviousFiveData = "Previous5";
         private const string NextData = "Next";
+        private const string NextFiveData = "Next5";
         private const string SelectData = "Select";
         private const string DisabledData = "Disabled";
         private const string CancelData = "Cancel";
+
+        private const string Spacer = "  ";
 
         private const string MissingImageUrl = "https://thetvdb.com/images/missing/movie.jpg";
 
@@ -413,7 +417,7 @@ namespace PotatoBot.Services
                 else if(page.NextPossible)
                 {
                     // If next is possible add a spacing button
-                    secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData(Spacer, DisabledData));
                 }
 
                 if(page.NextPossible)
@@ -423,12 +427,12 @@ namespace PotatoBot.Services
                 else if(page.PreviousPossible)
                 {
                     // if previous is possbile add a spacing button
-                    secondRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData(Spacer, DisabledData));
                 }
 
                 var thirdRow = new List<InlineKeyboardButton>
                 {
-                    InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
+                    InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonCancel"), CancelData)
                 };
 
                 keyboardMarkupData.Add(firstRow);
@@ -474,39 +478,45 @@ namespace PotatoBot.Services
 
                 // Selection buttons
                 var firstRow = new List<InlineKeyboardButton>();
+                var secondRow = new List<InlineKeyboardButton>();
 
                 // Prev button
                 if(page.PreviousPossible)
                 {
-                    firstRow.Add(InlineKeyboardButton.WithCallbackData("Prev", PreviousData));
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonPrev"), PreviousData));
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData($"{Program.LanguageManager.GetTranslation("ButtonPrev")} 5", PreviousFiveData));
                 }
                 else if(page.NextPossible)
                 {
                     // If next is possible add a spacing button
-                    firstRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData(Spacer, DisabledData));
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData(Spacer, DisabledData));
                 }
 
                 // Middle add button
-                firstRow.Add(InlineKeyboardButton.WithCallbackData($"Add", $"{SelectData}{0}"));
+                firstRow.Add(InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonAdd"), $"{SelectData}{0}"));
 
                 // Next button
                 if(page.NextPossible)
                 {
-                    firstRow.Add(InlineKeyboardButton.WithCallbackData("Next", NextData));
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonNext"), NextData));
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData($"{Program.LanguageManager.GetTranslation("ButtonNext")} 5", NextFiveData));
                 }
                 else if(page.PreviousPossible)
                 {
                     // if previous is possbile add a spacing button
-                    firstRow.Add(InlineKeyboardButton.WithCallbackData("  ", DisabledData));
+                    firstRow.Add(InlineKeyboardButton.WithCallbackData(Spacer, DisabledData));
+                    secondRow.Add(InlineKeyboardButton.WithCallbackData(Spacer, DisabledData));
                 }
 
-                var secondRow = new List<InlineKeyboardButton>
+                var thirdRow = new List<InlineKeyboardButton>
                 {
-                    InlineKeyboardButton.WithCallbackData("Cancel", CancelData)
+                    InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonCancel"), CancelData)
                 };
 
                 keyboardMarkupData.Add(firstRow);
                 keyboardMarkupData.Add(secondRow);
+                keyboardMarkupData.Add(thirdRow);
 
                 var keyboardMarkup = new InlineKeyboardMarkup(keyboardMarkupData);
 
@@ -879,7 +889,7 @@ namespace PotatoBot.Services
                     {
                         var cache = _cache[message.Chat.Id];
 
-                        if(HandlePagination(message, cache, data))
+                        if(HandlePagination(message, cache, data).GetAwaiter().GetResult())
                         {
                             return;
                         }
@@ -907,7 +917,7 @@ namespace PotatoBot.Services
             }
         }
 
-        private bool HandlePagination(Message message, Cache cache, string data)
+        private async Task<bool> HandlePagination(Message message, Cache cache, string data)
         {
             if(data == DisabledData)
             {
@@ -915,19 +925,26 @@ namespace PotatoBot.Services
                 return true;
             }
 
-            if(data == NextData || data == PreviousData)
+            if(data == NextData || data == PreviousData || data == NextFiveData || data == PreviousFiveData)
             {
                 if(data == NextData)
                 {
                     cache.Page++;
                 }
-                else
+                else if(data == PreviousData)
                 {
                     cache.Page--;
                 }
+                else if(data == NextFiveData)
+                {
+                    cache.Page += Math.Min(cache.PageItemList.Count() - cache.Page, 5);
+                }
+                else
+                {
+                    cache.Page -= Math.Min(cache.Page, 5);
+                }
 
-                var updateTask = UpdatePageination(message);
-                updateTask.Wait();
+                await UpdatePageination(message);
 
                 // Do not invoke any further tasks
                 return true;
@@ -938,7 +955,7 @@ namespace PotatoBot.Services
                 // Cancel Pagination
                 _logger.Trace("Cancellation requested");
 
-                _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+                await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
 
                 return true;
             }
@@ -950,7 +967,7 @@ namespace PotatoBot.Services
                 {
                     // How ?
                     _logger.Warn($"Failed to parse '{selection}' to int");
-                    _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+                    await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
                 }
 
                 try
@@ -966,7 +983,7 @@ namespace PotatoBot.Services
                 catch(Exception ex)
                 {
                     _logger.Error(ex, "Failed to execute selection function");
-                    _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+                    await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
                 }
 
                 return true;
