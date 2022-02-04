@@ -127,7 +127,7 @@ namespace PotatoBot.Commands
 
             if(resultCount > 0)
             {
-                cacheData.SearchResults = cacheData.SearchResults.OrderByDescending((r) => r.Year);
+                //cacheData.SearchResults = cacheData.SearchResults.OrderByDescending((r) => r.Year);
                 var title = string.Format(
                     Program.LanguageManager.GetTranslation("Commands", "Search", cacheData.SelectedSearch.ToString()),
                     resultCount
