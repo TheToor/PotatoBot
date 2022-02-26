@@ -9,19 +9,19 @@ namespace PotatoBot.Managers
 {
     internal class LanguageManager
     {
-        private static string ActiveLanguagePath => Path.Combine(Directory.GetCurrentDirectory(), "Language", "active.json");
+        private static string _activeLanguagePath => Path.Combine(Directory.GetCurrentDirectory(), "Language", "active.json");
 
         private readonly Random _random = new();
         private readonly dynamic _language;
 
         internal LanguageManager()
         {
-            if(!File.Exists(ActiveLanguagePath))
+            if(!File.Exists(_activeLanguagePath))
             {
-                throw new FileNotFoundException("No language file found! (active.json)");
+                throw new FileNotFoundException($"No language file found! ({_activeLanguagePath})");
             }
 
-            var json = File.ReadAllText(ActiveLanguagePath);
+            var json = File.ReadAllText(_activeLanguagePath);
             _language = JsonConvert.DeserializeObject<dynamic>(json);
         }
 

@@ -48,6 +48,13 @@ namespace PotatoBot
         private static volatile bool _exit;
         private static volatile bool _exited;
 
+#if DEBUG
+        internal static int TestMain(string[] args)
+        {
+            return Main(args);
+        }
+#endif
+
         private static int Main(string[] args)
         {
             try
@@ -76,6 +83,8 @@ namespace PotatoBot
             AppDomain.CurrentDomain.ProcessExit += ProcessExit;
             Console.CancelKeyPress += ProcessExit;
 
+            _logger.Info("Bot startup completed");
+
             do
             {
                 Thread.Sleep(10);
@@ -96,7 +105,7 @@ namespace PotatoBot
             return 0;
         }
 
-        private static void ProcessExit(object sender, EventArgs e)
+        internal static void ProcessExit(object sender, EventArgs e)
         {
             if(_exit || _exited)
             {
