@@ -198,7 +198,7 @@ namespace PotatoBot.Commands
                     }
                 }
 
-                await TelegramService.SendSimpleMessage(message.Chat.Id, queueText, Telegram.Bot.Types.Enums.ParseMode.Html);
+                await TelegramService.SendSimpleMessage(message.Chat.Id, queueText, ParseMode.Html);
             }
 
             return true;

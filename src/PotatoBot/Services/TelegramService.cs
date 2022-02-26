@@ -62,12 +62,12 @@ namespace PotatoBot.Services
         // Characters that need to be escaped with an \
         private readonly string[] _charactersToEscape = new string[]
         {
-            "_", /* "*",*/ "[", "]", "(", ")", "~", "`", "#", "+", "-", "=", "|", "{", "}", "!"
+            /* "*",*/"(", ")", "~", "`", "#", "+", "=", "|", "{", "}"
         };
         // Characters that need to be espcaed with an \ when send in Markdown mode (non-HTML)
         private readonly string[] _charactersToEscapeNonHTML = new string[]
         {
-            ">", "."
+            ">", ".", "[", "]", "-", "!"
         };
 
         internal TelegramService()
