@@ -18,6 +18,8 @@ namespace PotatoBot.Commands
     {
         public string UniqueIdentifier => "search";
 
+        private const string DataBoth = "Both";
+
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
@@ -72,6 +74,10 @@ namespace PotatoBot.Commands
                     InlineKeyboardButton.WithCallbackData(service.Name, service.Name)
                 });
             }
+            keyboardMarkup.Add(new List<InlineKeyboardButton>()
+            {
+                InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonBoth"), DataBoth)
+            });
 
             var markup = new InlineKeyboardMarkup(keyboardMarkup);
 
@@ -91,17 +97,37 @@ namespace PotatoBot.Commands
                 is not IServarr service
             )
             {
-                _logger.Warn($"Failed to find service of type {cacheData.SelectedSearch} with name {messageData}");
-                return false;
+                if(messageData != DataBoth)
+                {
+                    _logger.Warn($"Failed to find service of type {cacheData.SelectedSearch} with name {messageData}");
+                    return false;
+                }
+
+                cacheData.API = Program.ServiceManager.GetAllServices().Where(
+                    s => s is IServarr apiBase &&
+                    apiBase.Type == cacheData.SelectedSearch
+                ).Cast<IServarr>();
+            }
+            else
+            {
+                cacheData.API = new List<IServarr>()
+                {
+                    service
+                };
             }
 
-            cacheData.API = service;
-            _logger.Trace($"{message.From.Username} is searching for {cacheData.SelectedSearch} with {service.Type}");
 
+            _logger.Trace($"{message.Chat.Username} is searching for {cacheData.SelectedSearch} with {cacheData.API.Count()} services");
+
+            var isSingleSearch = cacheData.API.Count() == 1;
             var title = string.Format(
-                Program.LanguageManager.GetTranslation("Commands", "Search", "Selected"),
+                Program.LanguageManager.GetTranslation(
+                    "Commands",
+                    "Search",
+                    isSingleSearch ? "Selected" : "SelectedAll"
+                ),
                 Program.LanguageManager.GetTranslation(cacheData.SelectedSearch.ToString()),
-                (service as IService).Name
+                isSingleSearch ? cacheData.API.First().Name : ""
             );
 
             await TelegramService.ForceReply(this, message, title);
@@ -115,13 +141,14 @@ namespace PotatoBot.Commands
             var cacheData = TelegramService.GetCachedData<SearchData>(message);
             cacheData.SearchText = searchText;
 
-            _logger.Trace($"Searching in {cacheData.API.Type} for '{searchText}'");
+            var searchService = cacheData.API.First();
+            _logger.Trace($"Searching in {searchService.Type} for '{searchText}'");
 
             StatisticsService.IncreaseSearches();
 
             await client.SendChatActionAsync(message.Chat.Id, Telegram.Bot.Types.Enums.ChatAction.Typing);
 
-            cacheData.SearchResults = cacheData.API.Search(searchText);
+            cacheData.SearchResults = searchService.Search(searchText);
             var resultCount = cacheData.SearchResults?.Count() ?? 0;
             _logger.Trace($"Found {resultCount} results for '{searchText}'");
 
@@ -155,19 +182,22 @@ namespace PotatoBot.Commands
                 return true;
             }
 
-            var result = cacheData.API.Add(selectedItem);
-            if(result.Added)
+            foreach(var service in cacheData.API)
             {
-                StatisticsService.IncreaseAdds();
-                await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Success"), selectedItem.Title));
-            }
-            else if(result.AlreadyAdded)
-            {
-                await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Exists"), selectedItem.Title));
-            }
-            else
-            {
-                await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Fail"), selectedItem.Title));
+                var result = service.Add(selectedItem);
+                if(result.Added)
+                {
+                    StatisticsService.IncreaseAdds();
+                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Success"), selectedItem.Title));
+                }
+                else if(result.AlreadyAdded)
+                {
+                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Exists"), selectedItem.Title));
+                }
+                else
+                {
+                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Fail"), selectedItem.Title));
+                }
             }
 
             return true;

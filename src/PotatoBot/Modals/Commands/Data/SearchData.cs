@@ -6,7 +6,7 @@ namespace PotatoBot.Modals.Commands.Data
     {
         public ServarrType SelectedSearch { get; set; }
         public string SearchText { get; set; }
-        public IServarr API { get; set; }
+        public IEnumerable<IServarr> API { get; set; }
 
         public IEnumerable<IServarrItem> SearchResults { get; set; }
     }
