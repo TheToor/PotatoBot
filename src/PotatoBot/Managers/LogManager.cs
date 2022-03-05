@@ -20,7 +20,7 @@ namespace PotatoBot.Managers
         {
             try
             {
-                var message = $"*[{logEvent.Level}][{logEvent.TimeStamp}]\n{logEvent.CallerClassName}->{logEvent.CallerMemberName}*\n{logEvent.Message}\n\n/debug_logfile";
+                var message = $"<b>[{logEvent.Level}][{logEvent.TimeStamp}]\n{logEvent.CallerClassName}->{logEvent.CallerMemberName}</b>\n{logEvent.Message}\n\n/debug_logfile";
                 if(Program.ServiceManager == null || Program.ServiceManager.TelegramService == null)
                 {
                     return;

@@ -246,14 +246,14 @@ namespace PotatoBot.Services
                 return;
             }
 
-            message = EscapeMessage(message, ParseMode.MarkdownV2);
+            message = EscapeMessage(message, ParseMode.Html);
 
             _logger.Trace($"Sending '{message}' to admins");
 
             foreach(var chat in _settings.Admins)
             {
                 Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-                await _client.SendTextMessageAsync(chat, message, ParseMode.MarkdownV2);
+                await _client.SendTextMessageAsync(chat, message, ParseMode.Html);
             }
         }
 
