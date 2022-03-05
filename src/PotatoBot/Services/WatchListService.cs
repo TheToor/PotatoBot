@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
 
@@ -27,7 +28,7 @@ namespace PotatoBot.Services
         /// List<int> Watched items in IServarr Service
         /// </summary>
         private Dictionary<long, Dictionary<string, List<ulong>>> _watchList = new();
-        private readonly object _watchListLock = new ();
+        private readonly SemaphoreSlim _watchListLock = new (1);
         private ICacheManager<object> _watchListPathCache;
 
         public bool Start()
@@ -72,7 +73,9 @@ namespace PotatoBot.Services
 
         private void ReadSettings()
         {
-            lock(_watchListLock)
+            _logger.Trace("Waiting for lock");
+            _watchListLock.Wait();
+            try
             {
                 _logger.Trace("Reading watchlist ...");
 
@@ -81,6 +84,10 @@ namespace PotatoBot.Services
                     File.WriteAllText(WatchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
                 }
                 _watchList = JsonConvert.DeserializeObject<Dictionary<long, Dictionary<string, List<ulong>>>>(File.ReadAllText(WatchListDatabaseFileName));
+            }
+            finally
+            {
+                _watchListLock.Release();
             }
         }
 
@@ -92,8 +99,9 @@ namespace PotatoBot.Services
                 return;
             }
 
-            lock(_watchListLock)
-            {
+            _watchListLock.Wait();
+            try
+            { 
                 _logger.Trace("Saving watchlist");
                 if(File.Exists(WatchListDatabaseFileName))
                 {
@@ -101,11 +109,22 @@ namespace PotatoBot.Services
                 }
                 File.WriteAllText(WatchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
             }
+            finally
+            {
+                _watchListLock.Release();
+            }
         }
 
         internal void CheckWatchlist(object sender, System.Timers.ElapsedEventArgs e)
         {
-            lock(_watchListLock)
+            CheckWatchlistAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        internal async Task CheckWatchlistAsync()
+        {
+            await _watchListLock.WaitAsync();
+
+            try
             {
                 var plexServices = Program.ServiceManager.GetPlexServices().ToDictionary(p => p, p => p.GetRecentlyAdded());
 
@@ -115,7 +134,7 @@ namespace PotatoBot.Services
 
                 foreach(var user in _watchList.Keys)
                 {
-                    newWatchList.Add(user, new ());
+                    newWatchList.Add(user, new());
 
                     var services = _watchList[user];
                     foreach(var service in services.Keys)
@@ -170,14 +189,14 @@ namespace PotatoBot.Services
                                     var releaseItem = newItems.NewItems.FirstOrDefault(i => i.Media.Part.File.StartsWith(path));
                                     if(releaseItem != null)
                                     {
-                                        Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
+                                        await Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
                                             user,
                                             string.Format(
                                                 Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
                                                 releaseItem.Title
                                             ),
                                             Telegram.Bot.Types.Enums.ParseMode.Html
-                                        ).Wait();
+                                        );
                                         continue;
                                     }
 
@@ -187,14 +206,14 @@ namespace PotatoBot.Services
                                     );
                                     if(releaseDirectory != null)
                                     {
-                                        Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
+                                        await Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
                                             user,
                                             string.Format(
                                                 Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
                                                 releaseDirectory.Title
                                             ),
                                             Telegram.Bot.Types.Enums.ParseMode.Html
-                                        ).Wait();
+                                        );
                                         continue;
                                     }
 
@@ -218,11 +237,16 @@ namespace PotatoBot.Services
                 // Update watchlist
                 _watchList = newWatchList;
             }
+            finally
+            {
+                _watchListLock.Release();
+            }
         }
 
         internal void AddToWatchList(long userId, IServarr service, IServarrItem item)
         {
-            lock(_watchListLock)
+            _watchListLock.Wait();
+            try
             {
                 if(!_watchList.ContainsKey(userId))
                 {
@@ -244,9 +268,13 @@ namespace PotatoBot.Services
                 _watchList[userId][service.Name].Add(item.Id);
 
                 _logger.Trace($"Added {item.Id} in service {service.Name} to watchlist for user {userId}");
-            }
 
-            SaveSettings();
+                SaveSettings();
+            }
+            finally
+            {
+                _watchListLock.Release();
+            }
         }
     }
 }
