@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Telegram.Bot.Exceptions;
 
 namespace PotatoBot.Services
 {
@@ -150,53 +151,65 @@ namespace PotatoBot.Services
                                 continue;
                             }
 
-                            _logger.Trace($"Transforming path. Current path is '{path}'");
-                            foreach(var plex in plexServices.Keys)
+                            try
                             {
-                                var settings = Program.Settings.Plex.FirstOrDefault(s => s.Name == plex.Name);
-                                if(settings != null)
+                                _logger.Trace($"Transforming path. Current path is '{path}'");
+                                foreach(var plex in plexServices.Keys)
                                 {
-                                    foreach(var pathTransform in settings.PathOverrides)
+                                    var settings = Program.Settings.Plex.FirstOrDefault(s => s.Name == plex.Name);
+                                    if(settings != null)
                                     {
-                                        path = path.Replace(pathTransform.Key, pathTransform.Value);
+                                        foreach(var pathTransform in settings.PathOverrides)
+                                        {
+                                            path = path.Replace(pathTransform.Key, pathTransform.Value);
+                                        }
                                     }
-                                }
 
-                                var newItems = plexServices[plex];
-                                _logger.Trace($"Searching for '{path}' in {newItems.NewItems.Count} items and {newItems.NewDirectories.Count} new releases");
-                                var releaseItem = newItems.NewItems.FirstOrDefault(i => i.Media.Part.File.StartsWith(path));
-                                if(releaseItem != null)
+                                    var newItems = plexServices[plex];
+                                    _logger.Trace($"Searching for '{path}' in {newItems.NewItems.Count} items and {newItems.NewDirectories.Count} new releases");
+                                    var releaseItem = newItems.NewItems.FirstOrDefault(i => i.Media.Part.File.StartsWith(path));
+                                    if(releaseItem != null)
+                                    {
+                                        Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
+                                            user,
+                                            string.Format(
+                                                Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
+                                                releaseItem.Title
+                                            ),
+                                            Telegram.Bot.Types.Enums.ParseMode.Html
+                                        ).Wait();
+                                        continue;
+                                    }
+
+                                    var releaseDirectory = newItems.NewDirectories.FirstOrDefault(d =>
+                                        (d.Location?.Path?.StartsWith(path) ?? false) ||
+                                        (d.Location?.Path == path)
+                                    );
+                                    if(releaseDirectory != null)
+                                    {
+                                        Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
+                                            user,
+                                            string.Format(
+                                                Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
+                                                releaseDirectory.Title
+                                            ),
+                                            Telegram.Bot.Types.Enums.ParseMode.Html
+                                        ).Wait();
+                                        continue;
+                                    }
+
+                                    // Readd to watchlist
+                                    newWatchList[user][service].Add(item);
+                                }
+                            }
+                            catch(ApiRequestException ex)
+                            {
+                                _logger.Warn(ex);
+                                if(newWatchList[user][service].Contains(item))
                                 {
-                                    Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
-                                        user,
-                                        string.Format(
-                                            Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
-                                            releaseItem.Title
-                                        ),
-                                        Telegram.Bot.Types.Enums.ParseMode.Html
-                                    ).Wait();
-                                    continue;
+                                    newWatchList[user][service].Remove(item);
+                                    _logger.Debug($"Removed faulty item from {user} watchlist");
                                 }
-
-                                var releaseDirectory = newItems.NewDirectories.FirstOrDefault(d => 
-                                    (d.Location?.Path?.StartsWith(path) ?? false) ||
-                                    (d.Location?.Path == path)
-                                );
-                                if(releaseDirectory != null)
-                                {
-                                    Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
-                                        user,
-                                        string.Format(
-                                            Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
-                                            releaseDirectory.Title
-                                        ),
-                                        Telegram.Bot.Types.Enums.ParseMode.Html
-                                    ).Wait();
-                                    continue;
-                                }
-
-                                // Readd to watchlist
-                                newWatchList[user][service].Add(item);
                             }
                         }
                     }
