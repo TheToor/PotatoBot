@@ -268,13 +268,13 @@ namespace PotatoBot.Services
                 _watchList[userId][service.Name].Add(item.Id);
 
                 _logger.Trace($"Added {item.Id} in service {service.Name} to watchlist for user {userId}");
-
-                SaveSettings();
             }
             finally
             {
                 _watchListLock.Release();
             }
+
+            SaveSettings();
         }
     }
 }
