@@ -9,7 +9,6 @@ namespace PotatoBot.Targets
     {
         public TelegramTarget()
         {
-
         }
 
         protected async override void Write(LogEventInfo logEvent)

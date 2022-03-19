@@ -8,7 +8,6 @@ namespace PotatoBot.Modals.API.Plex.Library
     [XmlRoot(ElementName = "Video")]
     public class Video
     {
-
         [XmlElement(ElementName = "Director")]
         public List<Director> Director { get; set; }
 

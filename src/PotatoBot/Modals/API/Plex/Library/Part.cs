@@ -33,5 +33,4 @@ namespace PotatoBot.Modals.API.Plex.Library
         [XmlAttribute(AttributeName = "hasThumbnail")]
         public int HasThumbnail { get; set; }
     }
-
 }
