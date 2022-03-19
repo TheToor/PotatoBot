@@ -12,7 +12,10 @@
     ·
     <a href="https://github.com/TheToor/PotatoBot/issues">Request Feature</a>
   </p>
-
+ 
+<p align="center">
+  <a href="https://www.codefactor.io/repository/github/thetoor/potatobot"><img src="https://www.codefactor.io/repository/github/thetoor/potatobot/badge" alt="CodeFactor" /></a>
+</p>
 
 ## Table of Contents
 
