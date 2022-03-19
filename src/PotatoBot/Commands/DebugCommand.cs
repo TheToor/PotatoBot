@@ -37,27 +37,7 @@ namespace PotatoBot.Commands
                         return true;
                     }
 
-                    var level = arguments[1];
-
-                    if(level == "0")
-                    {
-                        LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Error);
-                        await TelegramService.SimpleReplyToMessage(message, "Loglevel set to ERROR");
-                    }
-                    else if(level == "1")
-                    {
-                        LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Warn);
-                        await TelegramService.SimpleReplyToMessage(message, "Loglevel set to WARN");
-                    }
-                    else if(level == "2")
-                    {
-                        LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Info);
-                        await TelegramService.SimpleReplyToMessage(message, "Loglevel set to INFO");
-                    }
-                    else
-                    {
-                        await TelegramService.SimpleReplyToMessage(message, "Unsupported Loglevel (0 = Error, 1 = Warn, 2 = Info)");
-                    }
+                    await HandleLogCommand(message, arguments);
                     break;
                 }
 
@@ -79,7 +59,7 @@ namespace PotatoBot.Commands
                 case "longmessage":
                 {
                     var testMessage = "";
-                    for(int i = 0; i < 256; i++)
+                    for(var i = 0; i < 256; i++)
                     {
                         testMessage += new string(i.ToString().Last(), 58);
                         testMessage += "\n";
@@ -108,6 +88,30 @@ namespace PotatoBot.Commands
             }
 
             return true;
+        }
+
+        private static async Task HandleLogCommand(Message message, string[] arguments)
+        {
+            var level = arguments[1];
+            if(level == "0")
+            {
+                LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Error);
+                await TelegramService.SimpleReplyToMessage(message, "Loglevel set to ERROR");
+            }
+            else if(level == "1")
+            {
+                LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Warn);
+                await TelegramService.SimpleReplyToMessage(message, "Loglevel set to WARN");
+            }
+            else if(level == "2")
+            {
+                LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Info);
+                await TelegramService.SimpleReplyToMessage(message, "Loglevel set to INFO");
+            }
+            else
+            {
+                await TelegramService.SimpleReplyToMessage(message, "Unsupported Loglevel (0 = Error, 1 = Warn, 2 = Info)");
+            }
         }
     }
 }

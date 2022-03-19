@@ -36,96 +36,21 @@ namespace PotatoBot.Managers
 
             var settings = Program.Settings;
 
-            foreach(var sonarr in settings.Sonarr)
-            {
-                if(sonarr.Enabled)
-                {
-                    _logger.Info("Enabling Sonarr Service ...");
-                    var sonarrService = new SonarrService(sonarr, "api/v3");
-                    _services.Add(sonarrService);
-                    _sonarr.Add(sonarrService);
+            InitializeSonarr(settings);
 
-                    if(sonarr.EnableCalendar)
-                    {
-                        API.Calendar.Calendars.Add(sonarrService);
-                    }
-                }
-            }
+            InitializeRadarr(settings);
 
-            foreach(var radarr in settings.Radarr)
-            {
-                if(radarr.Enabled)
-                {
-                    _logger.Info("Enabling Radarr Service ...");
-                    var radarrService = new RadarrService(radarr, "api/v3");
-                    _services.Add(radarrService);
-                    _radarr.Add(radarrService);
+            InitializeLidarr(settings);
 
-                    if(radarr.EnableCalendar)
-                    {
-                        API.Calendar.Calendars.Add(radarrService);
-                    }
-                }
-            }
+            InitializePlex(settings);
 
-            foreach(var lidarr in settings.Lidarr)
-            {
-                if(lidarr.Enabled)
-                {
-                    _logger.Info("Enalbing Lidarr Service ...");
-                    var lidarrService = new LidarrService(lidarr, "api/v1");
-                    _services.Add(lidarrService);
-                    _lidarr.Add(lidarrService);
-
-                    if(lidarr.EnableCalendar)
-                    {
-                        API.Calendar.Calendars.Add(lidarrService);
-                    }
-                }
-            }
-
-            if(settings.Plex?.Count > 0)
-            {
-                _logger.Info($"Adding {settings.Plex.Count} Plex Servers");
-
-                foreach(var server in settings.Plex)
-                {
-                    if(!server.Enabled)
-                    {
-                        _logger.Trace($"Skipping '{server.Url}' because it is disabled");
-                        continue;
-                    }
-
-                    var service = new PlexService(server);
-                    _plexServices.Add(service);
-                    _services.Add(service);
-                }
-            }
-
-            if(settings.SABnzbd?.Count > 0)
-            {
-                _logger.Info($"Adding {settings.SABnzbd.Count} SABnzbd Servers");
-
-                foreach(var server in settings.SABnzbd)
-                {
-                    if(!server.Enabled)
-                    {
-                        _logger.Trace($"Skipping '{server.Url}' because it is disabled");
-                        continue;
-                    }
-
-                    var service = new SABnzbdService(server);
-                    _sabNzbdServices.Add(service);
-                    _services.Add(service);
-                }
-            }
+            InitializeSABnzbd(settings);
 
             // Webhook should be started as the last service as it may depend on other services (like Sonarr)
             _services.Add(new WebhookService());
 
             StartAllServices();
         }
-
         ~ServiceManager()
         {
             StopAllServices();
@@ -180,6 +105,105 @@ namespace PotatoBot.Managers
         internal List<PlexService> GetPlexServices()
         {
             return _plexServices;
+        }
+
+        private void InitializeSABnzbd(Modals.Settings.BotSettings settings)
+        {
+            if(settings.SABnzbd?.Count > 0)
+            {
+                _logger.Info($"Adding {settings.SABnzbd.Count} SABnzbd Servers");
+
+                foreach(var server in settings.SABnzbd)
+                {
+                    if(!server.Enabled)
+                    {
+                        _logger.Trace($"Skipping '{server.Url}' because it is disabled");
+                        continue;
+                    }
+
+                    var service = new SABnzbdService(server);
+                    _sabNzbdServices.Add(service);
+                    _services.Add(service);
+                }
+            }
+        }
+
+        private void InitializePlex(Modals.Settings.BotSettings settings)
+        {
+            if(settings.Plex?.Count > 0)
+            {
+                _logger.Info($"Adding {settings.Plex.Count} Plex Servers");
+
+                foreach(var server in settings.Plex)
+                {
+                    if(!server.Enabled)
+                    {
+                        _logger.Trace($"Skipping '{server.Url}' because it is disabled");
+                        continue;
+                    }
+
+                    var service = new PlexService(server);
+                    _plexServices.Add(service);
+                    _services.Add(service);
+                }
+            }
+        }
+
+        private void InitializeLidarr(Modals.Settings.BotSettings settings)
+        {
+            foreach(var lidarr in settings.Lidarr)
+            {
+                if(lidarr.Enabled)
+                {
+                    _logger.Info("Enalbing Lidarr Service ...");
+                    var lidarrService = new LidarrService(lidarr, "api/v1");
+                    _services.Add(lidarrService);
+                    _lidarr.Add(lidarrService);
+
+                    if(lidarr.EnableCalendar)
+                    {
+                        API.Calendar.Calendars.Add(lidarrService);
+                    }
+                }
+            }
+        }
+
+        private void InitializeRadarr(Modals.Settings.BotSettings settings)
+        {
+            foreach(var radarr in settings.Radarr)
+            {
+                if(radarr.Enabled)
+                {
+                    _logger.Info("Enabling Radarr Service ...");
+                    var radarrService = new RadarrService(radarr, "api/v3");
+                    _services.Add(radarrService);
+                    _radarr.Add(radarrService);
+
+                    if(radarr.EnableCalendar)
+                    {
+                        API.Calendar.Calendars.Add(radarrService);
+                    }
+                }
+            }
+        }
+
+        private void InitializeSonarr(Modals.Settings.BotSettings settings)
+        {
+            foreach(var sonarr in settings.Sonarr)
+            {
+                if(sonarr.Enabled)
+                {
+                    _logger.Info("Enabling Sonarr Service ...");
+                    var sonarrService = new SonarrService(sonarr, "api/v3");
+                    _services.Add(sonarrService);
+                    _sonarr.Add(sonarrService);
+
+                    if(sonarr.EnableCalendar)
+                    {
+                        API.Calendar.Calendars.Add(sonarrService);
+                    }
+                }
+            }
         }
     }
 }
