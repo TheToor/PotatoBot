@@ -6,7 +6,6 @@ namespace PotatoBot.Modals.API.Plex.Library
     [XmlRoot(ElementName = "Directory")]
     public class Directory
     {
-
         [XmlElement(ElementName = "Guid")]
         public List<Guid> Guid { get; set; }
 

@@ -6,7 +6,6 @@ namespace PotatoBot.Modals.API.Plex.Library
     [XmlRoot(ElementName = "Part")]
     public class Part
     {
-
         [XmlElement(ElementName = "Stream")]
         public List<Stream> Stream { get; set; }
 

@@ -6,7 +6,6 @@ namespace PotatoBot.Modals.API.Plex.Library
     [XmlRoot(ElementName = "MediaContainer")]
     public class LibraryMediaContainer
     {
-
         [XmlElement(ElementName = "Video")]
         public List<Video> Video { get; set; }
 

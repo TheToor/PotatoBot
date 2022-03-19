@@ -89,8 +89,6 @@ namespace PotatoBot.Modals.API.SABnzbd
         [JsonProperty("warnings")]
         public List<object> Warnings { get; set; }
 
-
-
         [JsonProperty("downloaddirspeed")]
         public int DownloadDirectorySpeed { get; set; }
 
@@ -151,7 +149,6 @@ namespace PotatoBot.Modals.API.SABnzbd
         public string DiskspaceTotal1 { get; set; }
         [JsonProperty("diskspace1_norm")]
         public string Diskspace1Norm { get; set; }
-
 
         [JsonProperty("diskspace2")]
         public string Diskspace2 { get; set; }

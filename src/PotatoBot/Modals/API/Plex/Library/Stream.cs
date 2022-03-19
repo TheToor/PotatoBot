@@ -5,7 +5,6 @@ namespace PotatoBot.Modals.API.Plex.Library
     [XmlRoot(ElementName = "Stream")]
     public class Stream
     {
-
         [XmlAttribute(AttributeName = "id")]
         public int Id { get; set; }
 

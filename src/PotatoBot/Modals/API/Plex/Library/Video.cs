@@ -108,7 +108,6 @@ namespace PotatoBot.Modals.API.Plex.Library
         [XmlAttribute(AttributeName = "originallyAvailableAt")]
         public string OriginallyAvailableAt { get; set; }
 
-
         [XmlAttribute(AttributeName = "addedAt")]
         public int AddedAt { get; set; }
         [XmlIgnore()]

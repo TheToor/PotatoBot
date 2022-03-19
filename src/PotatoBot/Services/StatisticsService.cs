@@ -93,8 +93,6 @@ namespace PotatoBot.Services
                 _logger.Error(ex, "Failed to save statistics");
             }
         }
-
-
         internal static Statistics GetCurrentStatistics()
         {
             return _statistics;

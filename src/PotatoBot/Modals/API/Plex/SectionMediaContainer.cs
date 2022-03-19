@@ -5,7 +5,6 @@ namespace PotatoBot.Modals.API.Plex
     [XmlRoot(ElementName = "MediaContainer")]
     public class SectionMediaContainer
     {
-
         [XmlElement(ElementName = "Server")]
         public Server Server { get; set; }
 

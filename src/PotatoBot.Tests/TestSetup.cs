@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace PotatoBot.Tests
 {
@@ -22,11 +21,5 @@ namespace PotatoBot.Tests
             Program.ProcessExit(null, null);
             GC.SuppressFinalize(this);
         }
-    }
-
-    [CollectionDefinition("PotatoBot")]
-    public class TestSetupCollection : IClassFixture<TestSetup>
-    {
-
     }
 }

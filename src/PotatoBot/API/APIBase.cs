@@ -22,8 +22,6 @@ namespace PotatoBot.API
         private readonly string _apiUrl;
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
-
-
         internal APIBase(EntertainmentSettings settings, string apiUrl)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));

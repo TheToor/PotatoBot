@@ -41,7 +41,6 @@ namespace PotatoBot
             }
         }
 
-
         private const string SettingsFileName = "settings.json";
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 

@@ -2,7 +2,6 @@
 {
     public class RemoveQueueItem : RequestBase
     {
-
         public uint Id { get; set; }
         public bool RemoveFromClient { get; set; }
         public bool Blocklist { get; set; }

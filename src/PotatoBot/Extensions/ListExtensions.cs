@@ -1,19 +1,10 @@
-﻿using System;
+﻿using PotatoBot.Modals;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace PotatoBot.Extensions
 {
-    public class PageResult<T>
-    {
-        public int Start { get; set; }
-        public int End { get; set; }
-
-        public bool NextPossible { get; set; }
-        public bool PreviousPossible { get; set; }
-
-        public List<T> Items { get; set; } = new List<T>();
-    }
     public static class ListExtensions
     {
         public static PageResult<T> TakePaged<T>(this IEnumerable<T> list, int page, int itemsPerPage)
@@ -28,9 +19,10 @@ namespace PotatoBot.Extensions
                 throw new ArgumentOutOfRangeException(nameof(page), page, "Page needs to be greaten than 0");
             }
 
-            var result = new PageResult<T>();
-
-            result.Start = page * itemsPerPage;
+            var result = new PageResult<T>
+            {
+                Start = page * itemsPerPage
+            };
             result.End = result.Start + itemsPerPage;
 
             if(result.Start >= itemCount)

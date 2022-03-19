@@ -116,7 +116,6 @@ namespace PotatoBot.Commands
                 };
             }
 
-
             _logger.Trace($"{message.Chat.Username} is searching for {cacheData.SelectedSearch} with {cacheData.API.Count()} services");
 
             var isSingleSearch = cacheData.API.Count() == 1;

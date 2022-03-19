@@ -5,7 +5,6 @@ namespace PotatoBot.Modals.API.Plex
     [XmlRoot(ElementName = "Section")]
     public class Section
     {
-
         [XmlAttribute(AttributeName = "id")]
         public int Id { get; set; }
 

@@ -6,7 +6,6 @@ namespace PotatoBot.Modals.API.Plex
     [XmlRoot(ElementName = "Server")]
     public class Server
     {
-
         [XmlElement(ElementName = "Section")]
         public List<Section> Section { get; set; }
 

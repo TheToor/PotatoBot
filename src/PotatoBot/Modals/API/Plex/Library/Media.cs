@@ -5,7 +5,6 @@ namespace PotatoBot.Modals.API.Plex.Library
     [XmlRoot(ElementName = "Media")]
     public class Media
     {
-
         [XmlElement(ElementName = "Part")]
         public Part Part { get; set; }
 
