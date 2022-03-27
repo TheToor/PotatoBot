@@ -2,6 +2,7 @@
 using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
+using PotatoBot.Modals.Commands.FormatProviders;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,8 @@ namespace PotatoBot.Commands
             var title = LanguageManager.GetTranslation("Commands", "Search", "Start");
             await TelegramService.ReplyWithMarkupAndData(this, message, title, markup, new SearchData()
             {
-                SelectedSearch = ServarrType.Unknown
+                SelectedSearch = ServarrType.Unknown,
+                SearchFormatProvider = Program.Settings.AddPicturesToSearch ? new PictureSearchFormatProvider() : new ListSearchFormatProvider()
             });
             return true;
         }
