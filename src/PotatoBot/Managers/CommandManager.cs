@@ -117,7 +117,7 @@ namespace PotatoBot.Managers
             };
         }
 
-        public async Task<bool> ProcessMessage(TelegramBotClient client, Message message)
+        public async Task<bool> ProcessCommandMessage(TelegramBotClient client, Message message)
         {
             try
             {

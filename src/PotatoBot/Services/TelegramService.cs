@@ -19,18 +19,6 @@ namespace PotatoBot.Services
 {
     internal class TelegramService : IService
     {
-        private const string PreviousData = "Previous";
-        private const string PreviousFiveData = "Previous5";
-        private const string NextData = "Next";
-        private const string NextFiveData = "Next5";
-        private const string SelectData = "Select";
-        private const string DisabledData = "Disabled";
-        private const string CancelData = "Cancel";
-
-        private const string Spacer = "  ";
-
-        private const string MissingImageUrl = "https://thetvdb.com/images/missing/movie.jpg";
-
         private const ushort MaxMessageLength = 4096;
 
         public string Name => "Telegram";
@@ -45,7 +33,7 @@ namespace PotatoBot.Services
         private CommandManager _commandManager;
 
         // Thread lock for cache
-        private readonly object _cacheLock = new();
+        private readonly SemaphoreSlim _cacheLock = new (1, 1);
         // Cache to store data "inside" of a telegram chat
         private Dictionary<long, Cache> _cache = new();
         // Timer to invalidate cache
@@ -386,7 +374,8 @@ namespace PotatoBot.Services
 
         internal T GetCachedData<T>(Message message) where T : IData
         {
-            lock(_cacheLock)
+            _cacheLock.Wait();
+            try
             {
                 if(_cache.ContainsKey(message.Chat.Id))
                 {
@@ -396,6 +385,10 @@ namespace PotatoBot.Services
                 }
 
                 return default;
+            }
+            finally
+            {
+                _cacheLock.Release();
             }
         }
 
@@ -436,7 +429,10 @@ namespace PotatoBot.Services
 
         internal Cache GetCache(Message message)
         {
-            lock(_cacheLock)
+            _logger.Trace($"Getting cache for chat {message.Chat.Id}");
+            _cacheLock.Wait();
+
+            try
             {
                 if(_cache.ContainsKey(message.Chat.Id))
                 {
@@ -455,11 +451,17 @@ namespace PotatoBot.Services
                     return cache;
                 }
             }
+            finally
+            {
+                _cacheLock.Release();
+            }
         }
 
         private void CacheOrUpdate(Message message, IData data)
         {
-            lock(_cacheLock)
+            _cacheLock.Wait();
+
+            try
             {
                 if(_cache.ContainsKey(message.Chat.Id))
                 {
@@ -480,13 +482,19 @@ namespace PotatoBot.Services
                     });
                 }
             }
+            finally
+            {
+                _cacheLock.Release();
+            }
         }
 
         private void ValidateCache(object sender, System.Timers.ElapsedEventArgs e)
         {
             _logger.Trace("Validating cache ...");
 
-            lock(_cacheLock)
+            _cacheLock.Wait();
+
+            try
             {
                 var newCachedRequired = false;
                 var newCache = new Dictionary<long, Cache>();
@@ -511,6 +519,10 @@ namespace PotatoBot.Services
                 {
                     _cache = newCache;
                 }
+            }
+            finally
+            {
+                _cacheLock.Release();
             }
         }
 
@@ -603,7 +615,7 @@ namespace PotatoBot.Services
                     Program.ServiceManager?.StatisticsService?.IncreaseCommandsReceived();
 
                     _logger.Trace("Detected command");
-                    await _commandManager.ProcessMessage(_client, message);
+                    await _commandManager.ProcessCommandMessage(_client, message);
                 }
                 else
                 {
@@ -616,23 +628,33 @@ namespace PotatoBot.Services
                         var replyToMessageId = message.ReplyToMessage.MessageId;
                         _logger.Trace($"Message {message.MessageId} is a reply to {replyToMessageId}. Checking for Force Reply ...");
 
-                        lock(_cacheLock)
+                        await _cacheLock.WaitAsync();
+                        try
                         {
                             if(_cache.ContainsKey(message.Chat.Id))
                             {
+                                _cacheLock.Release();
                                 var cache = GetCache(message.ReplyToMessage);
+
                                 if(cache.MessageId == replyToMessageId)
                                 {
                                     _logger.Trace($"Detected {replyToMessageId} as reply. Invoking action ...");
                                     // Reset ForceReply flag
                                     cache.ForceReply = false;
                                     // Invoke Event Handler
-                                    cache.ForceReplyInstance.OnReplyReceived(_client, message);
+                                    await cache.ForceReplyInstance.OnReplyReceived(_client, message);
                                 }
                             }
                             else
                             {
                                 _logger.Trace($"Not awaiting a reply to {replyToMessageId}");
+                            }
+                        }
+                        finally
+                        {
+                            if(_cacheLock.CurrentCount == 0)
+                            {
+                                _cacheLock.Release();
                             }
                         }
                     }
@@ -659,21 +681,21 @@ namespace PotatoBot.Services
                 var data = callbackQuery.Data;
                 var message = callbackQuery.Message;
 
-                lock(_cache)
-                {
+                await _cacheLock.WaitAsync();
+
+                try
+                { 
                     if(_cache.ContainsKey(message.Chat.Id))
                     {
                         var cache = _cache[message.Chat.Id];
+                        _cacheLock.Release();
 
-                        if(HandlePagination(message, cache, data).GetAwaiter().GetResult())
+                        if(await (cache.Data as SearchData)?.SearchFormatProvider?.HandlePagination(_client, message, cache, data))
                         {
                             return;
                         }
 
-                        var task = cache.QueryCallbackInstance.OnCallbackQueryReceived(_client, callbackQuery);
-                        task.Wait();
-
-                        if(!task.Result)
+                        if(!await cache.QueryCallbackInstance.OnCallbackQueryReceived(_client, callbackQuery))
                         {
                             _logger.Warn($"Failed to execute callback for '{cache.QueryCallbackInstance}'");
                         }
@@ -681,7 +703,15 @@ namespace PotatoBot.Services
                     else
                     {
                         _logger.Debug($"No callback found for message {message.MessageId}");
-                        _client.DeleteMessageAsync(message.Chat, message.MessageId);
+                        await _client.DeleteMessageAsync(message.Chat, message.MessageId);
+                        _cacheLock.Release();
+                    }
+                }
+                catch
+                {
+                    if(_cacheLock.CurrentCount == 0)
+                    {
+                        _cacheLock.Release();
                     }
                 }
             }
@@ -691,81 +721,6 @@ namespace PotatoBot.Services
                 Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
                 await _client.SendTextMessageAsync(callbackQuery.Message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"));
             }
-        }
-
-        private async Task<bool> HandlePagination(Message message, Cache cache, string data)
-        {
-            if(data == DisabledData)
-            {
-                _logger.Trace("Stupid user clicked on disabled button ... Ignoring the twat");
-                return true;
-            }
-
-            if(data == NextData || data == PreviousData || data == NextFiveData || data == PreviousFiveData)
-            {
-                if(data == NextData)
-                {
-                    cache.Page++;
-                }
-                else if(data == PreviousData)
-                {
-                    cache.Page--;
-                }
-                else if(data == NextFiveData)
-                {
-                    cache.Page += Math.Min(cache.PageItemList.Count() - cache.Page, 5);
-                }
-                else
-                {
-                    cache.Page -= Math.Min(cache.Page, 5);
-                }
-
-                await UpdatePageination(message);
-
-                // Do not invoke any further tasks
-                return true;
-            }
-
-            if(data == CancelData)
-            {
-                // Cancel Pagination
-                _logger.Trace("Cancellation requested");
-
-                await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-
-                return true;
-            }
-
-            if(data.StartsWith(SelectData))
-            {
-                var selection = data.Substring(SelectData.Length, data.Length - SelectData.Length);
-                if(!int.TryParse(selection, out var selectedIndex))
-                {
-                    // How ?
-                    _logger.Warn($"Failed to parse '{selection}' to int");
-                    await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-                }
-
-                try
-                {
-                    var task = cache.PageSelectionFunction(_client, message, selectedIndex);
-                    task.Wait();
-
-                    if(!task.Result)
-                    {
-                        _logger.Warn("Failed to process selection");
-                    }
-                }
-                catch(Exception ex)
-                {
-                    _logger.Error(ex, "Failed to execute selection function");
-                    await _client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-                }
-
-                return true;
-            }
-
-            return false;
         }
     }
 }
