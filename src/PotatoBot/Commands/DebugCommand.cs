@@ -85,6 +85,14 @@ namespace PotatoBot.Commands
                     Program.ServiceManager.WatchListService.CheckWatchlist(null, null);
                     break;
                 }
+
+                case "block":
+                {
+                    await TelegramService.SendSimpleMessage(message.Chat, $"Starting wait on thread {Environment.CurrentManagedThreadId}", Telegram.Bot.Types.Enums.ParseMode.Html);
+                    await Task.Delay(10000);
+                    await TelegramService.SendSimpleMessage(message.Chat, $"Done with block on thread {Environment.CurrentManagedThreadId}", Telegram.Bot.Types.Enums.ParseMode.Html);
+                    break;
+                }
             }
 
             return true;
