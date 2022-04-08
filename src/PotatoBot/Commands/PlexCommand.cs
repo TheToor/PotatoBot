@@ -32,7 +32,7 @@ namespace PotatoBot.Commands
             return command switch
             {
                 "watch" => await HandleWatch(client, message, arguments),
-                "invite" => await HandleInvite(client, message, arguments),
+                "invite" => await HandleInvite(message),
                 _ => false,
             };
         }
@@ -40,7 +40,7 @@ namespace PotatoBot.Commands
         public async Task<bool> OnReplyReceived(TelegramBotClient client, Message message)
         {
             var email = message.Text;
-            if(!Regex.IsMatch(email, EmailRegex, RegexOptions.IgnoreCase))
+            if(string.IsNullOrEmpty(email) || !Regex.IsMatch(email, EmailRegex, RegexOptions.IgnoreCase))
             {
                 await TelegramService.SimpleReplyToMessage(message, Program.LanguageManager.GetTranslation("Commands", "Plex", "NotAnEmail"));
                 return false;
@@ -85,7 +85,7 @@ namespace PotatoBot.Commands
             return true;
         }
 
-        private async Task<bool> HandleInvite(TelegramBotClient client, Message message, string[] arguments)
+        private async Task<bool> HandleInvite(Message message)
         {
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
             foreach(var plex in Program.ServiceManager.GetPlexServices())
@@ -107,9 +107,9 @@ namespace PotatoBot.Commands
             return true;
         }
 
-        private async Task<bool> HandleWatch(TelegramBotClient client, Message message, string[] arguments)
+        private static async Task<bool> HandleWatch(TelegramBotClient client, Message message, string[] arguments)
         {
-            await client.SendChatActionAsync(message.Chat, Telegram.Bot.Types.Enums.ChatAction.Typing);
+            await client.SendChatActionAsync(message.Chat!, Telegram.Bot.Types.Enums.ChatAction.Typing);
 
             if(arguments.Length != 3)
             {
@@ -130,7 +130,7 @@ namespace PotatoBot.Commands
                 return false;
             }
 
-            Program.ServiceManager.WatchListService.AddToWatchList(message.From.Id, service, item);
+            Program.ServiceManager.WatchListService.AddToWatchList(message.From!.Id, service, item);
             await TelegramService.SimpleReplyToMessage(
                 message,
                 string.Format(

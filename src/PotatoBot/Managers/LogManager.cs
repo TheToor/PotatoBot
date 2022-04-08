@@ -55,12 +55,11 @@ namespace PotatoBot.Managers
                 // Export log config from embedded resource
 
                 var assembly = Assembly.GetExecutingAssembly();
-                using(var resource = assembly.GetManifestResourceStream($"{Program.Namespace}.Resources.logconfig.xml"))
+                using var resource = assembly.GetManifestResourceStream($"{Program.Namespace}.Resources.logconfig.xml");
+                if(resource != null)
                 {
-                    using(var file = new StreamReader(resource))
-                    {
-                        File.WriteAllText(LogFileName, file.ReadToEnd());
-                    }
+                    using var file = new StreamReader(resource);
+                    File.WriteAllText(LogFileName, file.ReadToEnd());
                 }
             }
 

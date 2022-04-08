@@ -35,18 +35,22 @@ namespace PotatoBot.Commands
 
             var markup = new InlineKeyboardMarkup(keyboardMarkup);
             var title = LanguageManager.GetTranslation("Commands", "Search", "Start");
-            await TelegramService.ReplyWithMarkupAndData(this, message, title, markup, new SearchData()
-            {
-                SelectedSearch = ServarrType.Unknown,
-                SearchFormatProvider = Program.Settings.AddPicturesToSearch ? new PictureSearchFormatProvider() : new ListSearchFormatProvider()
-            });
+            await TelegramService.ReplyWithMarkupAndData(
+                this,
+                message,
+                title,
+                markup,
+                new SearchData(
+                    searchFormatProvider: Program.Settings.AddPicturesToSearch ? new PictureSearchFormatProvider() : new ListSearchFormatProvider()
+                )
+            );
             return true;
         }
 
         public async Task<bool> OnCallbackQueryReceived(TelegramBotClient client, CallbackQuery callbackQuery)
         {
-            var messageData = callbackQuery.Data;
-            var message = callbackQuery.Message;
+            var messageData = callbackQuery.Data!;
+            var message = callbackQuery.Message!;
             var cacheData = TelegramService.GetCachedData<SearchData>(message);
 
             if(cacheData.SelectedSearch == ServarrType.Unknown)
@@ -65,7 +69,7 @@ namespace PotatoBot.Commands
             }
 
             cacheData.SelectedSearch = selectedSearch;
-            _logger.Trace($"{message.From.Username} is searching for {selectedSearch}");
+            _logger.Trace($"{message.From!.Username} is searching for {selectedSearch}");
 
             var title = Program.LanguageManager.GetTranslation("Commands", "Search", "Selection");
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
@@ -138,11 +142,11 @@ namespace PotatoBot.Commands
 
         public async Task<bool> OnReplyReceived(TelegramBotClient client, Message message)
         {
-            var searchText = message.Text;
+            var searchText = message.Text!;
             var cacheData = TelegramService.GetCachedData<SearchData>(message);
             cacheData.SearchText = searchText;
 
-            var searchService = cacheData.API.First();
+            var searchService = cacheData.API!.First();
             _logger.Trace($"Searching in {searchService.Type} for '{searchText}'");
 
             StatisticsService.IncreaseSearches();
@@ -161,7 +165,7 @@ namespace PotatoBot.Commands
                     resultCount
                 );
 
-                await TelegramService.ReplyWithPageination(message, title, cacheData.SearchResults, OnPageinationSelection);
+                await TelegramService.ReplyWithPageination(message, title, cacheData.SearchResults!, OnPageinationSelection);
             }
             else
             {
@@ -183,7 +187,7 @@ namespace PotatoBot.Commands
                 return true;
             }
 
-            foreach(var service in cacheData.API)
+            foreach(var service in cacheData.API!)
             {
                 var result = service.Add(selectedItem);
                 if(result.Added)

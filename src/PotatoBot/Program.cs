@@ -48,13 +48,13 @@ namespace PotatoBot
         private static volatile bool _exited;
 
 #if DEBUG
-        internal static int TestMain(string[] args)
+        internal static int TestMain()
         {
-            return Main(args);
+            return Main();
         }
 #endif
 
-        private static int Main(string[] args)
+        private static int Main()
         {
             try
             {

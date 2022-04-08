@@ -8,7 +8,7 @@ namespace PotatoBot.Tests
     {
         public TestSetup()
         {
-            Task.Factory.StartNew(() => Program.TestMain(null), TaskCreationOptions.LongRunning);
+            Task.Factory.StartNew(() => Program.TestMain(), TaskCreationOptions.LongRunning);
 
             while(Program.ServiceManager == null)
             {
