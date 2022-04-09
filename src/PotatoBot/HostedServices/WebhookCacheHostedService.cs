@@ -11,9 +11,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PotatoBot.Services
+namespace PotatoBot.HostedServices
 {
-    public class WebhookService : IHostedService
+    public class WebhookCacheHostedService : IHostedService
     {
         public string Name => "Webhook Endpoint";
 
@@ -24,7 +24,7 @@ namespace PotatoBot.Services
         private readonly ServiceManager _serviceManager;
         private readonly BotSettings _botSettings;
 
-        public WebhookService(ServiceManager serviceManager, BotSettings botSettings)
+        public WebhookCacheHostedService(ServiceManager serviceManager, BotSettings botSettings)
         {
             _serviceManager = serviceManager;
             _botSettings = botSettings;
@@ -132,6 +132,7 @@ namespace PotatoBot.Services
             {
                 _cacheUpdateTimer.Start();
 
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 Task.Factory.StartNew(async () =>
                 {
                     // Wait some time until the Program is initialized
@@ -140,6 +141,7 @@ namespace PotatoBot.Services
                     // Update cache one manually
                     UpdateCache(null, null);
                 });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             }
             catch(Exception ex)
             {

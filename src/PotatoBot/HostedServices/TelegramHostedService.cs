@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace PotatoBot.HostedServices
 {
-    public class TelegramHost : IHostedService
+    public class TelegramHostedService : IHostedService
     {
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly TelegramService _telegramService;
         private readonly CommandManager _commandManager;
 
-        public TelegramHost(TelegramService telegramService, CommandManager commandManager)
+        public TelegramHostedService(TelegramService telegramService, CommandManager commandManager)
         {
             _telegramService = telegramService;
             _commandManager = commandManager;

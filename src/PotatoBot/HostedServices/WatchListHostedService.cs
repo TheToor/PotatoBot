@@ -15,7 +15,7 @@ using Telegram.Bot.Exceptions;
 
 namespace PotatoBot.HostedServices
 {
-    public class WatchListService : IHostedService
+    public class WatchListHostedService : IHostedService
     {
         public string Name => "WatchList";
 
@@ -40,7 +40,7 @@ namespace PotatoBot.HostedServices
         private readonly LanguageManager _languageManager;
         private readonly BotSettings _botSettings;
 
-        public WatchListService(ServiceManager serviceManager, TelegramService telegramService, LanguageManager languageManager, BotSettings botSettings)
+        public WatchListHostedService(ServiceManager serviceManager, TelegramService telegramService, LanguageManager languageManager, BotSettings botSettings)
         {
             _serviceManager = serviceManager;
             _telegramService = telegramService;
