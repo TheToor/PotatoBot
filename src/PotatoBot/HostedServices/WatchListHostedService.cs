@@ -61,12 +61,12 @@ namespace PotatoBot.HostedServices
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             _timer.Start();
-            ReadSettings();
+            await ReadSettings();
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            SaveSettings(true);
+            await SaveSettings(true);
 
             _watchListPathCache.Dispose();
 
@@ -74,19 +74,30 @@ namespace PotatoBot.HostedServices
             _timer.Dispose();
         }
 
-        private void ReadSettings()
+        private async Task ReadSettings()
         {
             _logger.Trace("Waiting for lock");
-            _watchListLock.Wait();
+            await _watchListLock.WaitAsync();
             try
             {
                 _logger.Trace("Reading watchlist ...");
 
                 if(!File.Exists(WatchListDatabaseFileName))
                 {
-                    File.WriteAllText(WatchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
+                    await File.WriteAllTextAsync(WatchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
                 }
-                _watchList = JsonConvert.DeserializeObject<Dictionary<long, Dictionary<string, List<ulong>>>>(File.ReadAllText(WatchListDatabaseFileName));
+
+                var watchList = JsonConvert.DeserializeObject<Dictionary<long, Dictionary<string, List<ulong>>>>(File.ReadAllText(WatchListDatabaseFileName));
+                if(watchList == null)
+                {
+                    // Invalid watchlist so create a new one
+                    _logger.Warn("Unable to read watchlist from file. Creating a new one");
+                    _watchList = new();
+                }
+                else
+                {
+                    _watchList = watchList;
+                }
             }
             finally
             {
@@ -94,7 +105,7 @@ namespace PotatoBot.HostedServices
             }
         }
 
-        private void SaveSettings(bool force = false)
+        private async Task SaveSettings(bool force = false)
         {
             // Do not spam save
             if(!force && _settingsLastSaved.AddMinutes(5) > DateTime.Now)
@@ -102,7 +113,7 @@ namespace PotatoBot.HostedServices
                 return;
             }
 
-            _watchListLock.Wait();
+            await _watchListLock.WaitAsync();
             try
             {
                 _logger.Trace("Saving watchlist");
@@ -110,7 +121,7 @@ namespace PotatoBot.HostedServices
                 {
                     File.Delete(WatchListDatabaseFileName);
                 }
-                File.WriteAllText(WatchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
+                await File.WriteAllTextAsync(WatchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
             }
             finally
             {
@@ -245,7 +256,7 @@ namespace PotatoBot.HostedServices
             }
         }
 
-        internal void AddToWatchList(long userId, IServarr service, IServarrItem item)
+        internal async Task AddToWatchList(long userId, IServarr service, IServarrItem item)
         {
             _watchListLock.Wait();
             try
@@ -276,7 +287,7 @@ namespace PotatoBot.HostedServices
                 _watchListLock.Release();
             }
 
-            SaveSettings();
+            await SaveSettings();
         }
     }
 }

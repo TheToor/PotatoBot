@@ -114,6 +114,7 @@ namespace PotatoBot.Services
             }
         }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             _isReceiving = false;
@@ -124,6 +125,7 @@ namespace PotatoBot.Services
             }
             _botCancellationTokenSource.Cancel();
         }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
         private string EscapeMessage(string message, ParseMode parseMode)
         {

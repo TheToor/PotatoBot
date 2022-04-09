@@ -126,6 +126,7 @@ namespace PotatoBot.HostedServices
             _logger.Info("Finished updating Preview cache");
         }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             try
@@ -163,5 +164,6 @@ namespace PotatoBot.HostedServices
                 _logger.Warn(ex, $"Failed to correctly stop {Name}");
             }
         }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     }
 }

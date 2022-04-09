@@ -62,7 +62,7 @@ namespace PotatoBot.Services
             return;
         }
 
-        private void TrySave()
+        private async Task TrySave()
         {
             if(DateTime.Now < _lastSaved.AddSeconds(_saveDelay))
             {
@@ -72,7 +72,7 @@ namespace PotatoBot.Services
             }
 
             // Else just execute the normal save
-            SaveStatistics();
+            await SaveStatistics();
         }
 
         private async Task SaveStatistics()
@@ -92,6 +92,11 @@ namespace PotatoBot.Services
             {
                 _logger.Error(ex, "Failed to save statistics");
             }
+        }
+
+        internal Statistics? GetStatistics()
+        {
+            return _statistics;
         }
 
         public void IncreaseMessagesSent()
