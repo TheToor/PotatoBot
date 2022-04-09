@@ -1,4 +1,6 @@
-﻿namespace PotatoBot.Webhook.Modals.Sonarr
+﻿using PotatoBot.Modals.Webhook;
+
+namespace PotatoBot.Webhook.Modals.Sonarr
 {
     public class Rename : RequestBase
     {

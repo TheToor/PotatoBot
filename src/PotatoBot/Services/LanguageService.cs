@@ -5,16 +5,16 @@ using System;
 using System.IO;
 using System.Linq;
 
-namespace PotatoBot.Managers
+namespace PotatoBot.Services
 {
-    public class LanguageManager
+    public class LanguageService
     {
         private static string _activeLanguagePath => Path.Combine(Directory.GetCurrentDirectory(), "Language", "active.json");
 
         private readonly Random _random = new();
         private readonly dynamic _language;
 
-        public LanguageManager()
+        public LanguageService()
         {
             if(!File.Exists(_activeLanguagePath))
             {
@@ -22,7 +22,11 @@ namespace PotatoBot.Managers
             }
 
             var json = File.ReadAllText(_activeLanguagePath);
-            _language = JsonConvert.DeserializeObject<dynamic>(json);
+            _language = JsonConvert.DeserializeObject<dynamic>(json)!;
+            if(_language == null)
+            {
+                throw new InvalidDataException("Invalid language file");
+            }
         }
 
         internal string GetTranslation(params string[] path)
@@ -50,8 +54,11 @@ namespace PotatoBot.Managers
                 return (string)currentDict;
             }
 
-            var list = currentDict as JArray;
-            return (string)list[_random.Next(list.Count)];
+            if(currentDict is not JArray list)
+            {
+                return "INVALID TRANSLATION REQUESTED. MAYOR FUCKUP BY DEVELOPER";
+            }
+            return (string)list[_random.Next(list.Count)]!;
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using PotatoBot.Managers;
-using PotatoBot.Modals.Commands;
+﻿using PotatoBot.Modals.Commands;
 using PotatoBot.Services;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -11,9 +10,9 @@ namespace PotatoBot.Commands
     public class HelpCommand : ICommand
     {
         private readonly TelegramService _telegramService;
-        private readonly LanguageManager _languageManager;
+        private readonly LanguageService _languageManager;
 
-        public HelpCommand(TelegramService telegramService, LanguageManager languageManager)
+        public HelpCommand(TelegramService telegramService, LanguageService languageManager)
         {
             _telegramService = telegramService;
             _languageManager = languageManager;

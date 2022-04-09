@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PotatoBot.API
+namespace PotatoBot.Controllers
 {
     [Route("[controller]", Name = "Calendar")]
     public class Calendar : Controller

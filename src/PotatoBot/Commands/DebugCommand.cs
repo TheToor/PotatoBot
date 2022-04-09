@@ -1,5 +1,4 @@
-﻿using PotatoBot.Managers;
-using PotatoBot.Modals.Commands;
+﻿using PotatoBot.Modals.Commands;
 using PotatoBot.Services;
 using System;
 using System.IO;
@@ -15,11 +14,13 @@ namespace PotatoBot.Commands
     {
         private readonly TelegramService _telegramService;
         private readonly ServiceManager _serviceManager;
+        private readonly LogService _logService;
 
-        public DebugCommand(TelegramService telegramService, ServiceManager serviceManager)
+        public DebugCommand(TelegramService telegramService, ServiceManager serviceManager, LogService logService)
         {
             _telegramService = telegramService;
             _serviceManager = serviceManager;
+            _logService = logService;
         }
 
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
@@ -52,7 +53,7 @@ namespace PotatoBot.Commands
 
                 case "logfile":
                 {
-                    var currentLog = Path.Combine(LogManager.LogDirectory, $"PotatoServer-{DateTime.Now.Date.ToString("yyyy-MM-dd")}.log");
+                    var currentLog = Path.Combine(_logService.LogDirectory, $"PotatoServer-{DateTime.Now.Date.ToString("yyyy-MM-dd")}.log");
                     if(System.IO.File.Exists(currentLog))
                     {
                         using var file = System.IO.File.Open(currentLog, FileMode.Open);
@@ -106,17 +107,17 @@ namespace PotatoBot.Commands
             var level = arguments[1];
             if(level == "0")
             {
-                LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Error);
+                _logService.SetTelegramMinLogLevel(NLog.LogLevel.Error);
                 await _telegramService.SimpleReplyToMessage(message, "Loglevel set to ERROR");
             }
             else if(level == "1")
             {
-                LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Warn);
+                _logService.SetTelegramMinLogLevel(NLog.LogLevel.Warn);
                 await _telegramService.SimpleReplyToMessage(message, "Loglevel set to WARN");
             }
             else if(level == "2")
             {
-                LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Info);
+                _logService.SetTelegramMinLogLevel(NLog.LogLevel.Info);
                 await _telegramService.SimpleReplyToMessage(message, "Loglevel set to INFO");
             }
             else

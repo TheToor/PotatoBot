@@ -1,4 +1,6 @@
-﻿namespace PotatoBot.Webhook.Modals.Radarr
+﻿using PotatoBot.Modals.Webhook;
+
+namespace PotatoBot.Webhook.Modals.Radarr
 {
     public class Test : RequestBase
     {

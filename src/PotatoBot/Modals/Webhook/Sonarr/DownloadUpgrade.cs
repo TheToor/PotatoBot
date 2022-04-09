@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using PotatoBot.Modals.Webhook;
+using System.Collections.Generic;
 
 namespace PotatoBot.Webhook.Modals.Sonarr
 {

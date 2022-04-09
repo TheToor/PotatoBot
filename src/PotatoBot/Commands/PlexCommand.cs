@@ -1,5 +1,4 @@
 ﻿using PotatoBot.HostedServices;
-using PotatoBot.Managers;
 using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
@@ -23,10 +22,10 @@ namespace PotatoBot.Commands
 
         private readonly TelegramService _telegramService;
         private readonly ServiceManager _serviceManager;
-        private readonly LanguageManager _languageManager;
-        private readonly WatchListService _watchListService;
+        private readonly LanguageService _languageManager;
+        private readonly WatchListHostedService _watchListService;
 
-        public PlexCommand(TelegramService telegramService, ServiceManager serviceManager, LanguageManager languageManager, WatchListService watchListService)
+        public PlexCommand(TelegramService telegramService, ServiceManager serviceManager, LanguageService languageManager, WatchListHostedService watchListService)
         {
             _telegramService = telegramService;
             _serviceManager = serviceManager;

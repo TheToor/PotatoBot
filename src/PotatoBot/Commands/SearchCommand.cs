@@ -1,5 +1,4 @@
-﻿using PotatoBot.Managers;
-using PotatoBot.Modals;
+﻿using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
 using PotatoBot.Modals.Commands.FormatProviders;
@@ -26,11 +25,11 @@ namespace PotatoBot.Commands
 
         private readonly TelegramService _telegramService;
         private readonly ServiceManager _serviceManager;
-        private readonly LanguageManager _languageManager;
+        private readonly LanguageService _languageManager;
         private readonly StatisticsService _statisticsService;
         private readonly BotSettings _botSettings;
 
-        public SearchCommand(TelegramService telegramService, ServiceManager serviceManager, LanguageManager languageManager, StatisticsService statisticsService, BotSettings botSettings)
+        public SearchCommand(TelegramService telegramService, ServiceManager serviceManager, LanguageService languageManager, StatisticsService statisticsService, BotSettings botSettings)
         {
             _telegramService = telegramService;
             _serviceManager = serviceManager;

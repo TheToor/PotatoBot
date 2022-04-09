@@ -1,6 +1,5 @@
 ﻿using ByteSizeLib;
-using PotatoBot.API;
-using PotatoBot.Managers;
+using PotatoBot.Controllers;
 using PotatoBot.Modals;
 using PotatoBot.Modals.API;
 using PotatoBot.Modals.API.Requests.DELETE;
@@ -26,10 +25,10 @@ namespace PotatoBot.Commands
         private const string DataRemoveAndBlock = "RemoveAndBlock";
 
         private readonly TelegramService _telegramService;
-        private readonly LanguageManager _languageManager;
+        private readonly LanguageService _languageManager;
         private readonly ServiceManager _serviceManager;
 
-        public QueueCommand(TelegramService telegramService, LanguageManager languageManager, ServiceManager serviceManager)
+        public QueueCommand(TelegramService telegramService, LanguageService languageManager, ServiceManager serviceManager)
         {
             _telegramService = telegramService;
             _languageManager = languageManager;

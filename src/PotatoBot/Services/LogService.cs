@@ -5,14 +5,15 @@ using NLog.Targets.Wrappers;
 using PotatoBot.Targets;
 using System;
 using System.IO;
-using System.Reflection;
 
-namespace PotatoBot.Managers
+namespace PotatoBot.Services
 {
-    internal class LogManager
+    public class LogService
     {
-        private static string? _logDirectory;
-        public static string LogDirectory
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+        private string? _logDirectory;
+        public string LogDirectory
         {
             get
             {
@@ -28,12 +29,14 @@ namespace PotatoBot.Managers
 
         public string LogPath => Path.Combine(Directory.GetCurrentDirectory(), LogFileName);
 
-        private static LoggingConfiguration _configuration;
+        private LoggingConfiguration? _configuration;
 
-        private static readonly Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+        private readonly TelegramService _telegramService;
 
-        internal LogManager()
+        internal LogService(TelegramService telegramService)
         {
+            _telegramService = telegramService;
+
             InitializeLogging();
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -53,19 +56,10 @@ namespace PotatoBot.Managers
 
             if(!File.Exists(LogFileName))
             {
-                // Export log config from embedded resource
-
-                var assembly = Assembly.GetExecutingAssembly();
-                using var resource = assembly.GetManifestResourceStream($"{Program.Namespace}.Resources.logconfig.xml");
-                if(resource != null)
-                {
-                    using var file = new StreamReader(resource);
-                    File.WriteAllText(LogFileName, file.ReadToEnd());
-                }
+                throw new FileNotFoundException(LogFileName);
             }
 
             _configuration = new XmlLoggingConfiguration(LogFileName);
-
             foreach(var target in _configuration.AllTargets)
             {
                 if(target is AsyncTargetWrapper wrapper)
@@ -77,28 +71,33 @@ namespace PotatoBot.Managers
 
                     fileTarget.FileName = Path.Combine(LogDirectory,
                         fileTarget.FileName
-                            .ToString()
+                            .ToString()!
                             .Trim('\'')
                     );
                 }
             }
 
-            var telegramTarget = new TelegramTarget();
+            var telegramTarget = new TelegramTarget(_telegramService);
             _configuration.AddTarget("Telegram", telegramTarget);
             _configuration.AddRule(LogLevel.Error, LogLevel.Fatal, "Telegram");
 
-            NLog.LogManager.Configuration = _configuration;
-            NLog.LogManager.ReconfigExistingLoggers();
-            NLog.LogManager.EnableLogging();
+            LogManager.Configuration = _configuration;
+            LogManager.ReconfigExistingLoggers();
+            LogManager.EnableLogging();
         }
 
-        internal static void SetTelegramMinLogLevel(LogLevel logLevel)
+        internal void SetTelegramMinLogLevel(LogLevel logLevel)
         {
+            if(_configuration == null)
+            {
+                return;
+            }
+
             _configuration.RemoveRuleByName("Telegram");
             _configuration.AddRule(logLevel, LogLevel.Fatal, "Telegram");
 
-            NLog.LogManager.Configuration = _configuration;
-            NLog.LogManager.ReconfigExistingLoggers();
+            LogManager.Configuration = _configuration;
+            LogManager.ReconfigExistingLoggers();
         }
     }
 }

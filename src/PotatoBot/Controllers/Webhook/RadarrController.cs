@@ -2,30 +2,29 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NLog;
-using PotatoBot.Managers;
 using PotatoBot.Modals;
+using PotatoBot.Modals.Webhook;
 using PotatoBot.Services;
-using PotatoBot.Webhook.Modals;
-using PotatoBot.Webhook.Modals.Lidarr;
+using PotatoBot.Webhook.Modals.Radarr;
 using System;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace PotatoBot.Webhook.Controllers
+namespace PotatoBot.Controllers.Webhook
 {
-    [Route("webhook/[controller]", Name = "Lidarr")]
-    public class LidarrController : Controller
+    [Route("webhook/[controller]", Name = "Radarr")]
+    public class RadarrController : Controller
     {
-        private static readonly Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
         private readonly TelegramService _telegramService;
         private readonly StatisticsService _statisticsService;
         private readonly ServiceManager _serviceManager;
-        private readonly LanguageManager _languageManager;
+        private readonly LanguageService _languageManager;
 
-        public LidarrController(TelegramService telegramService, StatisticsService statisticsService, ServiceManager serviceManager, LanguageManager languageManager)
+        public RadarrController(TelegramService telegramService, StatisticsService statisticsService, ServiceManager serviceManager, LanguageService languageManager)
         {
             _telegramService = telegramService;
             _statisticsService = statisticsService;
@@ -54,7 +53,7 @@ namespace PotatoBot.Webhook.Controllers
             }
 
             var server = userAgent.Split("/")[0];
-            if(server != "Lidarr")
+            if(server != "Radarr")
             {
                 _logger.Warn("Invalid request");
                 return false;
@@ -84,7 +83,7 @@ namespace PotatoBot.Webhook.Controllers
             {
                 var json = streamReader.ReadToEnd();
 
-                var responseBase = JsonConvert.DeserializeObject<LidarrRequestBase>(json);
+                var responseBase = JsonConvert.DeserializeObject<RequestBase>(json);
                 switch(responseBase.EventType)
                 {
                     case EventType.Grab:
@@ -94,21 +93,22 @@ namespace PotatoBot.Webhook.Controllers
 
                         await _telegramService.SendToAll(
                             string.Format(
-                                _languageManager.GetTranslation("Artists", "Grab"),
-                                grabEvent.Albums.Select((a) => a.Title).Aggregate((i, j) => i + "\n" + j),
+                                _languageManager.GetTranslation("Movies", "Grab"),
+                                grabEvent.RemoteMovie.Year,
+                                grabEvent.Movie.Title,
                                 grabEvent.Release.Quality,
                                 grabEvent.Release.ReleaseGroup,
                                 $"{Math.Round(size.LargestWholeNumberBinaryValue, 2):0.00} {size.LargestWholeNumberBinarySymbol}",
                                 service.Name,
-                                grabEvent.Artist.Id
+                                grabEvent.Movie.Id
                             )
                         );
+                        break;
                     }
-                    break;
 
                     case EventType.Download:
                     {
-                        var downloadEvent = JsonConvert.DeserializeObject<Download>(json);
+                        var downloadEvent = JsonConvert.DeserializeObject<DownloadUpgrade>(json);
 
                         var eventType = "Download";
                         if(downloadEvent.IsUpgrade)
@@ -118,48 +118,42 @@ namespace PotatoBot.Webhook.Controllers
 
                         await _telegramService.SendToAll(
                             string.Format(
-                                _languageManager.GetTranslation("Artists", eventType),
-                                downloadEvent.Tracks.Select((t) => t.Title).Aggregate((i, j) => i + "\n" + j),
+                                _languageManager.GetTranslation("Movies", eventType),
+                                downloadEvent.RemoteMovie.Year,
+                                downloadEvent.Movie.Title,
                                 service.Name,
-                                downloadEvent.Artist.Id
+                                downloadEvent.Movie.Id
                             )
                         );
+
+                        break;
                     }
-                    break;
 
                     case EventType.Rename:
                     {
+                        var renameEvent = JsonConvert.DeserializeObject<Rename>(json);
                         await _telegramService.SendToAll(
                             string.Format(
-                                _languageManager.GetTranslation("Artists", "Rename"),
-                                responseBase.Artist.Name
+                                _languageManager.GetTranslation("Movies", "Rename"),
+                                renameEvent.Movie.Title
                             )
                         );
-                    }
-                    break;
 
-                    case EventType.Retag:
-                    {
-                        await _telegramService.SendToAll(
-                            string.Format(
-                                _languageManager.GetTranslation("Artists", "Retag"),
-                                responseBase.Artist.Name
-                            )
-                        );
+                        break;
                     }
-                    break;
 
                     case EventType.Test:
                     {
                         var testEvent = JsonConvert.DeserializeObject<Test>(json);
                         await _telegramService.SendToAll(
                             string.Format(
-                                _languageManager.GetTranslation("Artists", "Test"),
-                                testEvent.Albums.Select((a) => a.Title).Aggregate((i, j) => i + "\n" + j)
+                                _languageManager.GetTranslation("Movies", "Test"),
+                                testEvent.RemoteMovie.Year,
+                                testEvent.Movie.Title
                             )
                         );
+                        break;
                     }
-                    break;
                 }
             }
 

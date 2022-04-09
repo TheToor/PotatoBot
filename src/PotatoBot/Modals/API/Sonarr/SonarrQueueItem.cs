@@ -1,4 +1,4 @@
-﻿using PotatoBot.API;
+﻿using PotatoBot.Controllers;
 using PotatoBot.Services;
 
 namespace PotatoBot.Modals.API.Sonarr

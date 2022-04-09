@@ -1,6 +1,5 @@
 ﻿using ByteSizeLib;
-using PotatoBot.API;
-using PotatoBot.Managers;
+using PotatoBot.Controllers;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Settings;
 using PotatoBot.Services;
@@ -17,11 +16,11 @@ namespace PotatoBot.Commands
     public class StorageCommand : ICommand
     {
         private readonly TelegramService _telegramService;
-        private readonly LanguageManager _languageManager;
+        private readonly LanguageService _languageManager;
         private readonly ServiceManager _serviceManager;
         private readonly BotSettings _settings;
 
-        public StorageCommand(TelegramService telegramService, LanguageManager languageManager, ServiceManager serviceManager, BotSettings settings)
+        public StorageCommand(TelegramService telegramService, LanguageService languageManager, ServiceManager serviceManager, BotSettings settings)
         {
             _telegramService = telegramService;
             _languageManager = languageManager;

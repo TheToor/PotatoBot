@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NLog.Web;
 using PotatoBot.HostedServices;
-using PotatoBot.Managers;
 using PotatoBot.Modals.Settings;
 using PotatoBot.Services;
 using System;
@@ -69,17 +68,18 @@ namespace PotatoBot
                 .ConfigureServices((hostcontext, services) =>
                 {
                     services.AddSingleton(botSettings);
-                    services.AddSingleton<LanguageManager>();
+                    services.AddSingleton<LogService>();
+                    services.AddSingleton<LanguageService>();
                     services.AddSingleton<StatisticsService>();
                     services.AddSingleton<ServiceManager>();
                     services.AddSingleton<TelegramService>();
-                    services.AddSingleton<WatchListService>();
+                    services.AddSingleton<WatchListHostedService>();
 
-                    services.AddSingleton<CommandManager>();
+                    services.AddSingleton<CommandService>();
 
-                    services.AddHostedService<TelegramHost>();
-                    services.AddHostedService<WebhookService>();
-                    services.AddHostedService(serviceProvider => serviceProvider.GetService<WatchListService>());
+                    services.AddHostedService<TelegramHostedService>();
+                    services.AddHostedService<WebhookCacheHostedService>();
+                    services.AddHostedService(serviceProvider => serviceProvider.GetService<WatchListHostedService>());
 
                     services.AddCors((options) =>
                     {

@@ -1,4 +1,4 @@
-﻿using PotatoBot.API;
+﻿using PotatoBot.Controllers;
 
 namespace PotatoBot.Modals.API.Radarr
 {

@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Hosting;
-using PotatoBot.Managers;
 using PotatoBot.Modals.API.Lidarr;
 using PotatoBot.Modals.API.Plex;
 using PotatoBot.Modals.API.Radarr;
 using PotatoBot.Modals.API.Sonarr;
 using PotatoBot.Modals.Settings;
+using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -83,7 +83,7 @@ namespace PotatoBot.HostedServices
                     }
                 }
 
-                API.Preview.CachedStatisticsResponse = response;
+                Controllers.Preview.CachedStatisticsResponse = response;
             }
 
             _logger.Info("Finished updating Media Preview cache");
@@ -120,7 +120,7 @@ namespace PotatoBot.HostedServices
                     }
                 }
 
-                API.Preview.CachedPreviewResponse = cachedResponse;
+                Controllers.Preview.CachedPreviewResponse = cachedResponse;
             }
 
             _logger.Info("Finished updating Preview cache");

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using PotatoBot.Modals.Commands;
-using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +8,9 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
-namespace PotatoBot.Managers
+namespace PotatoBot.Services
 {
-    public class CommandManager
+    public class CommandService
     {
         internal List<Command> Commands = new();
 
@@ -19,17 +18,17 @@ namespace PotatoBot.Managers
 
         private readonly IServiceProvider _serviceProvider;
         private readonly StatisticsService _statisticsService;
-        private readonly LanguageManager _languageManager;
+        private readonly LanguageService _languageService;
 
         private readonly Dictionary<string, ICommand> _commands = new();
         private readonly Dictionary<string, IQueryCallback> _queryCommands = new();
         private readonly Dictionary<string, IReplyCallback> _replyCommands = new();
 
-        public CommandManager(IServiceProvider provider, StatisticsService statisticsService, LanguageManager languageManager)
+        public CommandService(IServiceProvider provider, StatisticsService statisticsService, LanguageService languageService)
         {
             _serviceProvider = provider;
             _statisticsService = statisticsService;
-            _languageManager = languageManager;
+            _languageService = languageService;
         }
 
         public void LoadCommands()
@@ -147,7 +146,7 @@ namespace PotatoBot.Managers
                 if(!_commands.ContainsKey(command.CommandName))
                 {
                     // Command not found
-                    await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("CommandNotFoundError"), replyToMessageId: message.MessageId);
+                    await client.SendTextMessageAsync(message.Chat.Id, _languageService.GetTranslation("CommandNotFoundError"), replyToMessageId: message.MessageId);
                     return true;
                 }
 
@@ -165,7 +164,7 @@ namespace PotatoBot.Managers
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process message");
-                await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("CommandProcessingError"), replyToMessageId: message.MessageId);
+                await client.SendTextMessageAsync(message.Chat.Id, _languageService.GetTranslation("CommandProcessingError"), replyToMessageId: message.MessageId);
                 return false;
             }
         }

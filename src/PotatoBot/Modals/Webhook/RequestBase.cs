@@ -1,4 +1,4 @@
-﻿namespace PotatoBot.Webhook.Modals
+﻿namespace PotatoBot.Modals.Webhook
 {
     public class RequestBase
     {

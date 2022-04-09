@@ -1,5 +1,4 @@
-﻿using PotatoBot.Managers;
-using PotatoBot.Modals.Commands;
+﻿using PotatoBot.Modals.Commands;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
@@ -23,9 +22,9 @@ namespace PotatoBot.Commands
 
         private readonly TelegramService _telegramService;
         private readonly ServiceManager _serviceManager;
-        private readonly LanguageManager _languageManager;
+        private readonly LanguageService _languageManager;
 
-        public SABnzbdCommand(TelegramService telegramService, ServiceManager serviceManager, LanguageManager languageManager)
+        public SABnzbdCommand(TelegramService telegramService, ServiceManager serviceManager, LanguageService languageManager)
         {
             _telegramService = telegramService;
             _serviceManager = serviceManager;

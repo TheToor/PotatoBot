@@ -1,5 +1,4 @@
 ﻿using PotatoBot.Extensions;
-using PotatoBot.Managers;
 using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
@@ -26,8 +25,8 @@ namespace PotatoBot.Services
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly BotSettings _settings;
-        private readonly LanguageManager _languageManager;
-        private readonly CommandManager _commandManager;
+        private readonly LanguageService _languageManager;
+        private readonly CommandService _commandManager;
         private readonly StatisticsService _statisticsService;
         private readonly ServiceManager _servarrManager;
 
@@ -60,7 +59,7 @@ namespace PotatoBot.Services
             ">", ".", "[", "]", "-", "!"
         };
 
-        public TelegramService(BotSettings settings, LanguageManager languageManager, CommandManager commandManager, StatisticsService statisticsService, ServiceManager servarrManager)
+        public TelegramService(BotSettings settings, LanguageService languageManager, CommandService commandManager, StatisticsService statisticsService, ServiceManager servarrManager)
         {
             _settings = settings;
             _languageManager = languageManager;

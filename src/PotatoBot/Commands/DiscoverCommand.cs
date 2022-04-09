@@ -1,5 +1,4 @@
-﻿using PotatoBot.Managers;
-using PotatoBot.Modals;
+﻿using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
 using PotatoBot.Services;
@@ -21,11 +20,11 @@ namespace PotatoBot.Commands
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly TelegramService _telegramService;
-        private readonly LanguageManager _languageManager;
+        private readonly LanguageService _languageManager;
         private readonly StatisticsService _statisticsService;
         private readonly ServiceManager _serviceManager;
 
-        public DiscoverCommand(TelegramService telegramService, LanguageManager languageManager, StatisticsService statisticsService, ServiceManager serviceManager)
+        public DiscoverCommand(TelegramService telegramService, LanguageService languageManager, StatisticsService statisticsService, ServiceManager serviceManager)
         {
             _telegramService = telegramService;
             _languageManager = languageManager;

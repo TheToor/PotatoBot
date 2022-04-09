@@ -1,5 +1,4 @@
-﻿using PotatoBot.Managers;
-using PotatoBot.Services;
+﻿using PotatoBot.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -14,8 +13,8 @@ namespace PotatoBot.Modals.Commands.FormatProviders
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly StatisticsService _statisticsService;
-        private readonly LanguageManager _languageManager;
-        public ListSearchFormatProvider(StatisticsService statisticsService, LanguageManager languageManager)
+        private readonly LanguageService _languageManager;
+        public ListSearchFormatProvider(StatisticsService statisticsService, LanguageService languageManager)
         {
             _statisticsService = statisticsService;
             _languageManager = languageManager;

@@ -1,4 +1,4 @@
-﻿using PotatoBot.API;
+﻿using PotatoBot.Controllers;
 using PotatoBot.Modals;
 using PotatoBot.Modals.API;
 using PotatoBot.Modals.API.Radarr;

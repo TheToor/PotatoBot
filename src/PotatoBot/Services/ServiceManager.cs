@@ -1,9 +1,8 @@
 ﻿using PotatoBot.Modals.Settings;
-using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
 
-namespace PotatoBot.Managers
+namespace PotatoBot.Services
 {
     public class ServiceManager : IDisposable
     {
@@ -36,9 +35,6 @@ namespace PotatoBot.Managers
             InitializePlex(settings);
 
             InitializeSABnzbd(settings);
-
-            // Webhook should be started as the last service as it may depend on other services (like Sonarr)
-            //_services.Add(new WebhookService());
 
             StartAllServices();
         }
@@ -154,7 +150,7 @@ namespace PotatoBot.Managers
 
                     if(lidarr.EnableCalendar)
                     {
-                        API.Calendar.Calendars.Add(lidarrService);
+                        Controllers.Calendar.Calendars.Add(lidarrService);
                     }
                 }
             }
@@ -173,7 +169,7 @@ namespace PotatoBot.Managers
 
                     if(radarr.EnableCalendar)
                     {
-                        API.Calendar.Calendars.Add(radarrService);
+                        Controllers.Calendar.Calendars.Add(radarrService);
                     }
                 }
             }
@@ -192,7 +188,7 @@ namespace PotatoBot.Managers
 
                     if(sonarr.EnableCalendar)
                     {
-                        API.Calendar.Calendars.Add(sonarrService);
+                        Controllers.Calendar.Calendars.Add(sonarrService);
                     }
                 }
             }

@@ -1,7 +1,6 @@
 ﻿using CacheManager.Core;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
-using PotatoBot.Managers;
 using PotatoBot.Modals;
 using PotatoBot.Modals.Settings;
 using PotatoBot.Services;
@@ -37,10 +36,10 @@ namespace PotatoBot.HostedServices
 
         private readonly ServiceManager _serviceManager;
         private readonly TelegramService _telegramService;
-        private readonly LanguageManager _languageManager;
+        private readonly LanguageService _languageManager;
         private readonly BotSettings _botSettings;
 
-        public WatchListHostedService(ServiceManager serviceManager, TelegramService telegramService, LanguageManager languageManager, BotSettings botSettings)
+        public WatchListHostedService(ServiceManager serviceManager, TelegramService telegramService, LanguageService languageManager, BotSettings botSettings)
         {
             _serviceManager = serviceManager;
             _telegramService = telegramService;

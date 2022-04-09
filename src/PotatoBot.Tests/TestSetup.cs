@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using PotatoBot.Managers;
+using PotatoBot.Services;
 using System;
 using System.Threading.Tasks;
 

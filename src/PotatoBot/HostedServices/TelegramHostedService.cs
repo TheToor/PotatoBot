@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Hosting;
-using PotatoBot.Managers;
 using PotatoBot.Services;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,12 +7,10 @@ namespace PotatoBot.HostedServices
 {
     public class TelegramHostedService : IHostedService
     {
-        private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
-
         private readonly TelegramService _telegramService;
-        private readonly CommandManager _commandManager;
+        private readonly CommandService _commandManager;
 
-        public TelegramHostedService(TelegramService telegramService, CommandManager commandManager)
+        public TelegramHostedService(TelegramService telegramService, CommandService commandManager)
         {
             _telegramService = telegramService;
             _commandManager = commandManager;

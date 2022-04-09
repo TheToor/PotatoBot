@@ -1,5 +1,6 @@
 ﻿using NLog;
 using NLog.Targets;
+using PotatoBot.Services;
 using System;
 
 namespace PotatoBot.Targets
@@ -7,20 +8,19 @@ namespace PotatoBot.Targets
     [Target("Telegram")]
     public sealed class TelegramTarget : TargetWithLayout
     {
-        public TelegramTarget()
+        private readonly TelegramService _telegramService;
+
+        public TelegramTarget(TelegramService telegramService)
         {
+            _telegramService = telegramService;
         }
 
         protected async override void Write(LogEventInfo logEvent)
         {
             try
             {
-                //var message = $"<b>[{logEvent.Level}][{logEvent.TimeStamp}]\n{logEvent.CallerClassName}->{logEvent.CallerMemberName}</b>\n{logEvent.Message}\n\n/debug_logfile";
-                //if(Program.ServiceManager == null || Program.ServiceManager.TelegramService == null)
-                //{
-                //    return;
-                //}
-                //await Program.ServiceManager.TelegramService.SendToAdmin(message);
+                var message = $"<b>[{logEvent.Level}][{logEvent.TimeStamp}]\n{logEvent.CallerClassName}->{logEvent.CallerMemberName}</b>\n{logEvent.Message}\n\n/debug_logfile";
+                await _telegramService.SendToAdmin(message);
             }
             catch(Exception)
             {

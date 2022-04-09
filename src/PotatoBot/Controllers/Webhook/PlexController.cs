@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 
-namespace PotatoBot.Webhook.Controllers
+namespace PotatoBot.Controllers.Webhook
 {
     [Route("webhook/[controller]", Name = "Plex")]
     public class PlexController : Controller

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace PotatoBot.API
+namespace PotatoBot.Controllers
 {
     [Route("[controller]", Name = "Preview")]
     public class Preview : Controller
