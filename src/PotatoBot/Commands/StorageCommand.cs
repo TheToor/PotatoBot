@@ -1,6 +1,9 @@
 ﻿using ByteSizeLib;
 using PotatoBot.API;
+using PotatoBot.Managers;
 using PotatoBot.Modals.Commands;
+using PotatoBot.Modals.Settings;
+using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,35 +14,48 @@ using Telegram.Bot.Types;
 namespace PotatoBot.Commands
 {
     [Command("storage", Description = "Show free storage")]
-    internal class StorageCommand : Service, ICommand
+    public class StorageCommand : ICommand
     {
+        private readonly TelegramService _telegramService;
+        private readonly LanguageManager _languageManager;
+        private readonly ServiceManager _serviceManager;
+        private readonly BotSettings _settings;
+
+        public StorageCommand(TelegramService telegramService, LanguageManager languageManager, ServiceManager serviceManager, BotSettings settings)
+        {
+            _telegramService = telegramService;
+            _languageManager = languageManager;
+            _serviceManager = serviceManager;
+            _settings = settings;
+        }
+
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
         {
             var services = new Dictionary<string, APIBase>();
-            if(Program.Settings.Radarr.Count > 0)
+            if(_settings.Radarr.Count > 0)
             {
-                foreach(var service in Program.ServiceManager.Radarr)
+                foreach(var service in _serviceManager.Radarr)
                 {
                     services.Add(service.Name, service);
                 }
             }
-            if(Program.Settings.Sonarr.Count > 0)
+            if(_settings.Sonarr.Count > 0)
             {
-                foreach(var service in Program.ServiceManager.Sonarr)
+                foreach(var service in _serviceManager.Sonarr)
                 {
                     services.Add(service.Name, service);
                 }
             }
-            if(Program.Settings.Lidarr.Count > 0)
+            if(_settings.Lidarr.Count > 0)
             {
-                foreach(var service in Program.ServiceManager.Lidarr)
+                foreach(var service in _serviceManager.Lidarr)
                 {
                     services.Add(service.Name, service);
                 }
             }
 
             var responseText = string.Format(
-                LanguageManager.GetTranslation("Commands", "Storage", "Storage"),
+                _languageManager.GetTranslation("Commands", "Storage", "Storage"),
                 services.Count
             );
 
@@ -57,7 +73,7 @@ namespace PotatoBot.Commands
                                 var totalSpace = ByteSize.FromBytes(i.TotalSpace);
 
                                 return string.Format(
-                                    LanguageManager.GetTranslation("Commands", "Storage", "Label"),
+                                    _languageManager.GetTranslation("Commands", "Storage", "Label"),
                                     i.Path,
                                     i.Label,
                                     $"{(int)Math.Round(freeSpace.LargestWholeNumberBinaryValue)} {freeSpace.LargestWholeNumberBinarySymbol}",
@@ -71,7 +87,7 @@ namespace PotatoBot.Commands
                 }
             }
 
-            await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
+            await _telegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
 
             return true;
         }

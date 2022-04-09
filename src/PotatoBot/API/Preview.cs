@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,13 @@ namespace PotatoBot.API
         internal static Dictionary<string, ulong> CachedStatisticsResponse;
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+
+        private readonly BotSettings _botSettings;
+
+        public Preview(BotSettings botSettings)
+        {
+            _botSettings = botSettings;
+        }
 
         [Route("")]
         [HttpGet]
@@ -34,16 +42,21 @@ namespace PotatoBot.API
             switch(type)
             {
                 case "movie":
-                    libraryUrl = Program.Settings.Radarr.FirstOrDefault(r => r.Enabled).Url;
+                    libraryUrl = _botSettings.Radarr.FirstOrDefault(r => r.Enabled)?.Url;
                     break;
 
                 case "series":
-                    libraryUrl = Program.Settings.Sonarr.FirstOrDefault(s => s.Enabled).Url;
+                    libraryUrl = _botSettings.Sonarr.FirstOrDefault(s => s.Enabled)?.Url;
                     break;
 
                 case "artist":
-                    libraryUrl = Program.Settings.Lidarr.FirstOrDefault(l => l.Enabled).Url;
+                    libraryUrl = _botSettings.Lidarr.FirstOrDefault(l => l.Enabled)?.Url;
                     break;
+            }
+
+            if(libraryUrl == null)
+            {
+                return NotFound();
             }
 
             var imageBytes = await DownloadPoster(libraryUrl, requestUrl);

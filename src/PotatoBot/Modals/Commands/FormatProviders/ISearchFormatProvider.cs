@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PotatoBot.Services;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -23,7 +24,7 @@ namespace PotatoBot.Modals.Commands.FormatProviders
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         public Task Send(TelegramBotClient client, Message message, bool create, Cache cache, PageResult<IServarrItem> page);
-        public async Task<bool> HandlePagination(TelegramBotClient client, Message message, Cache cache, string data)
+        public async Task<bool> HandlePagination(TelegramService telegramService, TelegramBotClient client, Message message, Cache cache, string data)
         {
             if(data == DisabledData)
             {
@@ -50,7 +51,7 @@ namespace PotatoBot.Modals.Commands.FormatProviders
                     cache.Page -= Math.Min(cache.Page, 5);
                 }
 
-                await Program.ServiceManager.TelegramService.UpdatePageination(message);
+                await telegramService.UpdatePageination(message);
 
                 // Do not invoke any further tasks
                 return true;

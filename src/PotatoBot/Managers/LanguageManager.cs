@@ -7,14 +7,14 @@ using System.Linq;
 
 namespace PotatoBot.Managers
 {
-    internal class LanguageManager
+    public class LanguageManager
     {
         private static string _activeLanguagePath => Path.Combine(Directory.GetCurrentDirectory(), "Language", "active.json");
 
         private readonly Random _random = new();
         private readonly dynamic _language;
 
-        internal LanguageManager()
+        public LanguageManager()
         {
             if(!File.Exists(_activeLanguagePath))
             {

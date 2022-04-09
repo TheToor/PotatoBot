@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NLog;
+using PotatoBot.Services;
 using System;
 using System.IO;
 using System.Linq;
@@ -12,9 +13,21 @@ namespace PotatoBot.Webhook.Controllers
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
+        private readonly StatisticsService _statisticsService;
+
+        public PlexController(StatisticsService statisticsService)
+        {
+            _statisticsService = statisticsService;
+        }
+
         private bool ValidateRequest()
         {
             var userAgent = Request.Headers.FirstOrDefault(h => h.Key == "User-Agent").Value.First();
+            if(Request.ContentType == null)
+            {
+                _logger.Trace($"Invalid content type (null / empty)");
+                return false;
+            }
             var split = Request.ContentType.Split(';');
             if(split.Length == 0)
             {
@@ -46,7 +59,7 @@ namespace PotatoBot.Webhook.Controllers
         [HttpPost]
         public IActionResult Index()
         {
-            Program.ServiceManager.StatisticsService.IncreaseWebhooksReceived();
+            _statisticsService.IncreaseWebhooksReceived();
 
             if(!ValidateRequest())
             {
@@ -62,7 +75,7 @@ namespace PotatoBot.Webhook.Controllers
                     {
                         // We don't care about the thumbnail
                         _logger.Trace($"Skipping request as thumbnail was detected");
-                        Program.ServiceManager.StatisticsService.IncreaseWebhooksProcessed();
+                        _statisticsService.IncreaseWebhooksProcessed();
                         return new StatusCodeResult((int)HttpStatusCode.OK);
                     }
 
@@ -72,21 +85,11 @@ namespace PotatoBot.Webhook.Controllers
                     if(start == -1 || end == -1)
                     {
                         _logger.Trace($"Skipping requests ({start}/{end})");
-                        Program.ServiceManager.StatisticsService.IncreaseWebhooksProcessed();
+                        _statisticsService.IncreaseWebhooksProcessed();
                         return new StatusCodeResult((int)HttpStatusCode.OK);
                     }
 
-                    //                    var json = content.Substring(start, end - start + 1).Trim();
-                    //#if DEBUG
-                    //                    _logger.Trace(json);
-                    //#endif
-                    //                    var plexEventBase = Newtonsoft.Json.JsonConvert.DeserializeObject<PlexEventBase>(json);
-                    //                    if(plexEventBase != null && plexEventBase.EventType == EventType.NewInLibrary)
-                    //                    {
-                    //                        ProcessRequest(Newtonsoft.Json.JsonConvert.DeserializeObject<PlexEvent>(json));
-                    //                    }
-
-                    Program.ServiceManager.StatisticsService.IncreaseWebhooksProcessed();
+                    _statisticsService.IncreaseWebhooksProcessed();
                     return new StatusCodeResult((int)HttpStatusCode.OK);
                 }
                 catch(Exception ex)
@@ -96,10 +99,5 @@ namespace PotatoBot.Webhook.Controllers
                 }
             }
         }
-
-        //private static void ProcessRequest (PlexEvent plexEvent)
-        //{
-
-        //}
     }
 }

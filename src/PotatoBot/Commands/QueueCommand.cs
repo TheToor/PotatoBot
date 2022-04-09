@@ -1,5 +1,6 @@
 ﻿using ByteSizeLib;
 using PotatoBot.API;
+using PotatoBot.Managers;
 using PotatoBot.Modals;
 using PotatoBot.Modals.API;
 using PotatoBot.Modals.API.Requests.DELETE;
@@ -17,28 +18,39 @@ using Telegram.Bot.Types.ReplyMarkups;
 namespace PotatoBot.Commands
 {
     [Command("queue", Description = "Shows the current download queue")]
-    internal class QueueCommand : Service, ICommand, IQueryCallback
+    public class QueueCommand : ICommand, IQueryCallback
     {
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         private const string DataRemoveDownload = "RemoveDownload";
         private const string DataRemoveAndBlock = "RemoveAndBlock";
 
+        private readonly TelegramService _telegramService;
+        private readonly LanguageManager _languageManager;
+        private readonly ServiceManager _serviceManager;
+
+        public QueueCommand(TelegramService telegramService, LanguageManager languageManager, ServiceManager serviceManager)
+        {
+            _telegramService = telegramService;
+            _languageManager = languageManager;
+            _serviceManager = serviceManager;
+        }
+
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
         {
-            var keyboardMarkup = TelegramService.GetDefaultEntertainmentInlineKeyboardButtons();
+            var keyboardMarkup = _telegramService.GetDefaultEntertainmentInlineKeyboardButtons();
             if(keyboardMarkup.Count == 0)
             {
                 // Nothing enabled so nothing to search for
-                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
                 return true;
             }
 
             if(arguments.Length == 0 || arguments.Length != 2)
             {
                 var markup = new InlineKeyboardMarkup(keyboardMarkup);
-                var title = LanguageManager.GetTranslation("Commands", "Queue", "Start");
-                await TelegramService.ReplyWithMarkup(this, message, title, markup);
+                var title = _languageManager.GetTranslation("Commands", "Queue", "Start");
+                await _telegramService.ReplyWithMarkup(this, message, title, markup);
             }
             else
             {
@@ -74,22 +86,22 @@ namespace PotatoBot.Commands
 
         private async Task SendQueueItemStatus(Message message, string[] arguments)
         {
-            var service = Program.ServiceManager.GetAllServices().FirstOrDefault(s => s.Name == arguments[0]);
+            var service = _serviceManager.GetAllServices().FirstOrDefault(s => s.Name == arguments[0]);
             if(service == null || service is not APIBase api)
             {
-                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
                 return;
             }
             if(!uint.TryParse(arguments[1], out var queueItemId))
             {
-                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
                 return;
             }
 
             var queueItem = api.GetQueue().FirstOrDefault(i => i.Id == queueItemId);
             if(queueItem == null)
             {
-                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Queue", "NotEnabled"));
                 return;
             }
 
@@ -116,54 +128,54 @@ namespace PotatoBot.Commands
                 {
                     new List<InlineKeyboardButton>()
                     {
-                        InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("RemoveDownload"), $"{DataRemoveDownload}_{service.Name}_{queueItemId}")
+                        InlineKeyboardButton.WithCallbackData(_languageManager.GetTranslation("RemoveDownload"), $"{DataRemoveDownload}_{service.Name}_{queueItemId}")
                     },
                     new List<InlineKeyboardButton>()
                     {
-                        InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("RemoveAndBlock"), $"{DataRemoveAndBlock}_{service.Name}_{queueItemId}")
+                        InlineKeyboardButton.WithCallbackData(_languageManager.GetTranslation("RemoveAndBlock"), $"{DataRemoveAndBlock}_{service.Name}_{queueItemId}")
                     }
                 }
             );
 
-            await TelegramService.ReplyWithMarkup(this, message, text, keyboardMarkup, ParseMode.Html);
+            await _telegramService.ReplyWithMarkup(this, message, text, keyboardMarkup, ParseMode.Html);
         }
 
-        private static async Task<bool> ProcessDeleteCallbackQuery(TelegramBotClient client, string messageData, Message message)
+        private async Task<bool> ProcessDeleteCallbackQuery(TelegramBotClient client, string messageData, Message message)
         {
             var split = messageData.Split('_');
             if(split.Length != 3)
             {
                 _logger.Warn($"Invalid split. Expected 2 but got {split.Length}");
-                await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("Commands", "Queue", "DeleteFailed"));
+                await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("Commands", "Queue", "DeleteFailed"));
                 return false;
             }
 
-            var service = Program.ServiceManager.GetAllServices().FirstOrDefault(s => s.Name == split[1]);
+            var service = _serviceManager.GetAllServices().FirstOrDefault(s => s.Name == split[1]);
             if(service == null || service is not APIBase api)
             {
                 _logger.Warn($"Failed to find Service with name '{split[1]}'");
-                await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("Commands", "Queue", "DeleteFailed"));
+                await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("Commands", "Queue", "DeleteFailed"));
                 return false;
             }
 
             if(!uint.TryParse(split[2], out var queueItemId))
             {
                 _logger.Warn($"Failed to parse '{split[2]}' to valid queue item id");
-                await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("Commands", "Queue", "DeleteFailed"));
+                await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("Commands", "Queue", "DeleteFailed"));
                 return false;
             }
 
             if(!api.RemoveFromQueue(new RemoveQueueItem(queueItemId, true, messageData.StartsWith(DataRemoveAndBlock))))
             {
-                await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("Commands", "Queue", "DeleteFailed"));
+                await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("Commands", "Queue", "DeleteFailed"));
                 return false;
             }
 
-            await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("Commands", "Queue", "DeleteSuccess"));
+            await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("Commands", "Queue", "DeleteSuccess"));
             return true;
         }
 
-        private static async Task<bool> ProcessQueueCallbackQuery(TelegramBotClient client, string messageData, Message message)
+        private async Task<bool> ProcessQueueCallbackQuery(TelegramBotClient client, string messageData, Message message)
         {
             if(!Enum.TryParse<ServarrType>(messageData, out var searchType))
             {
@@ -178,15 +190,15 @@ namespace PotatoBot.Commands
             }
 
             var searchTypeString = searchType.ToString();
-            var queue = Program.ServiceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == searchType).Cast<APIBase>().SelectMany(s => s.GetQueue()).ToList();
+            var queue = _serviceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == searchType).Cast<APIBase>().SelectMany(s => s.GetQueue()).ToList();
 
             if(queue?.Count == 0)
             {
-                await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("Commands", "Queue", $"No{searchTypeString}"));
+                await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("Commands", "Queue", $"No{searchTypeString}"));
             }
             else
             {
-                var queueText = string.Format($"{Program.LanguageManager.GetTranslation("Commands", "Queue", searchTypeString)}\n\n", queue.Count);
+                var queueText = string.Format($"{_languageManager.GetTranslation("Commands", "Queue", searchTypeString)}\n\n", queue.Count);
                 var grouped = queue.GroupBy(q => q.TrackedDownloadStatus);
 
                 foreach(var group in grouped)
@@ -198,7 +210,7 @@ namespace PotatoBot.Commands
                     }
                 }
 
-                await TelegramService.SendSimpleMessage(message.Chat.Id, queueText, ParseMode.Html);
+                await _telegramService.SendSimpleMessage(message.Chat.Id, queueText, ParseMode.Html);
             }
 
             return true;

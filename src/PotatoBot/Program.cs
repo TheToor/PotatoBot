@@ -1,41 +1,44 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using NLog.Web;
+using PotatoBot.HostedServices;
 using PotatoBot.Managers;
 using PotatoBot.Modals.Settings;
+using PotatoBot.Services;
 using System;
 using System.IO;
-using System.Threading;
 
 namespace PotatoBot
 {
     internal class Program
     {
-        internal static BotSettings Settings;
-
-        internal static LogManager LogManager;
-        internal static ServiceManager ServiceManager;
-        internal static LanguageManager LanguageManager;
-
-        private static string _namespace;
+        private static string? _namespace;
         internal static string Namespace
         {
             get
             {
                 if(string.IsNullOrEmpty(_namespace))
                 {
-                    _namespace = typeof(Program).Namespace;
+                    _namespace = typeof(Program).Namespace!;
                 }
                 return _namespace;
             }
         }
 
-        private static Version _version;
+        private static Version? _version;
         internal static Version Version
         {
             get
             {
                 if(_version == null)
                 {
-                    _version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                    _version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
                 }
                 return _version;
             }
@@ -44,125 +47,123 @@ namespace PotatoBot
         private const string SettingsFileName = "settings.json";
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private static volatile bool _exit;
-        private static volatile bool _exited;
+        private static IWebHostBuilder CreateHostBuilder()
+        {
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+                .Build();
+
+            var botSettings = ReadSettings();
+
+            return new WebHostBuilder()
+                .UseConfiguration(config)
+                .UseKestrel()
+                .ConfigureLogging((logger) =>
+                {
+                    // Remove the default logger
+                    logger.ClearProviders();
+                    // Add NLog logger
+                    logger.AddNLog(@"logconfig.xml");
+                })
+                .ConfigureServices((hostcontext, services) =>
+                {
+                    services.AddSingleton(botSettings);
+                    services.AddSingleton<LanguageManager>();
+                    services.AddSingleton<StatisticsService>();
+                    services.AddSingleton<ServiceManager>();
+                    services.AddSingleton<TelegramService>();
+                    services.AddSingleton<WatchListService>();
+
+                    services.AddSingleton<CommandManager>();
+
+                    services.AddHostedService<TelegramHost>();
+                    services.AddHostedService<WebhookService>();
+                    services.AddHostedService(serviceProvider => serviceProvider.GetService<WatchListService>());
+
+                    services.AddCors((options) =>
+                    {
+                        options.AddDefaultPolicy((builder) =>
+                        {
+                            builder
+                                .WithOrigins(botSettings.CORSUrls.ToArray())
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                        });
+                    });
+
+                    services.AddMvc((options) =>
+                    {
+                        // required for app.UseMvc() to work
+                        options.EnableEndpointRouting = false;
+                    });
+                    services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>((option) =>
+                    {
+                        option.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+                    });
+                    services.Configure<KestrelServerOptions>(options =>
+                    {
+                        options.AllowSynchronousIO = true;
+                    });
+                })
+                .Configure(app =>
+                {
+                    app.UseCors();
+                    app.UseMvc();
+                })
+                .UseNLog()
+                .UseUrls(botSettings.Webhook.BindingUrl)
+                .SuppressStatusMessages(true);
+        }
+
+#if DEBUG
+        public static IWebHost TestMain()
+        {
+            var host = CreateHostBuilder().Build();
+            return host;
+        }
+#endif
 
         public static int Main()
         {
-            try
-            {
-                LogManager = new LogManager();
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine($"Failed to start LogManager: {ex}");
-                return 1;
-            }
-
-            _logger.Info($"Initializing {Namespace} v{Version} ...");
-
-            if(!ReadSettings())
-            {
-                return 2;
-            }
-
-            _logger.Trace("Starting LanguageManager ...");
-            LanguageManager = new LanguageManager();
-
-            _logger.Trace("Starting ServiceManager ...");
-            ServiceManager = new ServiceManager();
-
-            AppDomain.CurrentDomain.ProcessExit += ProcessExit;
-            Console.CancelKeyPress += ProcessExit;
-
-            _logger.Info("Bot startup completed");
-
-            do
-            {
-                Thread.Sleep(10);
-            }
-            while(!_exit);
-
-            _logger.Trace("Stop request received");
-
-            _logger.Trace("Stopping all services ...");
-            ServiceManager.StopAllServices();
-
-            _exited = true;
-
-            _logger.Trace("All services stopped");
-
-            NLog.LogManager.Flush();
-
+            CreateHostBuilder().Build().Run();
             return 0;
         }
 
-        internal static void ProcessExit(object sender, EventArgs e)
-        {
-            if(_exit || _exited)
-            {
-                return;
-            }
-
-            _exit = true;
-            _logger.Info("Stop requested");
-
-            do
-            {
-                Thread.Sleep(10);
-            }
-            while(!_exited);
-
-            return;
-        }
-
-        private static bool ReadSettings()
+        private static BotSettings ReadSettings()
         {
             _logger.Trace($"Reading Settings from file {SettingsFileName}");
 
             if(!File.Exists(SettingsFileName))
             {
-                try
-                {
-                    Settings = new BotSettings();
-                    SaveSettings();
-                }
-                catch(Exception ex)
-                {
-                    _logger.Fatal(ex, $"Failed to write settings file to {SettingsFileName}. Aborting execution");
-                    return false;
-                }
+                var newSettings = new BotSettings();
+                SaveSettings(newSettings);
+                return newSettings;
             }
 
-            var settings = File.ReadAllText(SettingsFileName);
-            if(string.IsNullOrEmpty(settings))
+            var settingsContent = File.ReadAllText(SettingsFileName);
+            if(string.IsNullOrEmpty(settingsContent))
             {
-                _logger.Fatal("Invalid settings file");
-                return false;
+                throw new InvalidDataException("Invalid settings file");
             }
 
-            try
+            var settings = JsonConvert.DeserializeObject<BotSettings>(settingsContent);
+            if(settings == null)
             {
-                Settings = JsonConvert.DeserializeObject<BotSettings>(settings);
-
+                throw new InvalidDataException("Invalid settings file");
+            }
 #if TRACE
-                _logger.Trace("===================================================================");
-                _logger.Trace("Read Settings: ");
-                _logger.Trace(JsonConvert.SerializeObject(Settings));
-                _logger.Trace("===================================================================");
+            _logger.Trace("===================================================================");
+            _logger.Trace("Read Settings: ");
+            _logger.Trace(JsonConvert.SerializeObject(settings));
+            _logger.Trace("===================================================================");
 #endif
-            }
-            catch(Exception ex)
-            {
-                _logger.Fatal(ex, "Invalid settings file contents");
-                return false;
-            }
 
             _logger.Info("Successfully read settings");
-            return true;
+            return settings;
         }
 
-        internal static bool SaveSettings()
+        internal static bool SaveSettings(BotSettings settings)
         {
             _logger.Trace($"Saving Settings to file {SettingsFileName}");
 
@@ -173,7 +174,7 @@ namespace PotatoBot
                     File.Delete(SettingsFileName);
                 }
 
-                File.WriteAllText(SettingsFileName, JsonConvert.SerializeObject(Settings));
+                File.WriteAllText(SettingsFileName, JsonConvert.SerializeObject(settings));
 
                 _logger.Info("Successfully saved settings");
 

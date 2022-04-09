@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NLog;
+using PotatoBot.Managers;
 using PotatoBot.Modals;
+using PotatoBot.Services;
 using PotatoBot.Webhook.Modals;
 using PotatoBot.Webhook.Modals.Lidarr;
 using System;
@@ -16,9 +18,20 @@ namespace PotatoBot.Webhook.Controllers
     [Route("webhook/[controller]", Name = "Lidarr")]
     public class LidarrController : Controller
     {
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private static Services.TelegramService _telegramManager => Program.ServiceManager.TelegramService;
+        private readonly TelegramService _telegramService;
+        private readonly StatisticsService _statisticsService;
+        private readonly ServiceManager _serviceManager;
+        private readonly LanguageManager _languageManager;
+
+        public LidarrController(TelegramService telegramService, StatisticsService statisticsService, ServiceManager serviceManager, LanguageManager languageManager)
+        {
+            _telegramService = telegramService;
+            _statisticsService = statisticsService;
+            _serviceManager = serviceManager;
+            _languageManager = languageManager;
+        }
 
         private bool ValidateRequest()
         {
@@ -54,14 +67,14 @@ namespace PotatoBot.Webhook.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(string serviceName)
         {
-            Program.ServiceManager.StatisticsService.IncreaseWebhooksReceived();
+            _statisticsService.IncreaseWebhooksReceived();
 
             if(!ValidateRequest())
             {
                 return new StatusCodeResult((int)HttpStatusCode.NotAcceptable);
             }
 
-            var service = Program.ServiceManager.GetAllServices().FirstOrDefault(s => s is IServarr && s.Name == serviceName);
+            var service = _serviceManager.GetAllServices().FirstOrDefault(s => s is IServarr && s.Name == serviceName);
             if(service == null)
             {
                 return new StatusCodeResult((int)HttpStatusCode.BadRequest);
@@ -79,9 +92,9 @@ namespace PotatoBot.Webhook.Controllers
                         var grabEvent = JsonConvert.DeserializeObject<Grab>(json);
                         var size = ByteSize.FromBytes(grabEvent.Release.Size);
 
-                        await _telegramManager.SendToAll(
+                        await _telegramService.SendToAll(
                             string.Format(
-                                Program.LanguageManager.GetTranslation("Artists", "Grab"),
+                                _languageManager.GetTranslation("Artists", "Grab"),
                                 grabEvent.Albums.Select((a) => a.Title).Aggregate((i, j) => i + "\n" + j),
                                 grabEvent.Release.Quality,
                                 grabEvent.Release.ReleaseGroup,
@@ -103,9 +116,9 @@ namespace PotatoBot.Webhook.Controllers
                             eventType = "Upgrade";
                         }
 
-                        await _telegramManager.SendToAll(
+                        await _telegramService.SendToAll(
                             string.Format(
-                                Program.LanguageManager.GetTranslation("Artists", eventType),
+                                _languageManager.GetTranslation("Artists", eventType),
                                 downloadEvent.Tracks.Select((t) => t.Title).Aggregate((i, j) => i + "\n" + j),
                                 service.Name,
                                 downloadEvent.Artist.Id
@@ -116,9 +129,9 @@ namespace PotatoBot.Webhook.Controllers
 
                     case EventType.Rename:
                     {
-                        await _telegramManager.SendToAll(
+                        await _telegramService.SendToAll(
                             string.Format(
-                                Program.LanguageManager.GetTranslation("Artists", "Rename"),
+                                _languageManager.GetTranslation("Artists", "Rename"),
                                 responseBase.Artist.Name
                             )
                         );
@@ -127,9 +140,9 @@ namespace PotatoBot.Webhook.Controllers
 
                     case EventType.Retag:
                     {
-                        await _telegramManager.SendToAll(
+                        await _telegramService.SendToAll(
                             string.Format(
-                                Program.LanguageManager.GetTranslation("Artists", "Retag"),
+                                _languageManager.GetTranslation("Artists", "Retag"),
                                 responseBase.Artist.Name
                             )
                         );
@@ -139,9 +152,9 @@ namespace PotatoBot.Webhook.Controllers
                     case EventType.Test:
                     {
                         var testEvent = JsonConvert.DeserializeObject<Test>(json);
-                        await _telegramManager.SendToAll(
+                        await _telegramService.SendToAll(
                             string.Format(
-                                Program.LanguageManager.GetTranslation("Artists", "Test"),
+                                _languageManager.GetTranslation("Artists", "Test"),
                                 testEvent.Albums.Select((a) => a.Title).Aggregate((i, j) => i + "\n" + j)
                             )
                         );
@@ -150,7 +163,7 @@ namespace PotatoBot.Webhook.Controllers
                 }
             }
 
-            Program.ServiceManager.StatisticsService.IncreaseWebhooksProcessed();
+            _statisticsService.IncreaseWebhooksProcessed();
             return new StatusCodeResult((int)HttpStatusCode.OK);
         }
     }

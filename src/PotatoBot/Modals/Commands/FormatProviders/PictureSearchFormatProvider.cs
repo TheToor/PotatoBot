@@ -1,4 +1,6 @@
-﻿using System;
+﻿using PotatoBot.Managers;
+using PotatoBot.Services;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -12,6 +14,14 @@ namespace PotatoBot.Modals.Commands.FormatProviders
     {
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private readonly StatisticsService _statisticsService;
+        private readonly LanguageManager _languageManager;
+        public PictureSearchFormatProvider(StatisticsService statisticsService, LanguageManager languageManager)
+        {
+            _statisticsService = statisticsService;
+            _languageManager = languageManager;
+        }
+
         public async Task Send(TelegramBotClient client, Message message, bool create, Cache cache, PageResult<IServarrItem> page)
         {
             var keyboardMarkupData = new List<List<InlineKeyboardButton>>();
@@ -24,8 +34,8 @@ namespace PotatoBot.Modals.Commands.FormatProviders
             // Prev button
             if(page.PreviousPossible)
             {
-                firstRow.Add(InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonPrev"), ISearchFormatProvider.PreviousData));
-                secondRow.Add(InlineKeyboardButton.WithCallbackData($"{Program.LanguageManager.GetTranslation("ButtonPrev")} 5", ISearchFormatProvider.PreviousFiveData));
+                firstRow.Add(InlineKeyboardButton.WithCallbackData(_languageManager.GetTranslation("ButtonPrev"), ISearchFormatProvider.PreviousData));
+                secondRow.Add(InlineKeyboardButton.WithCallbackData($"{_languageManager.GetTranslation("ButtonPrev")} 5", ISearchFormatProvider.PreviousFiveData));
             }
             else if(page.NextPossible)
             {
@@ -35,13 +45,13 @@ namespace PotatoBot.Modals.Commands.FormatProviders
             }
 
             // Middle add button
-            firstRow.Add(InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonAdd"), $"{ISearchFormatProvider.SelectData}{0}"));
+            firstRow.Add(InlineKeyboardButton.WithCallbackData(_languageManager.GetTranslation("ButtonAdd"), $"{ISearchFormatProvider.SelectData}{0}"));
 
             // Next button
             if(page.NextPossible)
             {
-                firstRow.Add(InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonNext"), ISearchFormatProvider.NextData));
-                secondRow.Add(InlineKeyboardButton.WithCallbackData($"{Program.LanguageManager.GetTranslation("ButtonNext")} 5", ISearchFormatProvider.NextFiveData));
+                firstRow.Add(InlineKeyboardButton.WithCallbackData(_languageManager.GetTranslation("ButtonNext"), ISearchFormatProvider.NextData));
+                secondRow.Add(InlineKeyboardButton.WithCallbackData($"{_languageManager.GetTranslation("ButtonNext")} 5", ISearchFormatProvider.NextFiveData));
             }
             else if(page.PreviousPossible)
             {
@@ -52,7 +62,7 @@ namespace PotatoBot.Modals.Commands.FormatProviders
 
             var thirdRow = new List<InlineKeyboardButton>
             {
-                InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonCancel"), ISearchFormatProvider.CancelData)
+                InlineKeyboardButton.WithCallbackData(_languageManager.GetTranslation("ButtonCancel"), ISearchFormatProvider.CancelData)
             };
 
             keyboardMarkupData.Add(firstRow);
@@ -72,7 +82,7 @@ namespace PotatoBot.Modals.Commands.FormatProviders
             var posterUrl = page.Items[0].GetPosterUrl();
             if(create)
             {
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                _statisticsService.IncreaseMessagesSent();
 
                 Message sentMessage;
                 if(string.IsNullOrEmpty(posterUrl))

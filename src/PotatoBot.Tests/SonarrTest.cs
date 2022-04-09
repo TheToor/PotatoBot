@@ -7,13 +7,11 @@ namespace PotatoBot.Tests
     [Collection("PotatoBot")]
     public class SonarrTest
     {
-        private readonly TestSetup _testSetup;
         private readonly SonarrService _sonarr;
 
         public SonarrTest(TestSetup testSetup)
         {
-            _testSetup = testSetup;
-            _sonarr = Program.ServiceManager.Sonarr.First();
+            _sonarr = testSetup.ServiceManager.Sonarr.First();
         }
 
         [Fact]

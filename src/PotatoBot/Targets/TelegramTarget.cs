@@ -15,12 +15,12 @@ namespace PotatoBot.Targets
         {
             try
             {
-                var message = $"<b>[{logEvent.Level}][{logEvent.TimeStamp}]\n{logEvent.CallerClassName}->{logEvent.CallerMemberName}</b>\n{logEvent.Message}\n\n/debug_logfile";
-                if(Program.ServiceManager == null || Program.ServiceManager.TelegramService == null)
-                {
-                    return;
-                }
-                await Program.ServiceManager.TelegramService.SendToAdmin(message);
+                //var message = $"<b>[{logEvent.Level}][{logEvent.TimeStamp}]\n{logEvent.CallerClassName}->{logEvent.CallerMemberName}</b>\n{logEvent.Message}\n\n/debug_logfile";
+                //if(Program.ServiceManager == null || Program.ServiceManager.TelegramService == null)
+                //{
+                //    return;
+                //}
+                //await Program.ServiceManager.TelegramService.SendToAdmin(message);
             }
             catch(Exception)
             {

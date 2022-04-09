@@ -1,6 +1,9 @@
-﻿using PotatoBot.Modals;
+﻿using PotatoBot.HostedServices;
+using PotatoBot.Managers;
+using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
+using PotatoBot.Services;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -12,18 +15,31 @@ using Telegram.Bot.Types.ReplyMarkups;
 namespace PotatoBot.Commands
 {
     [Command("plex", Description = "Interacts with the Plex service")]
-    internal class PlexCommand : Service, ICommand, IReplyCallback, IQueryCallback
+    public class PlexCommand : ICommand, IReplyCallback, IQueryCallback
     {
         public string UniqueIdentifier => "Plex";
 
         private const string EmailRegex = @"\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\Z";
+
+        private readonly TelegramService _telegramService;
+        private readonly ServiceManager _serviceManager;
+        private readonly LanguageManager _languageManager;
+        private readonly WatchListService _watchListService;
+
+        public PlexCommand(TelegramService telegramService, ServiceManager serviceManager, LanguageManager languageManager, WatchListService watchListService)
+        {
+            _telegramService = telegramService;
+            _serviceManager = serviceManager;
+            _languageManager = languageManager;
+            _watchListService = watchListService;
+        }
 
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
         {
             if(arguments.Length == 0)
             {
                 // NO action
-                await TelegramService.SimpleReplyToMessage(message, Program.LanguageManager.GetTranslation("Commands", "Plex", "Help"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Plex", "Help"));
                 return true;
             }
 
@@ -42,27 +58,27 @@ namespace PotatoBot.Commands
             var email = message.Text;
             if(string.IsNullOrEmpty(email) || !Regex.IsMatch(email, EmailRegex, RegexOptions.IgnoreCase))
             {
-                await TelegramService.SimpleReplyToMessage(message, Program.LanguageManager.GetTranslation("Commands", "Plex", "NotAnEmail"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Plex", "NotAnEmail"));
                 return false;
             }
 
-            var cacheData = TelegramService.GetCachedData<PlexData>(message);
+            var cacheData = _telegramService.GetCachedData<PlexData>(message);
             if(cacheData.Plex.Invite(email))
             {
-                await TelegramService.SimpleReplyToMessage(
+                await _telegramService.SimpleReplyToMessage(
                     message,
                     string.Format(
-                        Program.LanguageManager.GetTranslation("Commands", "Plex", "InviteSuccess"),
+                        _languageManager.GetTranslation("Commands", "Plex", "InviteSuccess"),
                         email
                     )
                 );
             }
             else
             {
-                await TelegramService.SimpleReplyToMessage(
+                await _telegramService.SimpleReplyToMessage(
                     message,
                     string.Format(
-                        Program.LanguageManager.GetTranslation("Commands", "Plex", "InviteFail"),
+                        _languageManager.GetTranslation("Commands", "Plex", "InviteFail"),
                         email
                     )
                 );
@@ -72,23 +88,23 @@ namespace PotatoBot.Commands
 
         public async Task<bool> OnCallbackQueryReceived(TelegramBotClient client, CallbackQuery callbackQuery)
         {
-            var selectedInstance = Program.ServiceManager.GetPlexServices().FirstOrDefault(p => p.Name == callbackQuery.Data);
+            var selectedInstance = _serviceManager.GetPlexServices().FirstOrDefault(p => p.Name == callbackQuery.Data);
             if(selectedInstance == null)
             {
-                await TelegramService.SimpleReplyToMessage(callbackQuery.Message, Program.LanguageManager.GetTranslation("GeneralError"));
+                await _telegramService.SimpleReplyToMessage(callbackQuery.Message, _languageManager.GetTranslation("GeneralError"));
                 return true;
             }
-            var cacheData = TelegramService.GetCachedData<PlexData>(callbackQuery.Message);
+            var cacheData = _telegramService.GetCachedData<PlexData>(callbackQuery.Message);
             cacheData.Plex = selectedInstance;
 
-            await TelegramService.ForceReply(this, callbackQuery.Message, Program.LanguageManager.GetTranslation("Commands", "Plex", "Invite"));
+            await _telegramService.ForceReply(this, callbackQuery.Message, _languageManager.GetTranslation("Commands", "Plex", "Invite"));
             return true;
         }
 
         private async Task<bool> HandleInvite(Message message)
         {
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-            foreach(var plex in Program.ServiceManager.GetPlexServices())
+            foreach(var plex in _serviceManager.GetPlexServices())
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>()
                 {
@@ -97,17 +113,17 @@ namespace PotatoBot.Commands
             }
 
             var markup = new InlineKeyboardMarkup(keyboardMarkup);
-            await TelegramService.ReplyWithMarkupAndData(
+            await _telegramService.ReplyWithMarkupAndData(
                 this,
                 message,
-                Program.LanguageManager.GetTranslation("Commands", "Plex", "Selection"),
+                _languageManager.GetTranslation("Commands", "Plex", "Selection"),
                 markup,
                 new PlexData()
             );
             return true;
         }
 
-        private static async Task<bool> HandleWatch(TelegramBotClient client, Message message, string[] arguments)
+        private async Task<bool> HandleWatch(TelegramBotClient client, Message message, string[] arguments)
         {
             await client.SendChatActionAsync(message.Chat!, Telegram.Bot.Types.Enums.ChatAction.Typing);
 
@@ -119,7 +135,7 @@ namespace PotatoBot.Commands
             var serviceName = arguments[1];
             var id = ulong.Parse(arguments[2]);
 
-            if(Program.ServiceManager.GetAllServices().FirstOrDefault(s => s is IServarr && s.Name == serviceName) is not IServarr service)
+            if(_serviceManager.GetAllServices().FirstOrDefault(s => s is IServarr && s.Name == serviceName) is not IServarr service)
             {
                 return false;
             }
@@ -130,11 +146,11 @@ namespace PotatoBot.Commands
                 return false;
             }
 
-            Program.ServiceManager.WatchListService.AddToWatchList(message.From!.Id, service, item);
-            await TelegramService.SimpleReplyToMessage(
+            _watchListService.AddToWatchList(message.From!.Id, service, item);
+            await _telegramService.SimpleReplyToMessage(
                 message,
                 string.Format(
-                    LanguageManager.GetTranslation("Commands", "Plex", "Watch"),
+                    _languageManager.GetTranslation("Commands", "Plex", "Watch"),
                     item.Title
                 )
             );

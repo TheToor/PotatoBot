@@ -1,6 +1,10 @@
 ﻿using CacheManager.Core;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
+using PotatoBot.Managers;
 using PotatoBot.Modals;
+using PotatoBot.Modals.Settings;
+using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,9 +13,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
 
-namespace PotatoBot.Services
+namespace PotatoBot.HostedServices
 {
-    public class WatchListService : IService
+    public class WatchListService : IHostedService
     {
         public string Name => "WatchList";
 
@@ -19,7 +23,7 @@ namespace PotatoBot.Services
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private System.Timers.Timer _timer;
+        private readonly System.Timers.Timer _timer;
 
         private readonly DateTime _settingsLastSaved = DateTime.MinValue;
         /// <summary>
@@ -28,15 +32,24 @@ namespace PotatoBot.Services
         /// List<int> Watched items in IServarr Service
         /// </summary>
         private Dictionary<long, Dictionary<string, List<ulong>>> _watchList = new();
-        private readonly SemaphoreSlim _watchListLock = new (1);
-        private ICacheManager<object> _watchListPathCache;
+        private readonly SemaphoreSlim _watchListLock = new(1);
+        private readonly ICacheManager<object> _watchListPathCache;
 
-        public bool Start()
+        private readonly ServiceManager _serviceManager;
+        private readonly TelegramService _telegramService;
+        private readonly LanguageManager _languageManager;
+        private readonly BotSettings _botSettings;
+
+        public WatchListService(ServiceManager serviceManager, TelegramService telegramService, LanguageManager languageManager, BotSettings botSettings)
         {
+            _serviceManager = serviceManager;
+            _telegramService = telegramService;
+            _languageManager = languageManager;
+            _botSettings = botSettings;
+
             _timer = new System.Timers.Timer(5 * 60 * 1000);
             _timer.Elapsed += CheckWatchlist;
             _timer.AutoReset = true;
-            _timer.Start();
 
             _watchListPathCache = CacheFactory.Build("WatchList", settings =>
             {
@@ -44,23 +57,15 @@ namespace PotatoBot.Services
                     .WithSystemRuntimeCacheHandle()
                     .WithExpiration(ExpirationMode.Absolute, TimeSpan.FromMinutes(60));
             });
-
-            // Delay reading of settings
-            Task.Factory.StartNew(async () =>
-            {
-                do
-                {
-                    await Task.Delay(1000);
-                }
-                while(Program.ServiceManager == null);
-
-                ReadSettings();
-            });
-
-            return true;
         }
 
-        public bool Stop()
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            _timer.Start();
+            ReadSettings();
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             SaveSettings(true);
 
@@ -68,7 +73,6 @@ namespace PotatoBot.Services
 
             _timer.Stop();
             _timer.Dispose();
-            return true;
         }
 
         private void ReadSettings()
@@ -101,7 +105,7 @@ namespace PotatoBot.Services
 
             _watchListLock.Wait();
             try
-            { 
+            {
                 _logger.Trace("Saving watchlist");
                 if(File.Exists(WatchListDatabaseFileName))
                 {
@@ -126,7 +130,7 @@ namespace PotatoBot.Services
 
             try
             {
-                var plexServices = Program.ServiceManager.GetPlexServices().ToDictionary(p => p, p => p.GetRecentlyAdded());
+                var plexServices = _serviceManager.GetPlexServices().ToDictionary(p => p, p => p.GetRecentlyAdded());
 
                 var serviceCache = new Dictionary<string, IServarr>();
 
@@ -153,10 +157,9 @@ namespace PotatoBot.Services
                                     return serviceCache[service].GetById(itemId).Path;
                                 }
 
-                                if(Program.ServiceManager.GetAllServices().FirstOrDefault(s => s is IServarr && s.Name == service) is not IServarr selectedService)
+                                if(_serviceManager.GetAllServices().FirstOrDefault(s => s is IServarr && s.Name == service) is not IServarr selectedService)
                                 {
-                                    _logger.Warn($"Invalid item in cache from {user}. Service {service} is invalid");
-                                    return null;
+                                    throw new Exception($"Invalid item in cache from {user}. Service {service} is invalid");
                                 }
                                 serviceCache.Add(service, selectedService);
                                 return selectedService.GetById(itemId).Path;
@@ -175,7 +178,7 @@ namespace PotatoBot.Services
                                 _logger.Trace($"Transforming path. Current path is '{path}'");
                                 foreach(var plex in plexServices.Keys)
                                 {
-                                    var settings = Program.Settings.Plex.FirstOrDefault(s => s.Name == plex.Name);
+                                    var settings = _botSettings.Plex.FirstOrDefault(s => s.Name == plex.Name);
                                     if(settings != null)
                                     {
                                         foreach(var pathTransform in settings.PathOverrides)
@@ -189,10 +192,10 @@ namespace PotatoBot.Services
                                     var releaseItem = newItems.NewItems.FirstOrDefault(i => i.Media.Part.File.StartsWith(path));
                                     if(releaseItem != null)
                                     {
-                                        await Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
+                                        await _telegramService.SendSimpleAlertMessage(
                                             user,
                                             string.Format(
-                                                Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
+                                                _languageManager.GetTranslation("Commands", "Plex", "Added"),
                                                 releaseItem.Title
                                             ),
                                             Telegram.Bot.Types.Enums.ParseMode.Html
@@ -202,14 +205,14 @@ namespace PotatoBot.Services
 
                                     var releaseDirectory = newItems.NewDirectories.FirstOrDefault(d =>
                                         (d.Location?.Path?.StartsWith(path) ?? false) ||
-                                        (d.Location?.Path == path)
+                                        d.Location?.Path == path
                                     );
                                     if(releaseDirectory != null)
                                     {
-                                        await Program.ServiceManager.TelegramService.SendSimpleAlertMessage(
+                                        await _telegramService.SendSimpleAlertMessage(
                                             user,
                                             string.Format(
-                                                Program.LanguageManager.GetTranslation("Commands", "Plex", "Added"),
+                                                _languageManager.GetTranslation("Commands", "Plex", "Added"),
                                                 releaseDirectory.Title
                                             ),
                                             Telegram.Bot.Types.Enums.ParseMode.Html

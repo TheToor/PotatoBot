@@ -11,11 +11,20 @@ using Telegram.Bot.Types;
 namespace PotatoBot.Commands
 {
     [Command("debug", Description = "Debug command for admins")]
-    internal class DebugCommand : Service, ICommand
+    public class DebugCommand : ICommand
     {
+        private readonly TelegramService _telegramService;
+        private readonly ServiceManager _serviceManager;
+
+        public DebugCommand(TelegramService telegramService, ServiceManager serviceManager)
+        {
+            _telegramService = telegramService;
+            _serviceManager = serviceManager;
+        }
+
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
         {
-            if(!TelegramService.IsFromAdmin(message))
+            if(!_telegramService.IsFromAdmin(message))
             {
                 return true;
             }
@@ -43,7 +52,7 @@ namespace PotatoBot.Commands
 
                 case "logfile":
                 {
-                    var currentLog = Path.Combine(Program.LogManager.LogDirectory, $"PotatoServer-{DateTime.Now.Date.ToString("yyyy-MM-dd")}.log");
+                    var currentLog = Path.Combine(LogManager.LogDirectory, $"PotatoServer-{DateTime.Now.Date.ToString("yyyy-MM-dd")}.log");
                     if(System.IO.File.Exists(currentLog))
                     {
                         using var file = System.IO.File.Open(currentLog, FileMode.Open);
@@ -51,7 +60,7 @@ namespace PotatoBot.Commands
                     }
                     else
                     {
-                        await TelegramService.SimpleReplyToMessage(message, "No log found");
+                        await _telegramService.SimpleReplyToMessage(message, "No log found");
                     }
                     break;
                 }
@@ -64,7 +73,7 @@ namespace PotatoBot.Commands
                         testMessage += new string(i.ToString().Last(), 58);
                         testMessage += "\n";
                     }
-                    await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
+                    await _telegramService.SendSimpleMessage(message.Chat!, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
                     break;
                 }
 
@@ -76,21 +85,15 @@ namespace PotatoBot.Commands
                         testMessage += "Arg: " + argument;
                         testMessage += "\n";
                     }
-                    await TelegramService.SendSimpleMessage(message.Chat, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
-                    break;
-                }
-
-                case "watchlist":
-                {
-                    Program.ServiceManager.WatchListService.CheckWatchlist(null, null);
+                    await _telegramService.SendSimpleMessage(message.Chat!, testMessage, Telegram.Bot.Types.Enums.ParseMode.Html);
                     break;
                 }
 
                 case "block":
                 {
-                    await TelegramService.SendSimpleMessage(message.Chat, $"Starting wait on thread {Environment.CurrentManagedThreadId}", Telegram.Bot.Types.Enums.ParseMode.Html);
+                    await _telegramService.SendSimpleMessage(message.Chat!, $"Starting wait on thread {Environment.CurrentManagedThreadId}", Telegram.Bot.Types.Enums.ParseMode.Html);
                     await Task.Delay(10000);
-                    await TelegramService.SendSimpleMessage(message.Chat, $"Done with block on thread {Environment.CurrentManagedThreadId}", Telegram.Bot.Types.Enums.ParseMode.Html);
+                    await _telegramService.SendSimpleMessage(message.Chat!, $"Done with block on thread {Environment.CurrentManagedThreadId}", Telegram.Bot.Types.Enums.ParseMode.Html);
                     break;
                 }
             }
@@ -98,27 +101,27 @@ namespace PotatoBot.Commands
             return true;
         }
 
-        private static async Task HandleLogCommand(Message message, string[] arguments)
+        private async Task HandleLogCommand(Message message, string[] arguments)
         {
             var level = arguments[1];
             if(level == "0")
             {
                 LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Error);
-                await TelegramService.SimpleReplyToMessage(message, "Loglevel set to ERROR");
+                await _telegramService.SimpleReplyToMessage(message, "Loglevel set to ERROR");
             }
             else if(level == "1")
             {
                 LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Warn);
-                await TelegramService.SimpleReplyToMessage(message, "Loglevel set to WARN");
+                await _telegramService.SimpleReplyToMessage(message, "Loglevel set to WARN");
             }
             else if(level == "2")
             {
                 LogManager.SetTelegramMinLogLevel(NLog.LogLevel.Info);
-                await TelegramService.SimpleReplyToMessage(message, "Loglevel set to INFO");
+                await _telegramService.SimpleReplyToMessage(message, "Loglevel set to INFO");
             }
             else
             {
-                await TelegramService.SimpleReplyToMessage(message, "Unsupported Loglevel (0 = Error, 1 = Warn, 2 = Info)");
+                await _telegramService.SimpleReplyToMessage(message, "Unsupported Loglevel (0 = Error, 1 = Warn, 2 = Info)");
             }
         }
     }

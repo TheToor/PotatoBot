@@ -1,24 +1,41 @@
-﻿using System;
-using System.Threading;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using PotatoBot.Managers;
+using System;
 using System.Threading.Tasks;
 
 namespace PotatoBot.Tests
 {
-    public class TestSetup : IDisposable
+    public class TestSetup : IAsyncDisposable, IDisposable
     {
+        public readonly ServiceManager ServiceManager;
+
+        private readonly IWebHost _host;
+
         public TestSetup()
         {
-            Task.Factory.StartNew(() => Program.Main(), TaskCreationOptions.LongRunning);
+            _host = Program.TestMain();
+            Task.Factory.StartNew(
+                () => _host.Run(),
+                TaskCreationOptions.LongRunning
+            );
 
-            while(Program.ServiceManager == null)
+            do
             {
-                Thread.Sleep(10);
+                ServiceManager = _host.Services.GetService<ServiceManager>()!;
             }
+            while (ServiceManager == null);
         }
 
         public void Dispose()
         {
-            Program.ProcessExit(null, null);
+            _host.StopAsync().Wait();
+            GC.SuppressFinalize(this);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await _host.StopAsync();
             GC.SuppressFinalize(this);
         }
     }

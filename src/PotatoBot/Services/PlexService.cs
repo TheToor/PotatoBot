@@ -25,7 +25,9 @@ namespace PotatoBot.Services
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private readonly BotSettings _botSettings;
         private readonly PlexSettings _plexSettings;
+
         private string _plexToken => _plexSettings.APIKey;
 
         private string _machineIdentifier;
@@ -33,8 +35,11 @@ namespace PotatoBot.Services
         private readonly Dictionary<string, Video> _lastAddedMediaItem = new();
         private readonly Dictionary<string, Modals.API.Plex.Library.Directory> _lastAddedDirectory = new();
 
-        internal PlexService(PlexSettings plexSettings)
+        internal PlexService(BotSettings botSettings, PlexSettings plexSettings)
         {
+            _botSettings = botSettings;
+            _plexSettings = plexSettings;
+
             Name = plexSettings.Name;
 
             _plexSettings = plexSettings ?? throw new ArgumentNullException(nameof(plexSettings));
@@ -298,7 +303,7 @@ namespace PotatoBot.Services
                 var token = JsonConvert.DeserializeObject<TokenResponse>(text);
 
                 _plexSettings.APIKey = token.User.Authentication_token;
-                Program.SaveSettings();
+                Program.SaveSettings(_botSettings);
 
                 File.Delete(_plexSetupFile);
 

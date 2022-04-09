@@ -1,4 +1,5 @@
-﻿using PotatoBot.Modals;
+﻿using PotatoBot.Managers;
+using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
 using PotatoBot.Services;
@@ -13,25 +14,38 @@ using Telegram.Bot.Types.ReplyMarkups;
 namespace PotatoBot.Commands
 {
     [Command("discover", Description = "Discover new things")]
-    internal class DiscoverCommand : Service, ICommand, IQueryCallback
+    public class DiscoverCommand : ICommand, IQueryCallback
     {
         public string UniqueIdentifier => "discover";
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private readonly TelegramService _telegramService;
+        private readonly LanguageManager _languageManager;
+        private readonly StatisticsService _statisticsService;
+        private readonly ServiceManager _serviceManager;
+
+        public DiscoverCommand(TelegramService telegramService, LanguageManager languageManager, StatisticsService statisticsService, ServiceManager serviceManager)
+        {
+            _telegramService = telegramService;
+            _languageManager = languageManager;
+            _statisticsService = statisticsService;
+            _serviceManager = serviceManager;
+        }
+
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
         {
-            var keyboardMarkup = TelegramService.GetDefaultEntertainmentInlineKeyboardButtons(true);
+            var keyboardMarkup = _telegramService.GetDefaultEntertainmentInlineKeyboardButtons(true);
             if(keyboardMarkup.Count == 0)
             {
                 // Nothing enabled or supported so nothing to search for
-                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Discover", "NotEnabled"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Discover", "NotEnabled"));
                 return true;
             }
 
             var markup = new InlineKeyboardMarkup(keyboardMarkup);
-            var title = LanguageManager.GetTranslation("Commands", "Discover", "Start");
-            await TelegramService.ReplyWithMarkupAndData(this, message, title, markup, new DiscoveryData()
+            var title = _languageManager.GetTranslation("Commands", "Discover", "Start");
+            await _telegramService.ReplyWithMarkupAndData(this, message, title, markup, new DiscoveryData()
             {
                 SelectedSearch = ServarrType.Unknown
             });
@@ -42,7 +56,7 @@ namespace PotatoBot.Commands
         {
             var messageData = callbackQuery.Data;
             var message = callbackQuery.Message;
-            var cacheData = TelegramService.GetCachedData<DiscoveryData>(message);
+            var cacheData = _telegramService.GetCachedData<DiscoveryData>(message);
 
             if(cacheData.SelectedSearch == ServarrType.Unknown)
             {
@@ -62,9 +76,9 @@ namespace PotatoBot.Commands
             cacheData.SelectedSearch = selectedSearch;
             _logger.Trace($"{message.From.Username} is discovering {selectedSearch}");
 
-            var title = Program.LanguageManager.GetTranslation("Commands", "Discover", "Selection");
+            var title = _languageManager.GetTranslation("Commands", "Discover", "Selection");
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-            foreach(var service in Program.ServiceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == selectedSearch))
+            foreach(var service in _serviceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == selectedSearch))
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>()
                 {
@@ -74,7 +88,7 @@ namespace PotatoBot.Commands
 
             var markup = new InlineKeyboardMarkup(keyboardMarkup);
 
-            await TelegramService.ReplyWithMarkupAndData(this, message, title, markup, cacheData);
+            await _telegramService.ReplyWithMarkupAndData(this, message, title, markup, cacheData);
 
             return true;
         }
@@ -82,7 +96,7 @@ namespace PotatoBot.Commands
         private async Task<bool> HandleServiceSelection(TelegramBotClient client, Message message, string messageData, DiscoveryData cacheData)
         {
             if(
-                Program.ServiceManager.GetAllServices().FirstOrDefault(s =>
+                _serviceManager.GetAllServices().FirstOrDefault(s =>
                      s is IServarr apiBase &&
                      apiBase.Type == cacheData.SelectedSearch &&
                      apiBase.Name == messageData
@@ -108,15 +122,15 @@ namespace PotatoBot.Commands
             {
                 //cacheData.SearchResults = cacheData.SearchResults.OrderByDescending((r) => r.Year);
                 var title = string.Format(
-                    Program.LanguageManager.GetTranslation("Commands", "Discover", "Results"),
+                    _languageManager.GetTranslation("Commands", "Discover", "Results"),
                     resultCount
                 );
 
-                await TelegramService.ReplyWithPageination(message, title, cacheData.SearchResults, OnPageinationSelection);
+                await _telegramService.ReplyWithPageination(message, title, cacheData.SearchResults, OnPageinationSelection);
             }
             else
             {
-                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Discover", $"NoResults"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Discover", $"NoResults"));
             }
 
             return true;
@@ -124,29 +138,29 @@ namespace PotatoBot.Commands
 
         public async Task<bool> OnPageinationSelection(TelegramBotClient client, Message message, int selectedIndex)
         {
-            var cacheData = TelegramService.GetCachedData<DiscoveryData>(message);
+            var cacheData = _telegramService.GetCachedData<DiscoveryData>(message);
 
-            var selectedItem = TelegramService.GetPageinationResult(message, selectedIndex);
-            if(selectedItem == null)
+            var selectedItem = _telegramService.GetPageinationResult(message, selectedIndex);
+            if(cacheData == null || selectedItem == null)
             {
                 _logger.Warn($"Failed to find pageination result with index {selectedIndex}");
-                await client.SendTextMessageAsync(message.Chat.Id, string.Format(LanguageManager.GetTranslation("Commands", "Discover", "Fail"), "UNKNOWN"));
+                await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Discover", "Fail"), "UNKNOWN"));
                 return true;
             }
 
             var result = cacheData.API.Add(selectedItem);
             if(result.Added)
             {
-                StatisticsService.IncreaseAdds();
-                await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Discover", "Success"), selectedItem.Title));
+                _statisticsService.IncreaseAdds();
+                await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Discover", "Success"), selectedItem.Title));
             }
             else if(result.AlreadyAdded)
             {
-                await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Discover", "Exists"), selectedItem.Title));
+                await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Discover", "Exists"), selectedItem.Title));
             }
             else
             {
-                await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Discover", "Fail"), selectedItem.Title));
+                await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Discover", "Fail"), selectedItem.Title));
             }
 
             return true;

@@ -10,11 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\logconfig.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\logconfig.xml" />
+    <Content Include="logconfig.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

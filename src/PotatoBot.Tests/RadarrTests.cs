@@ -7,13 +7,11 @@ namespace PotatoBot.Tests
     [Collection("PotatoBot")]
     public class RadarrTests
     {
-        private readonly TestSetup _testSetup;
         private readonly RadarrService _radarr;
 
         public RadarrTests(TestSetup testSetup)
         {
-            _testSetup = testSetup;
-            _radarr = Program.ServiceManager.Radarr.First();
+            _radarr = testSetup.ServiceManager.Radarr.First();
         }
 
         [Fact]

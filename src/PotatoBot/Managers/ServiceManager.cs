@@ -1,9 +1,11 @@
-﻿using PotatoBot.Services;
+﻿using PotatoBot.Modals.Settings;
+using PotatoBot.Services;
+using System;
 using System.Collections.Generic;
 
 namespace PotatoBot.Managers
 {
-    internal class ServiceManager
+    public class ServiceManager : IDisposable
     {
         private readonly List<SonarrService> _sonarr = new();
         internal List<SonarrService> Sonarr => _sonarr;
@@ -14,10 +16,6 @@ namespace PotatoBot.Managers
         private readonly List<LidarrService> _lidarr = new();
         internal List<LidarrService> Lidarr => _lidarr;
 
-        internal TelegramService TelegramService { get; } = new TelegramService();
-        internal StatisticsService StatisticsService { get; } = new StatisticsService();
-        internal WatchListService WatchListService { get; } = new WatchListService();
-
         private readonly List<IService> _services = new();
 
         private readonly List<SABnzbdService> _sabNzbdServices = new();
@@ -25,16 +23,9 @@ namespace PotatoBot.Managers
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        internal ServiceManager()
+        public ServiceManager(BotSettings settings)
         {
             _logger.Info("ServiceManager starting ...");
-
-            // TelegramService relies on StatisticsService
-            _services.Add(StatisticsService);
-            _services.Add(TelegramService);
-            _services.Add(WatchListService);
-
-            var settings = Program.Settings;
 
             InitializeSonarr(settings);
 
@@ -47,13 +38,14 @@ namespace PotatoBot.Managers
             InitializeSABnzbd(settings);
 
             // Webhook should be started as the last service as it may depend on other services (like Sonarr)
-            _services.Add(new WebhookService());
+            //_services.Add(new WebhookService());
 
             StartAllServices();
         }
-        ~ServiceManager()
+        public void Dispose()
         {
             StopAllServices();
+            GC.SuppressFinalize(this);
         }
 
         internal void StartAllServices()
@@ -107,7 +99,7 @@ namespace PotatoBot.Managers
             return _plexServices;
         }
 
-        private void InitializeSABnzbd(Modals.Settings.BotSettings settings)
+        private void InitializeSABnzbd(BotSettings settings)
         {
             if(settings.SABnzbd?.Count > 0)
             {
@@ -128,7 +120,7 @@ namespace PotatoBot.Managers
             }
         }
 
-        private void InitializePlex(Modals.Settings.BotSettings settings)
+        private void InitializePlex(BotSettings settings)
         {
             if(settings.Plex?.Count > 0)
             {
@@ -142,14 +134,14 @@ namespace PotatoBot.Managers
                         continue;
                     }
 
-                    var service = new PlexService(server);
+                    var service = new PlexService(settings, server);
                     _plexServices.Add(service);
                     _services.Add(service);
                 }
             }
         }
 
-        private void InitializeLidarr(Modals.Settings.BotSettings settings)
+        private void InitializeLidarr(BotSettings settings)
         {
             foreach(var lidarr in settings.Lidarr)
             {
@@ -168,7 +160,7 @@ namespace PotatoBot.Managers
             }
         }
 
-        private void InitializeRadarr(Modals.Settings.BotSettings settings)
+        private void InitializeRadarr(BotSettings settings)
         {
             foreach(var radarr in settings.Radarr)
             {
@@ -187,7 +179,7 @@ namespace PotatoBot.Managers
             }
         }
 
-        private void InitializeSonarr(Modals.Settings.BotSettings settings)
+        private void InitializeSonarr(BotSettings settings)
         {
             foreach(var sonarr in settings.Sonarr)
             {

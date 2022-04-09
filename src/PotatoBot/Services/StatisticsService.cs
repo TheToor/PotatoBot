@@ -2,10 +2,11 @@
 using PotatoBot.Modals;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace PotatoBot.Services
 {
-    public class StatisticsService : IService
+    public class StatisticsService : IDisposable
     {
         public string Name => "Statistics";
 
@@ -13,35 +14,34 @@ namespace PotatoBot.Services
 
         private static readonly string _statisticsFileName = "stats.json";
 
-        private static Statistics _statistics;
+        private Statistics? _statistics;
 
         // Delay between saves
         // This prevents spam saving the file to the disk
         private static readonly int _saveDelay = 600;
         private DateTime _lastSaved = DateTime.MinValue;
 
-        public bool Start()
+        public StatisticsService()
         {
-            LoadStatistics();
-            return true;
+            LoadStatistics().ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
-        public bool Stop()
+        public void Dispose()
         {
-            SaveStatistics();
-            return true;
+            SaveStatistics().ConfigureAwait(false).GetAwaiter().GetResult();
+            GC.SuppressFinalize(this);
         }
 
-        private void LoadStatistics()
+        private async Task LoadStatistics()
         {
             if(!File.Exists(_statisticsFileName))
             {
                 // if no statistics have yet been saved then create an empty file
                 _statistics = new Statistics();
-                SaveStatistics();
+                await SaveStatistics();
             }
 
-            var statistics = File.ReadAllText(_statisticsFileName);
+            var statistics = await File.ReadAllTextAsync(_statisticsFileName);
             if(string.IsNullOrEmpty(statistics))
             {
                 _logger.Error("Invalid statistics file");
@@ -75,7 +75,7 @@ namespace PotatoBot.Services
             SaveStatistics();
         }
 
-        private void SaveStatistics()
+        private async Task SaveStatistics()
         {
             try
             {
@@ -84,7 +84,7 @@ namespace PotatoBot.Services
                     File.Delete(_statisticsFileName);
                 }
 
-                File.WriteAllText(_statisticsFileName, JsonConvert.SerializeObject(_statistics));
+                await File.WriteAllTextAsync(_statisticsFileName, JsonConvert.SerializeObject(_statistics));
 
                 _lastSaved = DateTime.Now;
             }
@@ -92,10 +92,6 @@ namespace PotatoBot.Services
             {
                 _logger.Error(ex, "Failed to save statistics");
             }
-        }
-        internal static Statistics GetCurrentStatistics()
-        {
-            return _statistics;
         }
 
         public void IncreaseMessagesSent()

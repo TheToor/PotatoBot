@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using NLog.Web;
+﻿using Microsoft.Extensions.Hosting;
+using PotatoBot.Managers;
 using PotatoBot.Modals.API.Lidarr;
 using PotatoBot.Modals.API.Plex;
 using PotatoBot.Modals.API.Radarr;
 using PotatoBot.Modals.API.Sonarr;
-using PotatoBot.Webhook;
+using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,21 +13,22 @@ using System.Threading.Tasks;
 
 namespace PotatoBot.Services
 {
-    public class WebhookService : IService
+    public class WebhookService : IHostedService
     {
         public string Name => "Webhook Endpoint";
-
-        private static Modals.Settings.WebhookSettings _settings => Program.Settings.Webhook;
-
-        private IWebHost _endpoint;
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
         private readonly System.Timers.Timer _cacheUpdateTimer;
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        internal WebhookService()
+        private readonly ServiceManager _serviceManager;
+        private readonly BotSettings _botSettings;
+
+        public WebhookService(ServiceManager serviceManager, BotSettings botSettings)
         {
+            _serviceManager = serviceManager;
+            _botSettings = botSettings;
+
             _cacheUpdateTimer = new System.Timers.Timer(1000 * 60 * 60 * 24);
             _cacheUpdateTimer.Elapsed += UpdateCache;
             _cacheUpdateTimer.AutoReset = true;
@@ -39,14 +38,14 @@ namespace PotatoBot.Services
         {
             _logger.Trace("Updating Media Preview cache ...");
 
-            if(Program.Settings.DebugNoPreview)
+            if(_botSettings.DebugNoPreview)
             {
                 _logger.Warn("Not updating Preview cache due to debug setting");
                 return;
             }
 
             {
-                var plexServers = Program.ServiceManager.GetPlexServices();
+                var plexServers = _serviceManager.GetPlexServices();
 
                 var response = new Dictionary<string, ulong>()
                 {
@@ -94,27 +93,27 @@ namespace PotatoBot.Services
             {
                 var cachedResponse = new Dictionary<string, object>();
 
-                if(Program.Settings.Radarr.Count > 0)
+                if(_botSettings.Radarr.Count > 0)
                 {
-                    var movies = Program.ServiceManager.Radarr.SelectMany(r => r.GetAll()).Distinct().ToList();
+                    var movies = _serviceManager.Radarr.SelectMany(r => r.GetAll()).Distinct().ToList();
                     if(movies != null)
                     {
                         cachedResponse.Add("Movies", movies.ConvertAll((o) => new BasicMovie(o)));
                     }
                 }
 
-                if(Program.Settings.Sonarr.Count > 0)
+                if(_botSettings.Sonarr.Count > 0)
                 {
-                    var series = Program.ServiceManager.Sonarr.SelectMany(s => s.GetAll()).Distinct().ToList();
+                    var series = _serviceManager.Sonarr.SelectMany(s => s.GetAll()).Distinct().ToList();
                     if(series != null)
                     {
                         cachedResponse.Add("Series", series.ConvertAll((o) => new BasicSeries(o)));
                     }
                 }
 
-                if(Program.Settings.Lidarr.Count > 0)
+                if(_botSettings.Lidarr.Count > 0)
                 {
-                    var artists = Program.ServiceManager.Lidarr.SelectMany(l => l.GetAll()).Distinct().ToList();
+                    var artists = _serviceManager.Lidarr.SelectMany(l => l.GetAll()).Distinct().ToList();
                     if(artists != null)
                     {
                         cachedResponse.Add("Artists", artists.ConvertAll((o) => new BasicArtist(o)));
@@ -127,35 +126,10 @@ namespace PotatoBot.Services
             _logger.Info("Finished updating Preview cache");
         }
 
-        public bool Start()
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             try
             {
-                var config = new ConfigurationBuilder()
-                    .SetBasePath(System.IO.Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-                    .Build();
-
-                _endpoint = new WebHostBuilder()
-                    .UseConfiguration(config)
-                    .UseKestrel()
-                    .ConfigureLogging((logging) =>
-                    {
-                        logging.ClearProviders();
-#if WEB_DEBUG
-                        logging.SetMinimumLevel(LogLevel.Trace);
-#else
-                        logging.SetMinimumLevel(LogLevel.Warning);
-#endif
-                    })
-                    .UseNLog()
-                    .UseStartup<Startup>()
-                    .UseUrls(_settings.BindingUrl)
-                    .SuppressStatusMessages(true)
-                    .Build();
-
-                _endpoint.RunAsync(_cancellationTokenSource.Token);
-
                 _cacheUpdateTimer.Start();
 
                 Task.Factory.StartNew(async () =>
@@ -166,42 +140,26 @@ namespace PotatoBot.Services
                     // Update cache one manually
                     UpdateCache(null, null);
                 });
-
-                _logger.Info($"Started {Name} on '{_settings.BindingUrl}'");
-                return true;
             }
             catch(Exception ex)
             {
                 _logger.Error(ex, $"Failed to start {Name}");
-                return false;
             }
         }
 
-        public bool Stop()
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.Info($"Received Stop signal for {Name}");
 
             try
             {
-                if(!_cancellationTokenSource.IsCancellationRequested)
-                {
-                    _logger.Trace("Requesting cancellation ...");
-                    _cancellationTokenSource.Cancel();
-                    _logger.Trace("Cleaning up ...");
-                    _endpoint.Dispose();
-                }
-
                 _cacheUpdateTimer.Stop();
                 _cacheUpdateTimer.Dispose();
-
-                _cancellationTokenSource.Dispose();
             }
             catch(Exception ex)
             {
                 _logger.Warn(ex, $"Failed to correctly stop {Name}");
             }
-
-            return true;
         }
     }
 }

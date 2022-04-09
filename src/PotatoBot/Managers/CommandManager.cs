@@ -1,4 +1,6 @@
-﻿using PotatoBot.Modals.Commands;
+﻿using Microsoft.Extensions.DependencyInjection;
+using PotatoBot.Modals.Commands;
+using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,17 +11,28 @@ using Telegram.Bot.Types;
 
 namespace PotatoBot.Managers
 {
-    internal class CommandManager
+    public class CommandManager
     {
         internal List<Command> Commands = new();
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private readonly IServiceProvider _serviceProvider;
+        private readonly StatisticsService _statisticsService;
+        private readonly LanguageManager _languageManager;
+
         private readonly Dictionary<string, ICommand> _commands = new();
         private readonly Dictionary<string, IQueryCallback> _queryCommands = new();
         private readonly Dictionary<string, IReplyCallback> _replyCommands = new();
 
-        internal CommandManager()
+        public CommandManager(IServiceProvider provider, StatisticsService statisticsService, LanguageManager languageManager)
+        {
+            _serviceProvider = provider;
+            _statisticsService = statisticsService;
+            _languageManager = languageManager;
+        }
+
+        public void LoadCommands()
         {
             _logger.Trace("CommandManager starting ...");
 
@@ -34,8 +47,7 @@ namespace PotatoBot.Managers
             {
                 try
                 {
-                    var attribute = (Command)type.GetCustomAttribute(commandAttribute);
-                    if(attribute == null)
+                    if(type.GetCustomAttribute(commandAttribute) is not Command attribute)
                     {
                         // Not a valid command
                         continue;
@@ -56,13 +68,16 @@ namespace PotatoBot.Managers
                     }
 
                     var commandName = attribute.Name;
-                    var instance = (ICommand)Activator.CreateInstance(type);
+                    if(ActivatorUtilities.CreateInstance(_serviceProvider, type) is not ICommand instance)
+                    {
+                        continue;
+                    }
 
                     Commands.Add(attribute);
 
                     if(queryInterface.IsAssignableFrom(type))
                     {
-                        _queryCommands.Add(commandName, (IQueryCallback)instance);
+                        _queryCommands.Add(commandName, instance as IQueryCallback);
                     }
 
                     if(replyInterface.IsAssignableFrom(type))
@@ -132,7 +147,7 @@ namespace PotatoBot.Managers
                 if(!_commands.ContainsKey(command.CommandName))
                 {
                     // Command not found
-                    await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("CommandNotFoundError"), replyToMessageId: message.MessageId);
+                    await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("CommandNotFoundError"), replyToMessageId: message.MessageId);
                     return true;
                 }
 
@@ -143,14 +158,14 @@ namespace PotatoBot.Managers
                 }
                 else
                 {
-                    Program.ServiceManager.StatisticsService.IncreaseCommandsProcessed();
+                    _statisticsService.IncreaseCommandsProcessed();
                 }
                 return result;
             }
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process message");
-                await client.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("CommandProcessingError"), replyToMessageId: message.MessageId);
+                await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("CommandProcessingError"), replyToMessageId: message.MessageId);
                 return false;
             }
         }

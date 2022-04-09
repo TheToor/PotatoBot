@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using PotatoBot.Managers;
+using PotatoBot.Services;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -10,6 +12,14 @@ namespace PotatoBot.Modals.Commands.FormatProviders
     public class ListSearchFormatProvider : ISearchFormatProvider
     {
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+
+        private readonly StatisticsService _statisticsService;
+        private readonly LanguageManager _languageManager;
+        public ListSearchFormatProvider(StatisticsService statisticsService, LanguageManager languageManager)
+        {
+            _statisticsService = statisticsService;
+            _languageManager = languageManager;
+        }
 
         public async Task Send(TelegramBotClient client, Message message, bool create, Cache cache, PageResult<IServarrItem> page)
         {
@@ -60,7 +70,7 @@ namespace PotatoBot.Modals.Commands.FormatProviders
 
             var thirdRow = new List<InlineKeyboardButton>
             {
-                InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonCancel"), ISearchFormatProvider.CancelData)
+                InlineKeyboardButton.WithCallbackData(_languageManager.GetTranslation("ButtonCancel"), ISearchFormatProvider.CancelData)
             };
 
             keyboardMarkupData.Add(firstRow);
@@ -74,7 +84,7 @@ namespace PotatoBot.Modals.Commands.FormatProviders
 
             if(create)
             {
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                _statisticsService.IncreaseMessagesSent();
                 var sentMessage = await client.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: messageText,

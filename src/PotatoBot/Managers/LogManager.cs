@@ -11,8 +11,8 @@ namespace PotatoBot.Managers
 {
     internal class LogManager
     {
-        private string _logDirectory;
-        public string LogDirectory
+        private static string? _logDirectory;
+        public static string LogDirectory
         {
             get
             {
@@ -23,6 +23,7 @@ namespace PotatoBot.Managers
                 return _logDirectory;
             }
         }
+
         public string LogFileName { get; } = "log.config";
 
         public string LogPath => Path.Combine(Directory.GetCurrentDirectory(), LogFileName);

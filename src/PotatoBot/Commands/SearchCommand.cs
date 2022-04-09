@@ -3,6 +3,7 @@ using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
 using PotatoBot.Modals.Commands.FormatProviders;
+using PotatoBot.Modals.Settings;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 namespace PotatoBot.Commands
 {
     [Command("search", Description = "Search for new things to add")]
-    internal class SearchCommand : Service, ICommand, IReplyCallback, IQueryCallback
+    public class SearchCommand : ICommand, IReplyCallback, IQueryCallback
     {
         public string UniqueIdentifier => "search";
 
@@ -23,25 +24,43 @@ namespace PotatoBot.Commands
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private readonly TelegramService _telegramService;
+        private readonly ServiceManager _serviceManager;
+        private readonly LanguageManager _languageManager;
+        private readonly StatisticsService _statisticsService;
+        private readonly BotSettings _botSettings;
+
+        public SearchCommand(TelegramService telegramService, ServiceManager serviceManager, LanguageManager languageManager, StatisticsService statisticsService, BotSettings botSettings)
+        {
+            _telegramService = telegramService;
+            _serviceManager = serviceManager;
+            _languageManager = languageManager;
+            _statisticsService = statisticsService;
+            _botSettings = botSettings;
+        }
+
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
         {
-            var keyboardMarkup = TelegramService.GetDefaultEntertainmentInlineKeyboardButtons();
+            var keyboardMarkup = _telegramService.GetDefaultEntertainmentInlineKeyboardButtons();
             if(keyboardMarkup.Count == 0)
             {
                 // Nothing enabled so nothing to search for
-                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "Search", "NotEnabled"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Search", "NotEnabled"));
                 return true;
             }
 
             var markup = new InlineKeyboardMarkup(keyboardMarkup);
-            var title = LanguageManager.GetTranslation("Commands", "Search", "Start");
-            await TelegramService.ReplyWithMarkupAndData(
+            var title = _languageManager.GetTranslation("Commands", "Search", "Start");
+            await _telegramService.ReplyWithMarkupAndData(
                 this,
                 message,
                 title,
                 markup,
                 new SearchData(
-                    searchFormatProvider: Program.Settings.AddPicturesToSearch ? new PictureSearchFormatProvider() : new ListSearchFormatProvider()
+                    searchFormatProvider:
+                        _botSettings.AddPicturesToSearch ?
+                        new PictureSearchFormatProvider(_statisticsService, _languageManager) :
+                        new ListSearchFormatProvider(_statisticsService, _languageManager)
                 )
             );
             return true;
@@ -51,7 +70,7 @@ namespace PotatoBot.Commands
         {
             var messageData = callbackQuery.Data!;
             var message = callbackQuery.Message!;
-            var cacheData = TelegramService.GetCachedData<SearchData>(message);
+            var cacheData = _telegramService.GetCachedData<SearchData>(message);
 
             if(cacheData.SelectedSearch == ServarrType.Unknown)
             {
@@ -71,9 +90,9 @@ namespace PotatoBot.Commands
             cacheData.SelectedSearch = selectedSearch;
             _logger.Trace($"{message.From!.Username} is searching for {selectedSearch}");
 
-            var title = Program.LanguageManager.GetTranslation("Commands", "Search", "Selection");
+            var title = _languageManager.GetTranslation("Commands", "Search", "Selection");
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-            foreach(var service in Program.ServiceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == selectedSearch))
+            foreach(var service in _serviceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == selectedSearch))
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>()
                 {
@@ -82,12 +101,12 @@ namespace PotatoBot.Commands
             }
             keyboardMarkup.Add(new List<InlineKeyboardButton>()
             {
-                InlineKeyboardButton.WithCallbackData(Program.LanguageManager.GetTranslation("ButtonBoth"), DataBoth)
+                InlineKeyboardButton.WithCallbackData(_languageManager.GetTranslation("ButtonBoth"), DataBoth)
             });
 
             var markup = new InlineKeyboardMarkup(keyboardMarkup);
 
-            await TelegramService.ReplyWithMarkupAndData(this, message, title, markup, cacheData);
+            await _telegramService.ReplyWithMarkupAndData(this, message, title, markup, cacheData);
 
             return true;
         }
@@ -95,7 +114,7 @@ namespace PotatoBot.Commands
         private async Task<bool> HandleServiceSelection(Message message, string messageData, SearchData cacheData)
         {
             if(
-                Program.ServiceManager.GetAllServices().FirstOrDefault(s =>
+                _serviceManager.GetAllServices().FirstOrDefault(s =>
                      s is IServarr apiBase &&
                      apiBase.Type == cacheData.SelectedSearch &&
                      apiBase.Name == messageData
@@ -109,7 +128,7 @@ namespace PotatoBot.Commands
                     return false;
                 }
 
-                cacheData.API = Program.ServiceManager.GetAllServices().Where(
+                cacheData.API = _serviceManager.GetAllServices().Where(
                     s => s is IServarr apiBase &&
                     apiBase.Type == cacheData.SelectedSearch
                 ).Cast<IServarr>();
@@ -126,16 +145,16 @@ namespace PotatoBot.Commands
 
             var isSingleSearch = cacheData.API.Count() == 1;
             var title = string.Format(
-                Program.LanguageManager.GetTranslation(
+                _languageManager.GetTranslation(
                     "Commands",
                     "Search",
                     isSingleSearch ? "Selected" : "SelectedAll"
                 ),
-                Program.LanguageManager.GetTranslation(cacheData.SelectedSearch.ToString()),
+                _languageManager.GetTranslation(cacheData.SelectedSearch.ToString()),
                 isSingleSearch ? cacheData.API.First().Name : ""
             );
 
-            await TelegramService.ForceReply(this, message, title);
+            await _telegramService.ForceReply(this, message, title);
 
             return true;
         }
@@ -143,13 +162,13 @@ namespace PotatoBot.Commands
         public async Task<bool> OnReplyReceived(TelegramBotClient client, Message message)
         {
             var searchText = message.Text!;
-            var cacheData = TelegramService.GetCachedData<SearchData>(message);
+            var cacheData = _telegramService.GetCachedData<SearchData>(message);
             cacheData.SearchText = searchText;
 
             var searchService = cacheData.API!.First();
             _logger.Trace($"Searching in {searchService.Type} for '{searchText}'");
 
-            StatisticsService.IncreaseSearches();
+            _statisticsService.IncreaseSearches();
 
             await client.SendChatActionAsync(message.Chat.Id, Telegram.Bot.Types.Enums.ChatAction.Typing);
 
@@ -161,15 +180,15 @@ namespace PotatoBot.Commands
             {
                 //cacheData.SearchResults = cacheData.SearchResults.OrderByDescending((r) => r.Year);
                 var title = string.Format(
-                    Program.LanguageManager.GetTranslation("Commands", "Search", cacheData.SelectedSearch.ToString()),
+                    _languageManager.GetTranslation("Commands", "Search", cacheData.SelectedSearch.ToString()),
                     resultCount
                 );
 
-                await TelegramService.ReplyWithPageination(message, title, cacheData.SearchResults!, OnPageinationSelection);
+                await _telegramService.ReplyWithPageination(message, title, cacheData.SearchResults!, OnPageinationSelection);
             }
             else
             {
-                await TelegramService.SimpleReplyToMessage(message, string.Format(LanguageManager.GetTranslation("Commands", "Search", $"No{cacheData.SelectedSearch}"), searchText));
+                await _telegramService.SimpleReplyToMessage(message, string.Format(_languageManager.GetTranslation("Commands", "Search", $"No{cacheData.SelectedSearch}"), searchText));
             }
 
             return true;
@@ -177,13 +196,13 @@ namespace PotatoBot.Commands
 
         public async Task<bool> OnPageinationSelection(TelegramBotClient client, Message message, int selectedIndex)
         {
-            var cacheData = TelegramService.GetCachedData<SearchData>(message);
+            var cacheData = _telegramService.GetCachedData<SearchData>(message);
 
-            var selectedItem = TelegramService.GetPageinationResult(message, selectedIndex);
+            var selectedItem = _telegramService.GetPageinationResult(message, selectedIndex);
             if(selectedItem == null)
             {
                 _logger.Warn($"Failed to find pageination result with index {selectedIndex}");
-                await client.SendTextMessageAsync(message.Chat.Id, string.Format(LanguageManager.GetTranslation("Commands", "Search", "Fail"), cacheData.SearchText));
+                await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Search", "Fail"), cacheData.SearchText));
                 return true;
             }
 
@@ -192,16 +211,16 @@ namespace PotatoBot.Commands
                 var result = service.Add(selectedItem);
                 if(result.Added)
                 {
-                    StatisticsService.IncreaseAdds();
-                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Success"), selectedItem.Title));
+                    _statisticsService.IncreaseAdds();
+                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Search", "Success"), selectedItem.Title));
                 }
                 else if(result.AlreadyAdded)
                 {
-                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Exists"), selectedItem.Title));
+                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Search", "Exists"), selectedItem.Title));
                 }
                 else
                 {
-                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(Program.LanguageManager.GetTranslation("Commands", "Search", "Fail"), selectedItem.Title));
+                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Search", "Fail"), selectedItem.Title));
                 }
             }
 

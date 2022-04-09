@@ -11,7 +11,7 @@ using Telegram.Bot.Types;
 namespace PotatoBot.Commands
 {
     [Command("sab", Description = "Controls SAB servers")]
-    internal class SABnzbdCommand : Service, ICommand
+    public class SABnzbdCommand : ICommand
     {
         internal enum SABnzbdCommandMode
         {
@@ -19,6 +19,17 @@ namespace PotatoBot.Commands
             Pause,
             Resume,
             Delete
+        }
+
+        private readonly TelegramService _telegramService;
+        private readonly ServiceManager _serviceManager;
+        private readonly LanguageManager _languageManager;
+
+        public SABnzbdCommand(TelegramService telegramService, ServiceManager serviceManager, LanguageManager languageManager)
+        {
+            _telegramService = telegramService;
+            _serviceManager = serviceManager;
+            _languageManager = languageManager;
         }
 
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
@@ -29,14 +40,14 @@ namespace PotatoBot.Commands
                 (command == SABnzbdCommandMode.Delete && arguments.Length != 2)
             )
             {
-                await TelegramService.SimpleReplyToMessage(
+                await _telegramService.SimpleReplyToMessage(
                     message,
-                    LanguageManager.GetTranslation("Commands", "SABnzbd", "CommandNotFound")
+                    _languageManager.GetTranslation("Commands", "SABnzbd", "CommandNotFound")
                 );
                 return true;
             }
 
-            var servers = Program.ServiceManager.GetSABnzbdServices();
+            var servers = _serviceManager.GetSABnzbdServices();
             return command switch
             {
                 SABnzbdCommandMode.Status => await ProcessStatusCommand(message, servers),
@@ -47,10 +58,10 @@ namespace PotatoBot.Commands
             };
         }
 
-        private static async Task<bool> ProcessStatusCommand(Message message, List<SABnzbdService> servers)
+        private async Task<bool> ProcessStatusCommand(Message message, List<SABnzbdService> servers)
         {
             var responseText = string.Format(
-                LanguageManager.GetTranslation("Commands", "SABnzbd", "Status", "Title"),
+                _languageManager.GetTranslation("Commands", "SABnzbd", "Status", "Title"),
                 servers.Count
             );
 
@@ -68,7 +79,7 @@ namespace PotatoBot.Commands
 
                 responseText += $"<b>{server.Name}</b>\n";
                 responseText += string.Format(
-                    LanguageManager.GetTranslation("Commands", "SABnzbd", "Status", "Text"),
+                    _languageManager.GetTranslation("Commands", "SABnzbd", "Status", "Text"),
                     queue.Paused ? queue.Paused : queue.PausedAll,
                     queue.Version,
                     queue.LoadAverage,
@@ -88,15 +99,15 @@ namespace PotatoBot.Commands
                 responseText += "\n\n";
             }
 
-            await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
+            await _telegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
 
             return true;
         }
 
-        private static async Task<bool> ProcessPauseCommand(Message message, List<SABnzbdService> servers)
+        private async Task<bool> ProcessPauseCommand(Message message, List<SABnzbdService> servers)
         {
             var responseText = string.Format(
-                LanguageManager.GetTranslation("Commands", "SABnzbd", "Pause"),
+                _languageManager.GetTranslation("Commands", "SABnzbd", "Pause"),
                 servers.Count
             );
 
@@ -107,15 +118,15 @@ namespace PotatoBot.Commands
                 responseText += $"{server.Name}: {response} \n";
             }
 
-            await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
+            await _telegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
 
             return true;
         }
 
-        private static async Task<bool> ProcessResumeCommand(Message message, List<SABnzbdService> servers)
+        private async Task<bool> ProcessResumeCommand(Message message, List<SABnzbdService> servers)
         {
             var responseText = string.Format(
-                LanguageManager.GetTranslation("Commands", "SABnzbd", "Resume"),
+                _languageManager.GetTranslation("Commands", "SABnzbd", "Resume"),
                 servers.Count
             );
 
@@ -126,12 +137,12 @@ namespace PotatoBot.Commands
                 responseText += $"{server.Name}: {response} \n";
             }
 
-            await TelegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
+            await _telegramService.SimpleReplyToMessage(message, responseText, Telegram.Bot.Types.Enums.ParseMode.Html);
 
             return true;
         }
 
-        private static async Task<bool> ProcessDeleteCommand(Message message, List<SABnzbdService> servers, string server)
+        private async Task<bool> ProcessDeleteCommand(Message message, List<SABnzbdService> servers, string server)
         {
             var selectedServer = servers.FirstOrDefault(s => s.Name == server);
             if(selectedServer == null)
@@ -141,11 +152,11 @@ namespace PotatoBot.Commands
 
             if(await selectedServer.DeleteOrphanedQueue())
             {
-                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "SABnzbd", "DeleteSuccess"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "SABnzbd", "DeleteSuccess"));
             }
             else
             {
-                await TelegramService.SimpleReplyToMessage(message, LanguageManager.GetTranslation("Commands", "SABnzbd", "DeleteFailed"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "SABnzbd", "DeleteFailed"));
             }
             return true;
         }

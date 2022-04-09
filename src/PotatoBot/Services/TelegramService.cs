@@ -17,7 +17,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PotatoBot.Services
 {
-    internal class TelegramService : IService
+    public class TelegramService
     {
         private const ushort MaxMessageLength = 4096;
 
@@ -25,12 +25,14 @@ namespace PotatoBot.Services
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private static TelegramSettings _settings => Program.Settings.Telegram;
+        private readonly BotSettings _settings;
+        private readonly LanguageManager _languageManager;
+        private readonly CommandManager _commandManager;
+        private readonly StatisticsService _statisticsService;
+        private readonly ServiceManager _servarrManager;
 
         private TelegramBotClient? _client;
         private TelegramBotClient? _alertClient;
-
-        private CommandManager? _commandManager;
 
         // Thread lock for cache
         private readonly SemaphoreSlim _cacheLock = new (1, 1);
@@ -58,29 +60,32 @@ namespace PotatoBot.Services
             ">", ".", "[", "]", "-", "!"
         };
 
-        internal TelegramService()
+        public TelegramService(BotSettings settings, LanguageManager languageManager, CommandManager commandManager, StatisticsService statisticsService, ServiceManager servarrManager)
         {
-            _users = _settings.Admins.Union(_settings.Users).ToList();
+            _settings = settings;
+            _languageManager = languageManager;
+            _commandManager = commandManager;
+            _statisticsService = statisticsService;
+            _servarrManager = servarrManager;
+
+            _users = _settings.Telegram.Admins.Union(_settings.Telegram.Users).ToList();
         }
 
-        public bool Start()
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             try
             {
                 _logger.Trace("Setting up bot ...");
-                _client = new TelegramBotClient(_settings.BotToken);
+                _client = new TelegramBotClient(_settings.Telegram.BotToken);
 
                 _logger.Trace("Setting up alert bot ...");
-                _alertClient = new TelegramBotClient(_settings.AlertBotToken);
+                _alertClient = new TelegramBotClient(_settings.Telegram.AlertBotToken);
 
                 _logger.Trace("Getting bot information ...");
-                var botInfo = _client.GetMeAsync().Result;
-                var alertBotInfo = _alertClient.GetMeAsync().Result;
+                var botInfo = await _client.GetMeAsync(cancellationToken);
+                var alertBotInfo = await _alertClient.GetMeAsync(cancellationToken);
                 _logger.Info($"Connected as {botInfo.FirstName} {botInfo.LastName} ({botInfo.Username})");
                 _logger.Info($"Alerts connected as {alertBotInfo.FirstName} {alertBotInfo.LastName} ({alertBotInfo.Username})");
-
-                _logger.Trace("Initializing command manager ...");
-                _commandManager = new CommandManager();
 
                 _logger.Trace("Setting up telegram bot ...");
                 var commands = _commandManager.Commands
@@ -89,7 +94,7 @@ namespace PotatoBot.Services
                         Command = c.Name,
                         Description = c.Description
                     });
-                _client.SetMyCommandsAsync(commands);
+                await _client.SetMyCommandsAsync(commands);
 
                 _logger.Trace("Initializing cache ...");
                 _cacheTimer = new System.Timers.Timer(1000 * 60 * 60)
@@ -99,27 +104,18 @@ namespace PotatoBot.Services
                 _cacheTimer.Elapsed += ValidateCache;
                 _cacheTimer.Start();
 
-                // Add additional delay before we start receiving
-                Task.Factory.StartNew(async () =>
-                {
-                    await Task.Delay(5000);
-
-                    _logger.Trace("Starting ...");
-                    _client.StartReceiving(HandleUpdateAsync, HandleErrorAsync, new ReceiverOptions(), _botCancellationTokenSource.Token);
-                    _isReceiving = true;
-                });
+                _client.StartReceiving(HandleUpdateAsync, HandleErrorAsync, new ReceiverOptions(), _botCancellationTokenSource.Token);
+                _isReceiving = true;
 
                 _logger.Info($"Successfully initialized {Name} Service");
-                return true;
             }
             catch(Exception ex)
             {
                 _logger.Error(ex, $"Failed to start {Name} Service");
-                return false;
             }
         }
 
-        public bool Stop()
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             _isReceiving = false;
             if(_cacheTimer != null)
@@ -128,7 +124,6 @@ namespace PotatoBot.Services
                 _cacheTimer.Dispose();
             }
             _botCancellationTokenSource.Cancel();
-            return true;
         }
 
         private string EscapeMessage(string message, ParseMode parseMode)
@@ -161,13 +156,13 @@ namespace PotatoBot.Services
 
                 foreach(var splittedMessage in messages)
                 {
-                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                    _statisticsService.IncreaseMessagesSent();
                     await _client!.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
                 }
             }
             else
             {
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                _statisticsService.IncreaseMessagesSent();
                 await _client!.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
             }
         }
@@ -184,13 +179,13 @@ namespace PotatoBot.Services
 
                 foreach(var splittedMessage in messages)
                 {
-                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                    _statisticsService.IncreaseMessagesSent();
                     await _alertClient!.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
                 }
             }
             else
             {
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                _statisticsService.IncreaseMessagesSent();
                 await _alertClient!.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
             }
         }
@@ -225,7 +220,7 @@ namespace PotatoBot.Services
         {
             foreach(var chat in _users)
             {
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                _statisticsService.IncreaseMessagesSent();
                 await _client!.SendTextMessageAsync(chat, message, ParseMode.Html, disableNotification: silent);
             }
         }
@@ -241,16 +236,21 @@ namespace PotatoBot.Services
 
             _logger.Trace($"Sending '{message}' to admins");
 
-            foreach(var chat in _settings.Admins)
+            foreach(var chat in _settings.Telegram.Admins)
             {
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                _statisticsService.IncreaseMessagesSent();
                 await _client!.SendTextMessageAsync(chat, message, ParseMode.Html);
             }
         }
 
-        internal static bool IsFromAdmin(Message message)
+        internal bool IsFromAdmin(Message message)
         {
-            return _settings.Admins.Contains(message.From!.Id);
+            return _settings.Telegram.Admins.Contains(message.From!.Id);
+        }
+
+        private bool IsValidUser(long userId)
+        {
+            return _users.Contains(userId);
         }
 
         internal async Task<Message> SimpleReplyToMessage(Message message, string text, ParseMode parseMode = ParseMode.MarkdownV2)
@@ -266,13 +266,13 @@ namespace PotatoBot.Services
                 foreach(var splittedMessage in messages)
                 {
                     lastMessage = await _client!.SendTextMessageAsync(message.Chat!, splittedMessage, replyToMessageId: message.MessageId, parseMode: parseMode);
-                    Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                    _statisticsService.IncreaseMessagesSent();
                 }
                 return lastMessage!;
             }
             else
             {
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+                _statisticsService.IncreaseMessagesSent();
                 return await _client!.SendTextMessageAsync(message.Chat!, text, replyToMessageId: message.MessageId, parseMode: parseMode);
             }
         }
@@ -283,7 +283,7 @@ namespace PotatoBot.Services
             cache.ForceReply = true;
             cache.ForceReplyInstance = caller;
 
-            Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+            _statisticsService.IncreaseMessagesSent();
             var sentMessage = await _client!.SendTextMessageAsync(message.Chat.Id, title, replyMarkup: new ForceReplyMarkup());
             cache.MessageId = sentMessage.MessageId;
 
@@ -310,7 +310,7 @@ namespace PotatoBot.Services
         }
         internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string text, IReplyMarkup markup, ParseMode parseMode = ParseMode.MarkdownV2)
         {
-            Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
+            _statisticsService.IncreaseMessagesSent();
             var sentMessage = await _client!.SendTextMessageAsync(
                 chatId: message.Chat!,
                 text: text,
@@ -337,7 +337,7 @@ namespace PotatoBot.Services
             _logger.Trace("Preparing page ...");
             cache.PageTitle = title;
             cache.Page = 0;
-            if(Program.Settings.AddPicturesToSearch)
+            if(_settings.AddPicturesToSearch)
             {
                 cache.PageSize = 1;
             }
@@ -400,16 +400,16 @@ namespace PotatoBot.Services
             }
         }
 
-        internal static List<List<InlineKeyboardButton>> GetDefaultEntertainmentInlineKeyboardButtons(bool supportDiscovery = false)
+        internal List<List<InlineKeyboardButton>> GetDefaultEntertainmentInlineKeyboardButtons(bool supportDiscovery = false)
         {
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
-            var allowedServices = Program.ServiceManager.GetAllServices().Where(s => (s as IServarr) is not null);
+            var allowedServices = _servarrManager.GetAllServices().Where(s => (s as IServarr) is not null);
             if(supportDiscovery)
             {
                 allowedServices = allowedServices.Where(s => (s as IServarrSupportsDiscovery) is not null);
             }
 
-            if(Program.ServiceManager.Radarr?.Count > 0 && Program.ServiceManager.Radarr.Any((s) => allowedServices.Contains(s)))
+            if(_servarrManager.Radarr?.Count > 0 && _servarrManager.Radarr.Any((s) => allowedServices.Contains(s)))
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
@@ -417,7 +417,7 @@ namespace PotatoBot.Services
                 });
             }
 
-            if(Program.ServiceManager.Sonarr?.Count > 0 && Program.ServiceManager.Sonarr.Any((s) => allowedServices.Contains(s)))
+            if(_servarrManager.Sonarr?.Count > 0 && _servarrManager.Sonarr.Any((s) => allowedServices.Contains(s)))
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
@@ -425,7 +425,7 @@ namespace PotatoBot.Services
                 });
             }
 
-            if(Program.ServiceManager.Lidarr?.Count > 0 && Program.ServiceManager.Lidarr.Any((s) => allowedServices.Contains(s)))
+            if(_servarrManager.Lidarr?.Count > 0 && _servarrManager.Lidarr.Any((s) => allowedServices.Contains(s)))
             {
                 keyboardMarkup.Add(new List<InlineKeyboardButton>
                 {
@@ -537,15 +537,6 @@ namespace PotatoBot.Services
             }
         }
 
-        private static bool IsValidUser(long userId)
-        {
-            if(_settings.Users.Contains(userId) || _settings.Admins.Contains(userId))
-            {
-                return true;
-            }
-            return false;
-        }
-
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
@@ -593,7 +584,7 @@ namespace PotatoBot.Services
 
                 _logger.Trace($"Received new message from [{user!.Id}] {user.Username}: {message.Text}");
 
-                Program.ServiceManager?.StatisticsService?.IncreaseMessagesReveived();
+                _statisticsService.IncreaseMessagesReveived();
 
                 // Discard messages from bots
                 if(message.From!.IsBot)
@@ -627,7 +618,7 @@ namespace PotatoBot.Services
                 if(message.Text.StartsWith("/", StringComparison.InvariantCultureIgnoreCase))
                 {
                     // Command
-                    Program.ServiceManager?.StatisticsService?.IncreaseCommandsReceived();
+                    _statisticsService.IncreaseCommandsReceived();
 
                     _logger.Trace("Detected command");
                     await _commandManager!.ProcessCommandMessage(_client!, message);
@@ -682,8 +673,8 @@ namespace PotatoBot.Services
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process message");
-                Program.ServiceManager?.StatisticsService?.IncreaseMessagesSent();
-                await _client!.SendTextMessageAsync(message.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"), replyToMessageId: message.MessageId);
+                _statisticsService.IncreaseMessagesSent();
+                await _client!.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("GeneralError"), replyToMessageId: message.MessageId);
             }
         }
 
@@ -705,7 +696,7 @@ namespace PotatoBot.Services
                         var cache = _cache[message.Chat.Id];
                         _cacheLock.Release();
 
-                        if(cache.Data is SearchData searchData && await searchData.SearchFormatProvider!.HandlePagination(_client!, message, cache, data!))
+                        if(cache.Data is SearchData searchData && await searchData.SearchFormatProvider!.HandlePagination(this, _client!, message, cache, data!))
                         {
                             return;
                         }
@@ -733,8 +724,8 @@ namespace PotatoBot.Services
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process CallbackQuery");
-                Program.ServiceManager.StatisticsService.IncreaseMessagesSent();
-                await _client!.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, Program.LanguageManager.GetTranslation("GeneralError"));
+                _statisticsService.IncreaseMessagesSent();
+                await _client!.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, _languageManager.GetTranslation("GeneralError"));
             }
         }
     }
