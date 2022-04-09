@@ -47,14 +47,7 @@ namespace PotatoBot
         private static volatile bool _exit;
         private static volatile bool _exited;
 
-#if DEBUG
-        internal static int TestMain()
-        {
-            return Main();
-        }
-#endif
-
-        private static int Main()
+        public static int Main()
         {
             try
             {
