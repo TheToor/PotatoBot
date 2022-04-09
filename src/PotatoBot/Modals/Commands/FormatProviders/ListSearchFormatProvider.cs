@@ -83,7 +83,7 @@ namespace PotatoBot.Modals.Commands.FormatProviders
 
             if(create)
             {
-                _statisticsService.IncreaseMessagesSent();
+                await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                 var sentMessage = await client.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: messageText,

@@ -94,63 +94,50 @@ namespace PotatoBot.Services
             }
         }
 
+        public async Task Increase(TrackedStatistics statistics)
+        {
+            if(_statistics == null)
+            {
+                return;
+            }
+
+            switch(statistics)
+            {
+                case TrackedStatistics.MessagesSent:
+                    _statistics.MessagesSent++;
+                    break;
+                case TrackedStatistics.MessagesReceived:
+                    _statistics.MessagesReveived++;
+                    break;
+                case TrackedStatistics.MessagesProcessed:
+                    _statistics.MessagesProcessed++;
+                    break;
+                case TrackedStatistics.CommandsReceived:
+                    _statistics.CommandsReceived++;
+                    break;
+                case TrackedStatistics.CommandsProcessed:
+                    _statistics.CommandsProcessed++;
+                    break;
+                case TrackedStatistics.Searches:
+                    _statistics.Searches++;
+                    break;
+                case TrackedStatistics.Adds:
+                    _statistics.Adds++;
+                    break;
+                case TrackedStatistics.WebhooksReceived:
+                    _statistics.WebhooksReceived++;
+                    break;
+                case TrackedStatistics.WebhooksProcessed:
+                    _statistics.WebhooksProcessed++;
+                    break;
+            }
+
+            await TrySave();
+        }
+
         internal Statistics? GetStatistics()
         {
             return _statistics;
-        }
-
-        public void IncreaseMessagesSent()
-        {
-            _statistics.MessagesSent++;
-            TrySave();
-        }
-
-        public void IncreaseMessagesReveived()
-        {
-            _statistics.MessagesReveived++;
-            TrySave();
-        }
-
-        public void IncreaseMessagesProcessed()
-        {
-            _statistics.MessagesProcessed++;
-            TrySave();
-        }
-
-        public void IncreaseCommandsReceived()
-        {
-            _statistics.CommandsReceived++;
-            TrySave();
-        }
-
-        public void IncreaseCommandsProcessed()
-        {
-            _statistics.CommandsProcessed++;
-            TrySave();
-        }
-
-        public void IncreaseSearches()
-        {
-            _statistics.Searches++;
-            TrySave();
-        }
-
-        public void IncreaseAdds()
-        {
-            _statistics.Adds++;
-            TrySave();
-        }
-
-        public void IncreaseWebhooksReceived()
-        {
-            _statistics.WebhooksReceived++;
-            TrySave();
-        }
-
-        public void IncreaseWebhooksProcessed()
-        {
-            _statistics.WebhooksProcessed++;
-            TrySave();
-        }
+        }       
     }
 }

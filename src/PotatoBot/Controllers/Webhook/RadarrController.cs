@@ -66,7 +66,7 @@ namespace PotatoBot.Controllers.Webhook
         [HttpPost]
         public async Task<IActionResult> Index(string serviceName)
         {
-            _statisticsService.IncreaseWebhooksReceived();
+            await _statisticsService.Increase(TrackedStatistics.WebhooksReceived);
 
             if(!ValidateRequest())
             {
@@ -157,7 +157,7 @@ namespace PotatoBot.Controllers.Webhook
                 }
             }
 
-            _statisticsService.IncreaseWebhooksProcessed();
+            await _statisticsService.Increase(TrackedStatistics.WebhooksProcessed);
             return new StatusCodeResult((int)HttpStatusCode.OK);
         }
     }

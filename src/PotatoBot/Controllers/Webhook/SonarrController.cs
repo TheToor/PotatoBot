@@ -66,7 +66,7 @@ namespace PotatoBot.Controllers.Webhook
         [HttpPost]
         public async Task<IActionResult> Index(string serviceName)
         {
-            _statisticsService.IncreaseWebhooksReceived();
+            await _statisticsService.Increase(TrackedStatistics.WebhooksReceived);
 
             if(!ValidateRequest())
             {
@@ -79,105 +79,103 @@ namespace PotatoBot.Controllers.Webhook
                 return new StatusCodeResult((int)HttpStatusCode.BadRequest);
             }
 
-            using(var streamReader = new StreamReader(Request.Body))
+            using var streamReader = new StreamReader(Request.Body);
+            var json = streamReader.ReadToEnd();
+
+            var responseBase = JsonConvert.DeserializeObject<RequestBase>(json);
+            switch(responseBase.EventType)
             {
-                var json = streamReader.ReadToEnd();
-
-                var responseBase = JsonConvert.DeserializeObject<RequestBase>(json);
-                switch(responseBase.EventType)
+                case EventType.Grab:
                 {
-                    case EventType.Grab:
+                    var grabEvent = JsonConvert.DeserializeObject<Grab>(json);
+                    var size = ByteSize.FromBytes(grabEvent.Release.Size);
+
+                    var episodes = string.Empty;
+                    foreach(var episode in grabEvent.Episodes)
                     {
-                        var grabEvent = JsonConvert.DeserializeObject<Grab>(json);
-                        var size = ByteSize.FromBytes(grabEvent.Release.Size);
-
-                        var episodes = string.Empty;
-                        foreach(var episode in grabEvent.Episodes)
-                        {
-                            episodes += $"\n[S{episode.SeasonNumber.ToString("00")}E{episode.EpisodeNumber.ToString("00")}] {episode.Title}";
-                        }
-
-                        await _telegramService.SendToAll(
-                            string.Format(
-                                _languageManager.GetTranslation("Series", "Grab"),
-                                grabEvent.Series.Title,
-                                episodes,
-                                grabEvent.Release.Quality,
-                                grabEvent.Release.ReleaseGroup,
-                                $"{Math.Round(size.LargestWholeNumberBinaryValue, 2):0.00} {size.LargestWholeNumberBinarySymbol}",
-                                service.Name,
-                                grabEvent.Series.Id
-                            )
-                        );
-                        break;
+                        episodes += $"\n[S{episode.SeasonNumber.ToString("00")}E{episode.EpisodeNumber.ToString("00")}] {episode.Title}";
                     }
 
-                    case EventType.Download:
-                    {
-                        var downloadEvent = JsonConvert.DeserializeObject<DownloadUpgrade>(json);
-
-                        var eventType = "Download";
-                        if(downloadEvent.IsUpgrade)
-                        {
-                            eventType = "Upgrade";
-                        }
-
-                        var episodes = string.Empty;
-                        foreach(var episode in downloadEvent.Episodes)
-                        {
-                            episodes += $"\n[S{episode.SeasonNumber.ToString("00")}E{episode.EpisodeNumber.ToString("00")}] {episode.Title}";
-                        }
-
-                        await _telegramService.SendToAll(
-                            string.Format(
-                                _languageManager.GetTranslation("Series", eventType),
-                                downloadEvent.Series.Title,
-                                episodes,
-                                service.Name,
-                                downloadEvent.Series.Id
-                            )
-                        );
-
-                        break;
-                    }
-
-                    case EventType.Rename:
-                    {
-                        var renameEvent = JsonConvert.DeserializeObject<Rename>(json);
-                        await _telegramService.SendToAll(
-                            string.Format(
-                                _languageManager.GetTranslation("Series", "Rename"),
-                                renameEvent.Series.Title
-                            )
-                        );
-
-                        break;
-                    }
-
-                    case EventType.Test:
-                    {
-                        var testEvent = JsonConvert.DeserializeObject<Test>(json);
-
-                        var episodes = string.Empty;
-                        foreach(var episode in testEvent.Episodes)
-                        {
-                            episodes += $"\n[S{episode.SeasonNumber.ToString("00")}E{episode.EpisodeNumber.ToString("00")}] {episode.Title}";
-                        }
-
-                        await _telegramService.SendToAll(
-                            string.Format(
-                                _languageManager.GetTranslation("Series", "Test"),
-                                testEvent.Series.Title,
-                                episodes
-                            )
-                        );
-                        break;
-                    }
+                    await _telegramService.SendToAll(
+                        string.Format(
+                            _languageManager.GetTranslation("Series", "Grab"),
+                            grabEvent.Series.Title,
+                            episodes,
+                            grabEvent.Release.Quality,
+                            grabEvent.Release.ReleaseGroup,
+                            $"{Math.Round(size.LargestWholeNumberBinaryValue, 2):0.00} {size.LargestWholeNumberBinarySymbol}",
+                            service.Name,
+                            grabEvent.Series.Id
+                        )
+                    );
+                    break;
                 }
 
-                _statisticsService.IncreaseWebhooksProcessed();
-                return new StatusCodeResult((int)HttpStatusCode.OK);
+                case EventType.Download:
+                {
+                    var downloadEvent = JsonConvert.DeserializeObject<DownloadUpgrade>(json);
+
+                    var eventType = "Download";
+                    if(downloadEvent.IsUpgrade)
+                    {
+                        eventType = "Upgrade";
+                    }
+
+                    var episodes = string.Empty;
+                    foreach(var episode in downloadEvent.Episodes)
+                    {
+                        episodes += $"\n[S{episode.SeasonNumber.ToString("00")}E{episode.EpisodeNumber.ToString("00")}] {episode.Title}";
+                    }
+
+                    await _telegramService.SendToAll(
+                        string.Format(
+                            _languageManager.GetTranslation("Series", eventType),
+                            downloadEvent.Series.Title,
+                            episodes,
+                            service.Name,
+                            downloadEvent.Series.Id
+                        )
+                    );
+
+                    break;
+                }
+
+                case EventType.Rename:
+                {
+                    var renameEvent = JsonConvert.DeserializeObject<Rename>(json);
+                    await _telegramService.SendToAll(
+                        string.Format(
+                            _languageManager.GetTranslation("Series", "Rename"),
+                            renameEvent.Series.Title
+                        )
+                    );
+
+                    break;
+                }
+
+                case EventType.Test:
+                {
+                    var testEvent = JsonConvert.DeserializeObject<Test>(json);
+
+                    var episodes = string.Empty;
+                    foreach(var episode in testEvent.Episodes)
+                    {
+                        episodes += $"\n[S{episode.SeasonNumber.ToString("00")}E{episode.EpisodeNumber.ToString("00")}] {episode.Title}";
+                    }
+
+                    await _telegramService.SendToAll(
+                        string.Format(
+                            _languageManager.GetTranslation("Series", "Test"),
+                            testEvent.Series.Title,
+                            episodes
+                        )
+                    );
+                    break;
+                }
             }
+
+            await _statisticsService.Increase(TrackedStatistics.WebhooksProcessed);
+            return new StatusCodeResult((int)HttpStatusCode.OK);
         }
     }
 }

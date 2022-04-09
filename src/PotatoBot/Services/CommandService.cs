@@ -157,7 +157,7 @@ namespace PotatoBot.Services
                 }
                 else
                 {
-                    _statisticsService.IncreaseCommandsProcessed();
+                    await _statisticsService.Increase(Modals.TrackedStatistics.CommandsProcessed);
                 }
                 return result;
             }

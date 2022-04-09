@@ -81,7 +81,7 @@ namespace PotatoBot.Modals.Commands.FormatProviders
             var posterUrl = page.Items[0].GetPosterUrl();
             if(create)
             {
-                _statisticsService.IncreaseMessagesSent();
+                await _statisticsService.Increase(TrackedStatistics.MessagesSent);
 
                 Message sentMessage;
                 if(string.IsNullOrEmpty(posterUrl))

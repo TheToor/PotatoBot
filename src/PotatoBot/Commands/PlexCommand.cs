@@ -145,7 +145,7 @@ namespace PotatoBot.Commands
                 return false;
             }
 
-            _watchListService.AddToWatchList(message.From!.Id, service, item);
+            await _watchListService.AddToWatchList(message.From!.Id, service, item);
             await _telegramService.SimpleReplyToMessage(
                 message,
                 string.Format(

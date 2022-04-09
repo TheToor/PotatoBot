@@ -150,7 +150,7 @@ namespace PotatoBot.Commands
             var result = cacheData.API.Add(selectedItem);
             if(result.Added)
             {
-                _statisticsService.IncreaseAdds();
+                await _statisticsService.Increase(TrackedStatistics.Adds);
                 await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Discover", "Success"), selectedItem.Title));
             }
             else if(result.AlreadyAdded)

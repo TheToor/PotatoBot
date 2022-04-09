@@ -167,7 +167,7 @@ namespace PotatoBot.Commands
             var searchService = cacheData.API!.First();
             _logger.Trace($"Searching in {searchService.Type} for '{searchText}'");
 
-            _statisticsService.IncreaseSearches();
+            await _statisticsService.Increase(TrackedStatistics.Searches);
 
             await client.SendChatActionAsync(message.Chat.Id, Telegram.Bot.Types.Enums.ChatAction.Typing);
 
@@ -210,7 +210,7 @@ namespace PotatoBot.Commands
                 var result = service.Add(selectedItem);
                 if(result.Added)
                 {
-                    _statisticsService.IncreaseAdds();
+                    await _statisticsService.Increase(TrackedStatistics.Adds);
                     await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Search", "Success"), selectedItem.Title));
                 }
                 else if(result.AlreadyAdded)

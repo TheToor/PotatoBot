@@ -157,13 +157,13 @@ namespace PotatoBot.Services
 
                 foreach(var splittedMessage in messages)
                 {
-                    _statisticsService.IncreaseMessagesSent();
+                    await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                     await _client!.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
                 }
             }
             else
             {
-                _statisticsService.IncreaseMessagesSent();
+                await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                 await _client!.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
             }
         }
@@ -180,13 +180,13 @@ namespace PotatoBot.Services
 
                 foreach(var splittedMessage in messages)
                 {
-                    _statisticsService.IncreaseMessagesSent();
+                    await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                     await _alertClient!.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
                 }
             }
             else
             {
-                _statisticsService.IncreaseMessagesSent();
+                await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                 await _alertClient!.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
             }
         }
@@ -221,7 +221,7 @@ namespace PotatoBot.Services
         {
             foreach(var chat in _users)
             {
-                _statisticsService.IncreaseMessagesSent();
+                await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                 await _client!.SendTextMessageAsync(chat, message, ParseMode.Html, disableNotification: silent);
             }
         }
@@ -239,7 +239,7 @@ namespace PotatoBot.Services
 
             foreach(var chat in _settings.Telegram.Admins)
             {
-                _statisticsService.IncreaseMessagesSent();
+                await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                 await _client!.SendTextMessageAsync(chat, message, ParseMode.Html);
             }
         }
@@ -267,13 +267,13 @@ namespace PotatoBot.Services
                 foreach(var splittedMessage in messages)
                 {
                     lastMessage = await _client!.SendTextMessageAsync(message.Chat!, splittedMessage, replyToMessageId: message.MessageId, parseMode: parseMode);
-                    _statisticsService.IncreaseMessagesSent();
+                    await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                 }
                 return lastMessage!;
             }
             else
             {
-                _statisticsService.IncreaseMessagesSent();
+                await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                 return await _client!.SendTextMessageAsync(message.Chat!, text, replyToMessageId: message.MessageId, parseMode: parseMode);
             }
         }
@@ -284,7 +284,7 @@ namespace PotatoBot.Services
             cache.ForceReply = true;
             cache.ForceReplyInstance = caller;
 
-            _statisticsService.IncreaseMessagesSent();
+            await _statisticsService.Increase(TrackedStatistics.MessagesSent);
             var sentMessage = await _client!.SendTextMessageAsync(message.Chat.Id, title, replyMarkup: new ForceReplyMarkup());
             cache.MessageId = sentMessage.MessageId;
 
@@ -311,7 +311,7 @@ namespace PotatoBot.Services
         }
         internal async Task<Message> ReplyWithMarkup(IQueryCallback caller, Message message, string text, IReplyMarkup markup, ParseMode parseMode = ParseMode.MarkdownV2)
         {
-            _statisticsService.IncreaseMessagesSent();
+            await _statisticsService.Increase(TrackedStatistics.MessagesSent);
             var sentMessage = await _client!.SendTextMessageAsync(
                 chatId: message.Chat!,
                 text: text,
@@ -585,8 +585,6 @@ namespace PotatoBot.Services
 
                 _logger.Trace($"Received new message from [{user!.Id}] {user.Username}: {message.Text}");
 
-                _statisticsService.IncreaseMessagesReveived();
-
                 // Discard messages from bots
                 if(message.From!.IsBot)
                 {
@@ -619,13 +617,15 @@ namespace PotatoBot.Services
                 if(message.Text.StartsWith("/", StringComparison.InvariantCultureIgnoreCase))
                 {
                     // Command
-                    _statisticsService.IncreaseCommandsReceived();
+                    await _statisticsService.Increase(TrackedStatistics.CommandsReceived);
 
                     _logger.Trace("Detected command");
                     await _commandManager!.ProcessCommandMessage(_client!, message);
                 }
                 else
                 {
+                    await _statisticsService.Increase(TrackedStatistics.MessagesReceived);
+
                     // Reply ?
                     _logger.Trace("Detected message");
 
@@ -674,7 +674,7 @@ namespace PotatoBot.Services
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process message");
-                _statisticsService.IncreaseMessagesSent();
+                await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                 await _client!.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("GeneralError"), replyToMessageId: message.MessageId);
             }
         }
@@ -725,7 +725,7 @@ namespace PotatoBot.Services
             catch(Exception ex)
             {
                 _logger.Error(ex, "Failed to process CallbackQuery");
-                _statisticsService.IncreaseMessagesSent();
+                await _statisticsService.Increase(TrackedStatistics.MessagesSent);
                 await _client!.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, _languageManager.GetTranslation("GeneralError"));
             }
         }

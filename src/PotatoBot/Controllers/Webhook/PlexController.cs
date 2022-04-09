@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace PotatoBot.Controllers.Webhook
 {
@@ -57,46 +58,44 @@ namespace PotatoBot.Controllers.Webhook
 
         [Route("")]
         [HttpPost]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            _statisticsService.IncreaseWebhooksReceived();
+            await _statisticsService.Increase(Modals.TrackedStatistics.WebhooksReceived);
 
             if(!ValidateRequest())
             {
                 return new StatusCodeResult((int)HttpStatusCode.NotAcceptable);
             }
 
-            using(var streamReader = new StreamReader(Request.Body))
+            using var streamReader = new StreamReader(Request.Body);
+            try
             {
-                try
+                var content = streamReader.ReadToEnd();
+                if(content.Contains("name=\"thumb\";"))
                 {
-                    var content = streamReader.ReadToEnd();
-                    if(content.Contains("name=\"thumb\";"))
-                    {
-                        // We don't care about the thumbnail
-                        _logger.Trace($"Skipping request as thumbnail was detected");
-                        _statisticsService.IncreaseWebhooksProcessed();
-                        return new StatusCodeResult((int)HttpStatusCode.OK);
-                    }
-
-                    var start = content.IndexOf('{');
-                    var end = content.LastIndexOf('}');
-
-                    if(start == -1 || end == -1)
-                    {
-                        _logger.Trace($"Skipping requests ({start}/{end})");
-                        _statisticsService.IncreaseWebhooksProcessed();
-                        return new StatusCodeResult((int)HttpStatusCode.OK);
-                    }
-
-                    _statisticsService.IncreaseWebhooksProcessed();
+                    // We don't care about the thumbnail
+                    _logger.Trace($"Skipping request as thumbnail was detected");
+                    await _statisticsService.Increase(Modals.TrackedStatistics.WebhooksProcessed);
                     return new StatusCodeResult((int)HttpStatusCode.OK);
                 }
-                catch(Exception ex)
+
+                var start = content.IndexOf('{');
+                var end = content.LastIndexOf('}');
+
+                if(start == -1 || end == -1)
                 {
-                    _logger.Warn(ex, "Failed to process request");
-                    return new StatusCodeResult((int)HttpStatusCode.InternalServerError);
+                    _logger.Trace($"Skipping requests ({start}/{end})");
+                    await _statisticsService.Increase(Modals.TrackedStatistics.WebhooksProcessed);
+                    return new StatusCodeResult((int)HttpStatusCode.OK);
                 }
+
+                await _statisticsService.Increase(Modals.TrackedStatistics.WebhooksProcessed);
+                return new StatusCodeResult((int)HttpStatusCode.OK);
+            }
+            catch(Exception ex)
+            {
+                _logger.Warn(ex, "Failed to process request");
+                return new StatusCodeResult((int)HttpStatusCode.InternalServerError);
             }
         }
     }
