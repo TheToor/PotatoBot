@@ -1,4 +1,5 @@
-﻿using PotatoBot.Modals.Commands;
+﻿using PotatoBot.Modals;
+using PotatoBot.Modals.Commands;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
@@ -12,14 +13,6 @@ namespace PotatoBot.Commands
     [Command("sab", Description = "Controls SAB servers")]
     public class SABnzbdCommand : ICommand
     {
-        internal enum SABnzbdCommandMode
-        {
-            Status,
-            Pause,
-            Resume,
-            Delete
-        }
-
         private readonly TelegramService _telegramService;
         private readonly ServiceManager _serviceManager;
         private readonly LanguageService _languageManager;

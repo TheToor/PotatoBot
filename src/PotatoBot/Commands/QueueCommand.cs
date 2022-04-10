@@ -63,6 +63,10 @@ namespace PotatoBot.Commands
         {
             var messageData = callbackQuery.Data;
             var message = callbackQuery.Message;
+            if(message == null || messageData == null)
+            {
+                return false;
+            }
 
             await client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
 
@@ -189,15 +193,15 @@ namespace PotatoBot.Commands
             }
 
             var searchTypeString = searchType.ToString();
-            var queue = _serviceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == searchType).Cast<APIBase>().SelectMany(s => s.GetQueue()).ToList();
+            var queue = _serviceManager.GetAllServices().Where(s => s is IServarr apiBase && apiBase.Type == searchType).Cast<APIBase>().SelectMany(s => s.GetQueue());
 
-            if(queue?.Count == 0)
+            if(queue == null || queue.Count() == 0)
             {
                 await client.SendTextMessageAsync(message.Chat.Id, _languageManager.GetTranslation("Commands", "Queue", $"No{searchTypeString}"));
             }
             else
             {
-                var queueText = string.Format($"{_languageManager.GetTranslation("Commands", "Queue", searchTypeString)}\n\n", queue.Count);
+                var queueText = string.Format($"{_languageManager.GetTranslation("Commands", "Queue", searchTypeString)}\n\n", queue.Count());
                 var grouped = queue.GroupBy(q => q.TrackedDownloadStatus);
 
                 foreach(var group in grouped)

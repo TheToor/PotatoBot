@@ -70,6 +70,10 @@ namespace PotatoBot.Commands
             var messageData = callbackQuery.Data!;
             var message = callbackQuery.Message!;
             var cacheData = _telegramService.GetCachedData<SearchData>(message);
+            if(cacheData == null)
+            {
+                return false;
+            }
 
             if(cacheData.SelectedSearch == ServarrType.Unknown)
             {
@@ -162,6 +166,10 @@ namespace PotatoBot.Commands
         {
             var searchText = message.Text!;
             var cacheData = _telegramService.GetCachedData<SearchData>(message);
+            if(cacheData == null)
+            {
+                return false;
+            }
             cacheData.SearchText = searchText;
 
             var searchService = cacheData.API!.First();
@@ -196,12 +204,14 @@ namespace PotatoBot.Commands
         public async Task<bool> OnPageinationSelection(TelegramBotClient client, Message message, int selectedIndex)
         {
             var cacheData = _telegramService.GetCachedData<SearchData>(message);
-
             var selectedItem = _telegramService.GetPageinationResult(message, selectedIndex);
-            if(selectedItem == null)
+            if(cacheData == null || selectedItem == null)
             {
                 _logger.Warn($"Failed to find pageination result with index {selectedIndex}");
-                await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Search", "Fail"), cacheData.SearchText));
+                if(cacheData != null)
+                {
+                    await client.SendTextMessageAsync(message.Chat.Id, string.Format(_languageManager.GetTranslation("Commands", "Search", "Fail"), cacheData.SearchText));
+                }
                 return true;
             }
 

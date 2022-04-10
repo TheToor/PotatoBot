@@ -47,7 +47,7 @@ namespace PotatoBot.Services
             return client;
         }
 
-        protected async Task<T> GetRequest<T>(SABnzbdRequestMode requestMode, RequestBase getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
+        protected async Task<T> GetRequest<T>(SABnzbdRequestMode requestMode, RequestBase? getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
             var url = $"{_baseUrl}&mode={requestMode}";
 

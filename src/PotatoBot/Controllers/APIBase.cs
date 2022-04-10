@@ -72,7 +72,7 @@ namespace PotatoBot.Controllers
             return client;
         }
 
-        protected bool DeleteRequest(string endpoint, RequestBase getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
+        protected bool DeleteRequest(string endpoint, RequestBase? getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
             var url = $"{_settings.Url}/{_apiUrl}/{endpoint}?apikey={_settings.APIKey}";
             if(getRequest != null)
@@ -100,7 +100,7 @@ namespace PotatoBot.Controllers
             }
         }
 
-        protected T GetRequest<T>(string endpoint, RequestBase getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, bool failOnUnexpectedStatusCode = false) where T : class
+        protected T GetRequest<T>(string endpoint, RequestBase? getRequest = null, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, bool failOnUnexpectedStatusCode = false) where T : class
         {
             var url = $"{_settings.Url}/{_apiUrl}/{endpoint}?apikey={_settings.APIKey}";
             if(getRequest != null)

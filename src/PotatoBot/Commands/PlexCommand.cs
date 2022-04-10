@@ -62,7 +62,7 @@ namespace PotatoBot.Commands
             }
 
             var cacheData = _telegramService.GetCachedData<PlexData>(message);
-            if(cacheData.Plex.Invite(email))
+            if(cacheData != null && cacheData.Plex.Invite(email))
             {
                 await _telegramService.SimpleReplyToMessage(
                     message,
@@ -90,13 +90,18 @@ namespace PotatoBot.Commands
             var selectedInstance = _serviceManager.GetPlexServices().FirstOrDefault(p => p.Name == callbackQuery.Data);
             if(selectedInstance == null)
             {
-                await _telegramService.SimpleReplyToMessage(callbackQuery.Message, _languageManager.GetTranslation("GeneralError"));
+                await _telegramService.SimpleReplyToMessage(callbackQuery.Message!, _languageManager.GetTranslation("GeneralError"));
                 return true;
             }
-            var cacheData = _telegramService.GetCachedData<PlexData>(callbackQuery.Message);
+            var cacheData = _telegramService.GetCachedData<PlexData>(callbackQuery.Message!);
+            if(cacheData == null)
+            {
+                return false;
+            }
+
             cacheData.Plex = selectedInstance;
 
-            await _telegramService.ForceReply(this, callbackQuery.Message, _languageManager.GetTranslation("Commands", "Plex", "Invite"));
+            await _telegramService.ForceReply(this, callbackQuery.Message!, _languageManager.GetTranslation("Commands", "Plex", "Invite"));
             return true;
         }
 

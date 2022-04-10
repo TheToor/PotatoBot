@@ -53,9 +53,14 @@ namespace PotatoBot.Commands
 
         public async Task<bool> OnCallbackQueryReceived(TelegramBotClient client, CallbackQuery callbackQuery)
         {
-            var messageData = callbackQuery.Data;
-            var message = callbackQuery.Message;
+            var messageData = callbackQuery.Data!;
+            var message = callbackQuery.Message!;
             var cacheData = _telegramService.GetCachedData<DiscoveryData>(message);
+            if(cacheData == null)
+            {
+                _logger.Warn($"Failed to find cached data for {message.From}");
+                return false;
+            }
 
             if(cacheData.SelectedSearch == ServarrType.Unknown)
             {
@@ -73,7 +78,7 @@ namespace PotatoBot.Commands
             }
 
             cacheData.SelectedSearch = selectedSearch;
-            _logger.Trace($"{message.From.Username} is discovering {selectedSearch}");
+            _logger.Trace($"{message.From!.Username} is discovering {selectedSearch}");
 
             var title = _languageManager.GetTranslation("Commands", "Discover", "Selection");
             var keyboardMarkup = new List<List<InlineKeyboardButton>>();
@@ -108,16 +113,16 @@ namespace PotatoBot.Commands
             }
 
             cacheData.API = service;
-            _logger.Trace($"{message.From.Username} is discovery in {cacheData.SelectedSearch} with {service.Type}");
+            _logger.Trace($"{message.From!.Username} is discovery in {cacheData.SelectedSearch} with {service.Type}");
 
             await client.SendChatActionAsync(message.Chat.Id, Telegram.Bot.Types.Enums.ChatAction.Typing);
             await client.DeleteMessageAsync(message.Chat.Id, message.MessageId);
 
-            cacheData.SearchResults = (cacheData.API as IServarrSupportsDiscovery).GetDiscoveryQueue();
+            cacheData.SearchResults = (cacheData.API as IServarrSupportsDiscovery)!.GetDiscoveryQueue();
             var resultCount = cacheData.SearchResults?.Count() ?? 0;
             _logger.Trace($"Found {resultCount} results in discovery queue");
 
-            if(resultCount > 0)
+            if(cacheData.SearchResults != null && resultCount > 0)
             {
                 //cacheData.SearchResults = cacheData.SearchResults.OrderByDescending((r) => r.Year);
                 var title = string.Format(
@@ -147,7 +152,7 @@ namespace PotatoBot.Commands
                 return true;
             }
 
-            var result = cacheData.API.Add(selectedItem);
+            var result = cacheData.API!.Add(selectedItem);
             if(result.Added)
             {
                 await _statisticsService.Increase(TrackedStatistics.Adds);

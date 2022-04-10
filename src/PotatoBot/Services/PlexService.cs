@@ -214,7 +214,7 @@ namespace PotatoBot.Services
             return client;
         }
 
-        private T GetXml<T>(string endpoint, bool hasParameters = false, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
+        private T? GetXml<T>(string endpoint, bool hasParameters = false, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
             var url = new Uri($"{(endpoint.StartsWith("http") ? "" : $"{_plexSettings.Url}/")}{endpoint}{(hasParameters ? "&" : "?")}X-Plex-Token={_plexToken}");
 
@@ -239,13 +239,17 @@ namespace PotatoBot.Services
 
                 var serializer = new XmlSerializer(typeof(T));
                 using var streamReader = new StringReader(xml);
-                return (T)serializer.Deserialize(streamReader);
+                var deserialized = serializer.Deserialize(streamReader);
+                if(deserialized != null)
+                {
+                    return (T)deserialized;
+                }
             }
             catch(Exception ex)
             {
                 _logger.Error(ex, $"Failed to get information from endpoint '{endpoint}'");
-                return default;
             }
+            return default;
         }
 
         private T GetJson<T>(string endpoint, bool hasParameters = false, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)

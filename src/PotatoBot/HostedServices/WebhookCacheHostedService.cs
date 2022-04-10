@@ -34,7 +34,7 @@ namespace PotatoBot.HostedServices
             _cacheUpdateTimer.AutoReset = true;
         }
 
-        private void UpdateCache(object sender, System.Timers.ElapsedEventArgs e)
+        private void UpdateCache(object? sender, System.Timers.ElapsedEventArgs? e)
         {
             _logger.Trace("Updating Media Preview cache ...");
 

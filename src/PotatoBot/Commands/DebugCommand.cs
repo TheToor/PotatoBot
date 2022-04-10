@@ -13,13 +13,11 @@ namespace PotatoBot.Commands
     public class DebugCommand : ICommand
     {
         private readonly TelegramService _telegramService;
-        private readonly ServiceManager _serviceManager;
         private readonly LogService _logService;
 
-        public DebugCommand(TelegramService telegramService, ServiceManager serviceManager, LogService logService)
+        public DebugCommand(TelegramService telegramService, LogService logService)
         {
             _telegramService = telegramService;
-            _serviceManager = serviceManager;
             _logService = logService;
         }
 

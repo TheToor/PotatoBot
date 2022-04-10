@@ -81,7 +81,7 @@ namespace PotatoBot.Modals.API.Radarr
 
         public string GetPosterUrl()
         {
-            Image selectedImage = default;
+            Image? selectedImage = default;
 
             if(Images.Count > 0)
             {
