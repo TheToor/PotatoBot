@@ -63,7 +63,7 @@ namespace PotatoBot
                     // Remove the default logger
                     logger.ClearProviders();
                     // Add NLog logger
-                    logger.AddNLog(@"logconfig.xml");
+                    logger.AddNLog(@"log.config");
                 })
                 .ConfigureServices((hostcontext, services) =>
                 {
