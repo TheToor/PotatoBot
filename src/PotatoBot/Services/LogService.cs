@@ -33,7 +33,7 @@ namespace PotatoBot.Services
 
         private readonly TelegramService _telegramService;
 
-        internal LogService(TelegramService telegramService)
+        public LogService(TelegramService telegramService)
         {
             _telegramService = telegramService;
 
