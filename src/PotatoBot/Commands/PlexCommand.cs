@@ -38,7 +38,7 @@ namespace PotatoBot.Commands
             if(arguments.Length == 0)
             {
                 // NO action
-                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Plex", "Help"));
+                await _telegramService.SimpleReplyToMessage(message, _languageManager.GetTranslation("Commands", "Plex", "Help"), Telegram.Bot.Types.Enums.ParseMode.Html);
                 return true;
             }
 
