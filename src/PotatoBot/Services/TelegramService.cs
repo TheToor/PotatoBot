@@ -2,6 +2,7 @@
 using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
+using PotatoBot.Modals.Commands.FormatProviders;
 using PotatoBot.Modals.Settings;
 using System;
 using System.Collections.Generic;
@@ -314,7 +315,7 @@ namespace PotatoBot.Services
             await _statisticsService.Increase(TrackedStatistics.MessagesSent);
             var sentMessage = await _client!.SendTextMessageAsync(
                 chatId: message.Chat!,
-                text: text,
+                text: EscapeMessage(text, parseMode),
                 replyMarkup: markup,
                 replyToMessageId: message.From!.IsBot ? 0 : message.MessageId,
                 parseMode: parseMode
@@ -373,12 +374,12 @@ namespace PotatoBot.Services
             var cache = GetCache(message);
             var page = cache.PageItemList!.TakePaged(cache.Page, cache.PageSize);
 
-            if(cache.Data is not SearchData)
+            if(cache.Data is not IProvidesSearch)
             {
                 throw new InvalidOperationException("Invalid message for pagination");
             }
 
-            await ((SearchData)cache.Data).SearchFormatProvider.Send(_client!, message, create, cache, page);
+            await ((IProvidesSearch)cache.Data).SearchFormatProvider.Send(_client!, message, create, cache, page);
         }
 
         internal T? GetCachedData<T>(Message message) where T : IData
@@ -697,7 +698,7 @@ namespace PotatoBot.Services
                         var cache = _cache[message.Chat.Id];
                         _cacheLock.Release();
 
-                        if(cache.Data is SearchData searchData && await searchData.SearchFormatProvider!.HandlePagination(this, _client!, message, cache, data!))
+                        if(cache.Data is IProvidesSearch searchData && await searchData.SearchFormatProvider!.HandlePagination(this, _client!, message, cache, data!))
                         {
                             return;
                         }

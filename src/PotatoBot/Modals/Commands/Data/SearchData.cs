@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PotatoBot.Modals.Commands.Data
 {
-    public class SearchData : IData
+    public class SearchData : IData, IProvidesSearch
     {
         public ServarrType SelectedSearch { get; set; }
         public string? SearchText { get; set; }

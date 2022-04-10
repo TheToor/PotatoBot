@@ -76,7 +76,7 @@ namespace PotatoBot.Services
 
                     if(queryInterface.IsAssignableFrom(type))
                     {
-                        _queryCommands.Add(commandName, instance as IQueryCallback);
+                        _queryCommands.Add(commandName, (IQueryCallback)instance);
                     }
 
                     if(replyInterface.IsAssignableFrom(type))

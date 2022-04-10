@@ -1,6 +1,8 @@
 ﻿using PotatoBot.Modals;
 using PotatoBot.Modals.Commands;
 using PotatoBot.Modals.Commands.Data;
+using PotatoBot.Modals.Commands.FormatProviders;
+using PotatoBot.Modals.Settings;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;
@@ -23,13 +25,15 @@ namespace PotatoBot.Commands
         private readonly LanguageService _languageManager;
         private readonly StatisticsService _statisticsService;
         private readonly ServiceManager _serviceManager;
+        private readonly BotSettings _botSettings;
 
-        public DiscoverCommand(TelegramService telegramService, LanguageService languageManager, StatisticsService statisticsService, ServiceManager serviceManager)
+        public DiscoverCommand(TelegramService telegramService, LanguageService languageManager, StatisticsService statisticsService, ServiceManager serviceManager, BotSettings botSettings)
         {
             _telegramService = telegramService;
             _languageManager = languageManager;
             _statisticsService = statisticsService;
             _serviceManager = serviceManager;
+            _botSettings = botSettings;
         }
 
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
@@ -44,10 +48,20 @@ namespace PotatoBot.Commands
 
             var markup = new InlineKeyboardMarkup(keyboardMarkup);
             var title = _languageManager.GetTranslation("Commands", "Discover", "Start");
-            await _telegramService.ReplyWithMarkupAndData(this, message, title, markup, new DiscoveryData()
-            {
-                SelectedSearch = ServarrType.Unknown
-            });
+            await _telegramService.ReplyWithMarkupAndData(
+                this,
+                message,
+                title,
+                markup,
+                new DiscoveryData(searchFormatProvider:
+                    _botSettings.AddPicturesToSearch ?
+                    new PictureSearchFormatProvider(_statisticsService, _languageManager) :
+                    new ListSearchFormatProvider(_statisticsService, _languageManager)
+                )
+                {
+                    SelectedSearch = ServarrType.Unknown
+                }
+            );
             return true;
         }
 
