@@ -1,4 +1,5 @@
 ﻿using PotatoBot.Model.Commands;
+using PotatoBot.Model.Settings;
 using PotatoBot.Services;
 using System;
 using System.IO;
@@ -15,11 +16,13 @@ namespace PotatoBot.Commands
     {
         private readonly TelegramService _telegramService;
         private readonly LogService _logService;
+        private readonly BotSettings _botSettings;
 
-        public DebugCommand(TelegramService telegramService, LogService logService)
+        public DebugCommand(TelegramService telegramService, LogService logService, BotSettings botSettings)
         {
             _telegramService = telegramService;
             _logService = logService;
+            _botSettings = botSettings;
         }
 
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
@@ -101,7 +104,7 @@ namespace PotatoBot.Commands
                 {
                     var button = new InlineKeyboardMarkup(InlineKeyboardButton.WithWebApp("Potato", new WebAppInfo()
                     {
-                        Url = "https://doeserich.no-ip.org:6767/Telegram/"
+                        Url = $"https://{_botSettings.Webhook.PublicUrl!}/Telegram/?data=test"
                     }));
                     await client.SendTextMessageAsync(message.Chat!, "DEBUG", replyMarkup: button);
                     break;

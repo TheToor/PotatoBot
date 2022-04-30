@@ -1,6 +1,7 @@
 ﻿using PotatoBot.Controllers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace PotatoBot.Model.API
 {
@@ -12,9 +13,13 @@ namespace PotatoBot.Model.API
         /// <summary>
         /// The Name of the download not of the Media item (Series, Movie, Artist)
         /// </summary>
+        [Display(Name = "Title")]
         public string Title { get; set; }
 
         public string DownloadClient { get; set; }
+        /// <summary>
+        /// Unique id of this download
+        /// </summary>
         public string DownloadId { get; set; }
         public string ErrorMessage { get; set; }
         public DateTime EstimatedCompletionTime { get; set; }

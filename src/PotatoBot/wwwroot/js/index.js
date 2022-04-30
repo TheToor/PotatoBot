@@ -1,1 +1,1 @@
-﻿console.log("Started");
+﻿document.getElementById("debug").innerHTML = window.Telegram;

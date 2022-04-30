@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using LettuceEncrypt;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
@@ -56,7 +57,15 @@ namespace PotatoBot
             var botSettings = ReadSettings();
 
             return new WebHostBuilder()
-                .UseKestrel()
+                .UseKestrel(kestrel =>
+                {
+                    var appServices = kestrel.ApplicationServices;
+                    kestrel.ConfigureHttpsDefaults(options =>
+                    {
+                        options.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.RequireCertificate;
+                        options.UseLettuceEncrypt(appServices);
+                    });
+                })
                 .UseConfiguration(config)
                 .UseDefaultServiceProvider(cfg => { })
                 .ConfigureLogging((logger) =>
@@ -68,6 +77,10 @@ namespace PotatoBot
                 })
                 .ConfigureServices((hostcontext, services) =>
                 {
+                    services
+                        .AddLettuceEncrypt()
+                        .PersistDataToDirectory(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "Cert")), botSettings.Telegram.BotToken);
+
                     services.AddSingleton(botSettings);
                     services.AddSingleton<LogService>();
                     services.AddSingleton<LanguageService>();
@@ -118,9 +131,8 @@ namespace PotatoBot
                     app.UseStaticFiles();
                     app.UseHttpsRedirection();
                 })
-                .UseWebRoot("wwwroot")
                 .UseNLog()
-                .UseUrls(botSettings.Webhook.BindingUrl)
+                .UseUrls(botSettings.Webhook.BindingUrl!)
                 .SuppressStatusMessages(true);
         }
 

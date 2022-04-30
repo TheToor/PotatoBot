@@ -1,4 +1,101 @@
-﻿@{
+﻿@model PotatoBot.Model.Webhook.Telegram.InitModel
+@{
 
 }
-<h1>Test</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <nav>
+                @if(Model.Radarr?.Count() > 0)
+                {
+                    @foreach(var settings in Model.Radarr)
+                    {
+                        <span class="sublink-1">@settings.Name</span>
+                        <a asp-controller="Telegram" asp-action="Library" asp-route-type="Radarr" asp-route-name="@settings.Name" class="sublink-2">Manage Library</a>
+                    }
+                }
+                @if(Model.Sonarr?.Count() > 0)
+                {
+                    @foreach(var settings in Model.Sonarr)
+                    {
+                        <span class="sublink-1">@settings.Name</span>
+                        <a asp-controller="Telegram" asp-action="Library" asp-route-type="Sonarr" asp-route-name="@settings.Name" class="sublink-2">Manage Library</a>
+                    }
+                }
+                @if(Model.Lidarr?.Count() > 0)
+                {
+                    @foreach(var settings in Model.Lidarr)
+                    {
+                        <span class="sublink-1">@settings.Name</span>
+                        <a asp-controller="Telegram" asp-action="Library" asp-route-type="Lidarr" asp-route-name="@settings.Name" class="sublink-2">Manage Library</a>
+                    }
+                }
+            </nav>
+        </div>
+        <div class="col-sm-12">
+            Test
+        </div>
+    </div>
+</div>
+
+<pre id="debug"></pre>
+
+@section Style {
+    <style>
+        :root {
+           --tg-theme-bg-color: #17212b;
+           --tg-theme-button-color: #5288c1;
+           --tg-theme-button-text-color: #ffffff;
+           --tg-theme-hint-color: #708499;
+           --tg-theme-link-color: #6ab3f3;
+           --tg-theme-text-color: #f5f5f5;
+
+           --tg-theme-side-padding: 20px;
+           --tg-theme-vertical-padding: 20px;
+
+           --fore-color: var(--tg-theme-text-color);
+           --back-color: var(--tg-theme-bg-color);
+           --nav-fore-color: var(--tg-theme-text-color);
+           --nav-back-color: var(--tg-theme-bg-color);
+           --nav-hover-back-color: var(--tg-theme-hint-color);
+           --nav-link-color: var(--tg-theme-link-color);
+           --nav-border-color: var(--tg-theme-bg-color);
+        }
+
+        html {
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /*
+        header {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            font-size: 2em;
+            padding: var(--tg-theme-vertical-padding) var(--tg-theme-side-padding);
+        }
+        */
+
+        #debug {
+            width: 100%;
+            background-color: blueviolet;
+            color: white;
+        }
+    </style>
+}
+
+@section Scripts {
+<script type="text/javascript">
+if (window.Telegram.WebApp.MainButton !== undefined) {
+    window.Telegram.WebApp.MainButton.isVisible = true;
+
+    window.Telegram.WebApp.onEvent("mainButtonClicked", function(e) {
+        window.Telegram.WebApp.close();
+    });
+}
+
+document.getElementById("debug").innerHTML = JSON.stringify(window.Telegram, null, 1);
+</script>
+}
