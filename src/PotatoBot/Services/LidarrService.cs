@@ -1,10 +1,10 @@
 ﻿using PotatoBot.Controllers;
-using PotatoBot.Modals;
-using PotatoBot.Modals.API;
-using PotatoBot.Modals.API.Lidarr;
-using PotatoBot.Modals.API.Requests;
-using PotatoBot.Modals.API.Requests.POST;
-using PotatoBot.Modals.Settings;
+using PotatoBot.Model;
+using PotatoBot.Model.API;
+using PotatoBot.Model.API.Lidarr;
+using PotatoBot.Model.API.Requests;
+using PotatoBot.Model.API.Requests.POST;
+using PotatoBot.Model.Settings;
 using System;
 using System.Collections.Generic;
 
@@ -93,7 +93,7 @@ namespace PotatoBot.Services
         {
             _logger.Trace("Fetching download queue");
 
-            var response = GetRequest<Modals.API.Queue<LidarrQueueItem>>(APIEndPoints.Queue, new QueueRequest());
+            var response = GetRequest<Model.API.Queue<LidarrQueueItem>>(APIEndPoints.Queue, new QueueRequest());
             if(response != null)
             {
                 _logger.Trace("Successfully fetched download queue");

@@ -1,4 +1,4 @@
-﻿using PotatoBot.Modals.Commands;
+﻿using PotatoBot.Model.Commands;
 using PotatoBot.Services;
 using System.Threading.Tasks;
 using Telegram.Bot;

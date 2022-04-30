@@ -1,11 +1,11 @@
 ﻿using PotatoBot.Controllers;
-using PotatoBot.Modals;
-using PotatoBot.Modals.API;
-using PotatoBot.Modals.API.Radarr;
-using PotatoBot.Modals.API.Requests;
-using PotatoBot.Modals.API.Requests.POST;
-using PotatoBot.Modals.API.Servarr;
-using PotatoBot.Modals.Settings;
+using PotatoBot.Model;
+using PotatoBot.Model.API;
+using PotatoBot.Model.API.Radarr;
+using PotatoBot.Model.API.Requests;
+using PotatoBot.Model.API.Requests.POST;
+using PotatoBot.Model.API.Servarr;
+using PotatoBot.Model.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -97,7 +97,7 @@ namespace PotatoBot.Services
         {
             _logger.Trace("Fetching download queue");
 
-            var response = GetRequest<Modals.API.Queue<RadarrQueueItem>>(APIEndPoints.Queue);
+            var response = GetRequest<Model.API.Queue<RadarrQueueItem>>(APIEndPoints.Queue);
             if(response != null)
             {
                 _logger.Trace("Successfully fetched download queue");

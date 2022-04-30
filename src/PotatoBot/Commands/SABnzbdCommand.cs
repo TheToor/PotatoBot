@@ -1,5 +1,5 @@
-﻿using PotatoBot.Modals;
-using PotatoBot.Modals.Commands;
+﻿using PotatoBot.Model;
+using PotatoBot.Model.Commands;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;

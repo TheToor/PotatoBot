@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
-using PotatoBot.Modals.API;
-using PotatoBot.Modals.API.Requests;
-using PotatoBot.Modals.API.Requests.DELETE;
-using PotatoBot.Modals.Settings;
+using PotatoBot.Model.API;
+using PotatoBot.Model.API.Requests;
+using PotatoBot.Model.API.Requests.DELETE;
+using PotatoBot.Model.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,4 +1,4 @@
-﻿using PotatoBot.Modals;
+﻿using PotatoBot.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;

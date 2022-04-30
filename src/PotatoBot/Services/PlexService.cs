@@ -1,11 +1,11 @@
 ﻿using Newtonsoft.Json;
-using PotatoBot.Modals.API;
-using PotatoBot.Modals.API.Plex;
-using PotatoBot.Modals.API.Plex.Library;
-using PotatoBot.Modals.API.Plex.Providers;
-using PotatoBot.Modals.API.Plex.Release;
-using PotatoBot.Modals.API.Plex.Statistics;
-using PotatoBot.Modals.Settings;
+using PotatoBot.Model.API;
+using PotatoBot.Model.API.Plex;
+using PotatoBot.Model.API.Plex.Library;
+using PotatoBot.Model.API.Plex.Providers;
+using PotatoBot.Model.API.Plex.Release;
+using PotatoBot.Model.API.Plex.Statistics;
+using PotatoBot.Model.Settings;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,7 +33,7 @@ namespace PotatoBot.Services
         private string _machineIdentifier;
         private MediaContainer _libraries;
         private readonly Dictionary<string, Video> _lastAddedMediaItem = new();
-        private readonly Dictionary<string, Modals.API.Plex.Library.Directory> _lastAddedDirectory = new();
+        private readonly Dictionary<string, Model.API.Plex.Library.Directory> _lastAddedDirectory = new();
 
         internal PlexService(BotSettings botSettings, PlexSettings plexSettings)
         {
@@ -102,7 +102,7 @@ namespace PotatoBot.Services
             }
         }
 
-        private List<Modals.API.Plex.Directory> GetLibraries()
+        private List<Model.API.Plex.Directory> GetLibraries()
         {
             var response = GetXml<MediaContainer>(APIEndPoints.PlexEndpoints.Library);
 

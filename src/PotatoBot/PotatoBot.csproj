@@ -1,7 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyVersion>0.3.0</AssemblyVersion>
     <FileVersion>0.3.0</FileVersion>
@@ -10,16 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="log.config">
+    <None Include="log.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ByteSize" Version="2.1.1" />
     <PackageReference Include="CacheManager.SystemRuntimeCaching" Version="2.0.0-beta-1629" />
     <PackageReference Include="Ical.Net" Version="4.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
@@ -33,5 +32,14 @@
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 			<_Parameter1>PotatoBot.Tests</_Parameter1>
 		</AssemblyAttribute>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Update="wwwroot\css\index.css">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Update="wwwroot\js\index.js">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 </Project>

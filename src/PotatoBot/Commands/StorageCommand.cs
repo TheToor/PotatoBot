@@ -1,7 +1,7 @@
 ﻿using ByteSizeLib;
 using PotatoBot.Controllers;
-using PotatoBot.Modals.Commands;
-using PotatoBot.Modals.Settings;
+using PotatoBot.Model.Commands;
+using PotatoBot.Model.Settings;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;

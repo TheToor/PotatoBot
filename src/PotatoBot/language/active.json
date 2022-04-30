@@ -1,0 +1,315 @@
+{
+	"Name": "EN Insulting",
+	"Radarr": "Movie",
+	"Sonarr": "Series",
+	"Lidarr": "Artist",
+	
+	"ButtonNext": "Next",
+	"ButtonPrev": "Prev",
+	"ButtonAdd": "Add",
+	"ButtonCancel": "Cancel",
+	"ButtonBoth": "Both",
+	
+	"RemoveDownload": "Remove",
+	"RemoveAndBlock": "Remove & Blacklist",
+	
+	"GeneralError": [
+		"You fucked it up mate",
+		"How did you do that?",
+		"It crashed. Are you proud now?",
+		"You broke it. Congrats."
+	],
+	"CommandNotFoundError": [
+		"I DON'T KNOW WHAT YOU WANT",
+		"I DON'T UNDERSTAND"
+	],
+	"CommandProcessingError": [
+		"Failed to process your message. Sorry not sorry!",
+		"Whatever you did, it broke something. Don't do it again. Or do it again. I'm a bot not your mother."
+	],
+	"Commands": {
+		"Stats": {
+			"Stats": [
+				"<b>{0}</b> Messages sent\n<b>{1}</b> Messages received\n<b>{2}</b> Messages processed\n<b>{3}</b> Commands received\n<b>{4}</b> Commands processed\n<b>{5}</b> searches\n<b>{6}</b> additions to the libraries\n<b>{7}</b> Webhooks received\n<b>{8}</b> Webhooks processed"
+			]
+		},
+		"Start": {
+			"Start": [
+				"Nope",
+				"No start available. At least not for you"
+			]
+		},
+		"Help": {
+			"Help": [
+				"Hahahahahahahahaha. No.",
+				"Why would I even?",
+				"Would you?"
+			]
+		},
+		"Storage": {
+			"Storage": [
+				"Showing free disk space of <b>{0}</b> services \n\n"
+			],
+			"Label": [
+				"{0} ({1}): {2} free of {3}"
+			]
+		},
+		"Discover": {
+			"NotEnabled": [
+				"This shit is disabled (for ya?) or none of your implementations support it. Yikes!"
+			],
+			"Start": [
+				"What fatass service you wanna discover today?",
+				"DISCOOOOOOOOOOOOOOOOOOOVERY CHANNEL!"
+			],
+			"Selection": [
+				"Which service do you want to discover today?",
+				"WHAT SERVICE?"
+			],
+			"NoResults": [
+				"You actually did it. Discovery queue is empty. Maybe get a hobby?",
+				"Get a fucking hobby. Or go masturbate. Either way shits empty!"
+			],
+			"Results": [
+				"Found <b>{0}</b> shit to discover for ya",
+				"<b>{0}</b> items! {0} !!!!!"
+			],
+			"Success": [
+				"Added {0} for ya.",
+				"If I'm not mistaken, then I did add {0} for ya. Thank me later"
+			],
+			"Exists": [
+				"You twat tried to add a something that already exists. Are you dumb?"
+			],
+			"Fail": [
+				"I gave my best but failed. {0} was not added",
+				"Blame the programmer. He made me do it. Failed to add {0}"
+			]
+		},
+		"Search": {
+			"NotEnabled": [
+				"This shit is disabled (for ya?)"
+			],
+			"Start": [
+				"What can I search for the lazy bastard today?"
+			],
+			"Selection": [
+				"Which service do you want to use for your absolute shitter of a query?"
+			],
+			"Selected": [
+				"So your fat ass wants to search for {0} in {1}. Here we goooo!"
+			],
+			"SelectedAll": [
+				"So your fat ass wants to search for {0} in ALL SERVICES. Here we goooo!"
+			],
+			"NoRadarr": [
+				"You actually did it. I didn't find shit for '{0}'. You can be proud of yourself.",
+				"Nothing found for '{0}'. Maybe try searching for something useful."
+			],
+			"Radarr": [
+				"Found <b>{0}</b> Movies for ya"
+			],
+			"NoSonarr": [
+				"You fucked it up. Didn't find shit for '{0}'."
+			],
+			"Sonarr": [
+				"Found <b>{0}</b> Series for ya"
+			],
+			"NoLidarr": [
+				"Didn't find anything for '{0}'. Try better next time"
+			],
+			"Lidarr": [
+				"Found <b>{0}</b> Artists for ya"
+			],
+			"Success": [
+				"Added {0} for ya.",
+				"If I'm not mistaken, then I did add {0} for ya. Thank me later"
+			],
+			"Exists": [
+				"You twat tried to add a something that already exists. Are you dumb?"
+			],
+			"Fail": [
+				"I gave my best but failed. {0} was not added",
+				"Blame the programmer. He made me do it. Failed to add {0}"
+			]
+		},
+		"Queue": {
+			"NotEnabled": [
+				"This shit is disabled (for ya?)"
+			],
+			"Start": [
+				"Show queue of what? Your mom?"
+			],
+			"NoTypeArgument": [
+				"You need to specify which queue. Dumbass.",
+				"No name, no queue. That simple"
+			],
+			"UnknownTypeArgument": [
+				"Can't get that queue. Guess why.",
+				"Welp. No. That thing has no queue"
+			],
+			"NoRadarr": [
+				"No movies currently downloading. Go add some!"
+			],
+			"NoSonarr": [
+				"No series currently downloading. Go add some!"
+			],
+			"NoLidarr": [
+				"No songs currently downloading. Go add some!"
+			],
+			"Radarr": [
+				"<b>{0}</b> movies are currently downloading"
+			],
+			"Sonarr": [
+				"<b>{0}</b> episodes currently downloading"
+			],
+			"Radarr": [
+				"<b>{0}</b> songs currently downloading"
+			],
+			"DeleteFailed": [
+				"Well it failed. Clear the damn queue item yourself you twat"
+			],
+			"DeleteSuccess": [
+				"Took the queue item and yeeted it to space. It's gone. You happy now?"
+			]
+		},
+		"Download": {
+			"NotEnabled": [
+				"This shit is disabled (for ya?)"
+			],
+			"NoTypeArgument": [
+				"Can't download shit if you don't tell me what"
+			],
+			"UnknownTypeArgument": [
+				"I can't download that. Did you even read the manual? Oh right. There isn't one."
+			],
+			"Downloading": [
+				"Trying to start the download of '{0}'. You happy now?"
+			],
+			"Downloaded": [
+				"Downloaded '{0}'.\nFilename: {1}\nChange filename?"
+			],
+			"Success": [
+				"Successfully downloaded and saved '{0}'"
+			]
+		},
+		"SABnzbd": {
+			"CommandNotFound": [
+				"TWAT"
+			],
+			"Status": {
+				"Title": [
+					"Status from all {0} SABnzbd servers\n\n"
+				],
+				"Text": [
+					"Paused: {0}\nVersion: {1}\nLoad Average: {2}\nFree Disk Space: {3}\nSize Remaining: {4} ({5} / {6})"
+				]
+			},
+			"Pause": [
+				"Paused SABnzbd on {0} servers\n\n"
+			],
+			"Resume": [
+				"Resumed SABnzbd on {0} servers\n\n"
+			],
+			"DeleteSuccess": [
+				"IT'S FUCKING NUKED"
+			],
+			"DeleteFailed": [
+				"The fuckers are still running"
+			]
+		},
+		"Plex": {
+			"Help": [
+				"/plex_invite : Invite someone to the Plex library"
+			],
+			"Watch": [
+				"Looking for {0} for your lazy ass. MAYBE i'll notify you if it releases. Maybe...",
+				"WATCHING FOR {0}",
+				"Keeping my eyes out for {0}. Or not. IDK maybe I crashed in the meantime",
+				"You really wanna fucking watch {0}. Ever thought about getting a hobby?",
+				"What is even {0}? A kids show?",
+				"Not even I would watch {0}. But your wish is my command. At least until I crash"
+			],
+			"Added": [
+				"Put your dick back into your pants. <b>{0}</b> just got added",
+				"WOOOOOOOOOHOOOOOOOOOOO. <b>{0}</b> is now ready to be played",
+				"Psssssttt. <b>{0}</b> is now ready to be played. Or maybe I lied?",
+				"LETS GOOOOOOOOOOOOO. <b>{0}</b> is here now",
+				"<b>{0}</b>. Yep thats it",
+				"Hello world. No more like hello <b>{0}</b>",
+				"You just fucking crashed the bot. Nah just kidding. <b>{0}</b> is now in Plex"
+			],
+			"Selection": [
+				"Which Server we talking bout?"
+			],
+			"Invite": [
+				"So you want to add another bastard to the list. Then give me his mail. Like email. Not address"
+			],
+			"NotAnEmail": [
+				"All you had to do was to give me an email. You failed that. HOW could you fail that? Not doing shit for you",
+				"EMAIL. I SAID EMAIL",
+				"You literally just had to give me an email. And failed at that. Maybe your mother should have bought that condom"
+			],
+			"InviteSuccess": [
+				"Invited {0}. He shall receive a mail."
+			],
+			"InviteFail": [
+				"Failed to invite {0}. Maybe I was stupid, maybe it was plex or maybe the programmer. Either way you are to blame."
+			]
+		}
+	},
+	"Series": {
+		"Grab": [
+			"Grabbed new episode(s) for ya.\n\n<b>{0}</b>{1}\n{2} / {3} / {4}\n\n/plex_watch_{5}_{6}"
+		],
+		"Download": [
+			"Downloaded new episode(s).\n\n<b>{0}</b>{1}\n\n/plex_watch_{2}_{3}"
+		],
+		"Upgrade": [
+			"Upgrade a episode for ya.\n\n<b>{0}</b>{1}\n\n/plex_watch_{2}_{3}"
+		],
+		"Rename": [
+			"Renamed a series for ya. It had a shit name anyways.\n<b>{0}</b>>"
+		],
+		"Test": [
+			"You tested. You DARE to test me??? Unbelievable.\n\n<b>{0}</b>{1}\nAs you see it works. Thank me later."
+		]
+	},
+	"Movies": {
+		"Grab": [
+			"Grabbed a new movie for ya.\n<b>[{0}] {1}</b>\n{2} / {3} / {4}\n\n/plex_watch_{5}_{6}"
+		],
+		"Download": [
+			"Downloaded a new movie.\n<b>[{0}] {1}</b>\n\n/plex_watch_{2}_{3}"
+		],
+		"Upgrade": [
+			"Upgrade a movie for ya.\n<b>[{0}] {1}</b>\n\n/plex_watch_{2}_{3}"
+		],
+		"Rename": [
+			"Renamed a file for ya. It had a shit name anyways.\n<b>{0}</b>"
+		],
+		"Test": [
+			"You tested. You DARE to test me??? Unbelievable.\n([{0}] {1})\nAs you see it works. Thank me later."
+		]
+	},
+	"Artists": {
+		"Grab": [
+			"Grabbed a new track(s) for ya.\n<b>{0}</b>\n{1} / {2} / {3}\n\n/plex_watch_{4}_{5}"
+		],
+		"Download": [
+			"Downloaded a new track.\n<b>{0}</b>\n\n/plex_watch_{1}_{2}"
+		],
+		"Upgrade": [
+			"Upgrade a track for ya.\n<b>{0}</b>\n\n/plex_watch_{1}_{2}"
+		],
+		"Rename": [
+			"Renamed a file for ya. It had a shit name anyways.\n<b>{0}</b>"
+		],
+		"Rename": [
+			"Retagged a file for ya. The tags were bullshit before.\n<b>{0}</b>"
+		],
+		"Test": [
+			"You tested. You DARE to test me??? Unbelievable.\n{0}\nAs you see it works. Thank me later."
+		]
+	}
+}

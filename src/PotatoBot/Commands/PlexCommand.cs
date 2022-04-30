@@ -1,7 +1,7 @@
 ﻿using PotatoBot.HostedServices;
-using PotatoBot.Modals;
-using PotatoBot.Modals.Commands;
-using PotatoBot.Modals.Commands.Data;
+using PotatoBot.Model;
+using PotatoBot.Model.Commands;
+using PotatoBot.Model.Commands.Data;
 using PotatoBot.Services;
 using System.Collections.Generic;
 using System.Linq;

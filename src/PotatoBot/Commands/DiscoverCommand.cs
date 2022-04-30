@@ -1,8 +1,8 @@
-﻿using PotatoBot.Modals;
-using PotatoBot.Modals.Commands;
-using PotatoBot.Modals.Commands.Data;
-using PotatoBot.Modals.Commands.FormatProviders;
-using PotatoBot.Modals.Settings;
+﻿using PotatoBot.Model;
+using PotatoBot.Model.Commands;
+using PotatoBot.Model.Commands.Data;
+using PotatoBot.Model.Commands.FormatProviders;
+using PotatoBot.Model.Settings;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;

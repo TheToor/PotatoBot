@@ -338,3 +338,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/src/PotatoBot/watchlist.json
+/src/PotatoBot/stats.json
+/src/PotatoBot/settings.json

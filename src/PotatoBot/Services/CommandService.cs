@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using PotatoBot.Modals.Commands;
+using PotatoBot.Model;
+using PotatoBot.Model.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -157,7 +158,7 @@ namespace PotatoBot.Services
                 }
                 else
                 {
-                    await _statisticsService.Increase(Modals.TrackedStatistics.CommandsProcessed);
+                    await _statisticsService.Increase(TrackedStatistics.CommandsProcessed);
                 }
                 return result;
             }

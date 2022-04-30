@@ -1,0 +1,12 @@
+html {
+    position: relative;
+    min-height: 100%;
+    min-width: 100%;
+    background-color: var(--tg-theme-bg-color);
+    color: var(--tg-theme-text-color);
+}
+
+body {
+  height: 100%;
+  width: 100%;
+}

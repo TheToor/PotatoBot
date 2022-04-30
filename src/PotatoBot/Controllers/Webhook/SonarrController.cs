@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NLog;
-using PotatoBot.Modals;
-using PotatoBot.Modals.Webhook;
+using PotatoBot.Model;
+using PotatoBot.Model.Webhook;
+using PotatoBot.Model.Webhook.Sonarr;
 using PotatoBot.Services;
-using PotatoBot.Webhook.Modals.Sonarr;
 using System;
 using System.IO;
 using System.Linq;

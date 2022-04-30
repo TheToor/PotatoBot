@@ -1,4 +1,4 @@
-﻿using PotatoBot.Modals.Commands;
+﻿using PotatoBot.Model.Commands;
 using PotatoBot.Services;
 using System;
 using System.IO;
@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PotatoBot.Commands
 {
@@ -93,6 +94,16 @@ namespace PotatoBot.Commands
                     await _telegramService.SendSimpleMessage(message.Chat!, $"Starting wait on thread {Environment.CurrentManagedThreadId}", Telegram.Bot.Types.Enums.ParseMode.Html);
                     await Task.Delay(10000);
                     await _telegramService.SendSimpleMessage(message.Chat!, $"Done with block on thread {Environment.CurrentManagedThreadId}", Telegram.Bot.Types.Enums.ParseMode.Html);
+                    break;
+                }
+
+                case "web":
+                {
+                    var button = new InlineKeyboardMarkup(InlineKeyboardButton.WithWebApp("Potato", new WebAppInfo()
+                    {
+                        Url = "https://doeserich.no-ip.org:6767/Telegram/"
+                    }));
+                    await client.SendTextMessageAsync(message.Chat!, "DEBUG", replyMarkup: button);
                     break;
                 }
             }

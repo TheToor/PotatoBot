@@ -1,10 +1,10 @@
 ﻿using ByteSizeLib;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using PotatoBot.Modals;
-using PotatoBot.Modals.Webhook;
+using PotatoBot.Model;
+using PotatoBot.Model.Webhook;
+using PotatoBot.Model.Webhook.Lidarr;
 using PotatoBot.Services;
-using PotatoBot.Webhook.Modals.Lidarr;
 using System;
 using System.IO;
 using System.Linq;

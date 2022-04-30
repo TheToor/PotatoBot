@@ -1,8 +1,8 @@
 ﻿using CacheManager.Core;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
-using PotatoBot.Modals;
-using PotatoBot.Modals.Settings;
+using PotatoBot.Model;
+using PotatoBot.Model.Settings;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;

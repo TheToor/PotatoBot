@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Hosting;
-using PotatoBot.Modals.API.Lidarr;
-using PotatoBot.Modals.API.Plex;
-using PotatoBot.Modals.API.Radarr;
-using PotatoBot.Modals.API.Sonarr;
-using PotatoBot.Modals.Settings;
+using PotatoBot.Model.API.Lidarr;
+using PotatoBot.Model.API.Plex;
+using PotatoBot.Model.API.Radarr;
+using PotatoBot.Model.API.Sonarr;
+using PotatoBot.Model.Settings;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;

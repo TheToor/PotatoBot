@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using PotatoBot.Modals;
+using PotatoBot.Model;
 using System;
 using System.IO;
 using System.Threading.Tasks;

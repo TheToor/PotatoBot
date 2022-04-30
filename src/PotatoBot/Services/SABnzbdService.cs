@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
-using PotatoBot.Modals.API.Requests;
-using PotatoBot.Modals.API.SABnzbd;
-using PotatoBot.Modals.Settings;
+using PotatoBot.Model.API.Requests;
+using PotatoBot.Model.API.SABnzbd;
+using PotatoBot.Model.Settings;
 using System;
 using System.Net;
 using System.Net.Http;

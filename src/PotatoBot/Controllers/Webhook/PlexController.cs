@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NLog;
+using PotatoBot.Model;
 using PotatoBot.Services;
 using System;
 using System.IO;
@@ -60,7 +61,7 @@ namespace PotatoBot.Controllers.Webhook
         [HttpPost]
         public async Task<IActionResult> Index()
         {
-            await _statisticsService.Increase(Modals.TrackedStatistics.WebhooksReceived);
+            await _statisticsService.Increase(TrackedStatistics.WebhooksReceived);
 
             if(!ValidateRequest())
             {
@@ -75,7 +76,7 @@ namespace PotatoBot.Controllers.Webhook
                 {
                     // We don't care about the thumbnail
                     _logger.Trace($"Skipping request as thumbnail was detected");
-                    await _statisticsService.Increase(Modals.TrackedStatistics.WebhooksProcessed);
+                    await _statisticsService.Increase(TrackedStatistics.WebhooksProcessed);
                     return new StatusCodeResult((int)HttpStatusCode.OK);
                 }
 
@@ -85,11 +86,11 @@ namespace PotatoBot.Controllers.Webhook
                 if(start == -1 || end == -1)
                 {
                     _logger.Trace($"Skipping requests ({start}/{end})");
-                    await _statisticsService.Increase(Modals.TrackedStatistics.WebhooksProcessed);
+                    await _statisticsService.Increase(TrackedStatistics.WebhooksProcessed);
                     return new StatusCodeResult((int)HttpStatusCode.OK);
                 }
 
-                await _statisticsService.Increase(Modals.TrackedStatistics.WebhooksProcessed);
+                await _statisticsService.Increase(TrackedStatistics.WebhooksProcessed);
                 return new StatusCodeResult((int)HttpStatusCode.OK);
             }
             catch(Exception ex)

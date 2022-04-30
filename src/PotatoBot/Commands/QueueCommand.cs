@@ -1,9 +1,9 @@
 ﻿using ByteSizeLib;
 using PotatoBot.Controllers;
-using PotatoBot.Modals;
-using PotatoBot.Modals.API;
-using PotatoBot.Modals.API.Requests.DELETE;
-using PotatoBot.Modals.Commands;
+using PotatoBot.Model;
+using PotatoBot.Model.API;
+using PotatoBot.Model.API.Requests.DELETE;
+using PotatoBot.Model.Commands;
 using PotatoBot.Services;
 using System;
 using System.Collections.Generic;

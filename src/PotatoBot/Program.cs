@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NLog.Web;
 using PotatoBot.HostedServices;
-using PotatoBot.Modals.Settings;
+using PotatoBot.Model.Settings;
 using PotatoBot.Services;
 using System;
 using System.IO;
@@ -56,8 +56,9 @@ namespace PotatoBot
             var botSettings = ReadSettings();
 
             return new WebHostBuilder()
-                .UseConfiguration(config)
                 .UseKestrel()
+                .UseConfiguration(config)
+                .UseDefaultServiceProvider(cfg => { })
                 .ConfigureLogging((logger) =>
                 {
                     // Remove the default logger
@@ -97,6 +98,8 @@ namespace PotatoBot
                         // required for app.UseMvc() to work
                         options.EnableEndpointRouting = false;
                     });
+                    services.AddControllersWithViews();
+
                     services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>((option) =>
                     {
                         option.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
@@ -108,9 +111,14 @@ namespace PotatoBot
                 })
                 .Configure(app =>
                 {
+                    app.UseRouting();
                     app.UseCors();
                     app.UseMvc();
+                    app.UseMvcWithDefaultRoute();
+                    app.UseStaticFiles();
+                    app.UseHttpsRedirection();
                 })
+                .UseWebRoot("wwwroot")
                 .UseNLog()
                 .UseUrls(botSettings.Webhook.BindingUrl)
                 .SuppressStatusMessages(true);
