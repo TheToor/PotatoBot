@@ -109,6 +109,11 @@ namespace PotatoBot.Commands
                     await client.SendTextMessageAsync(message.Chat!, "DEBUG", replyMarkup: button);
                     break;
                 }
+
+                case "exception":
+                {
+                    throw new Exception("Debug exception");
+                }
             }
 
             return true;
