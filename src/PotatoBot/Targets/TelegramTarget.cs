@@ -8,6 +8,8 @@ namespace PotatoBot.Targets
     [Target("Telegram")]
     public sealed class TelegramTarget : TargetWithLayout
     {
+        internal static bool Enabled { get; set; } = true;
+        
         private readonly TelegramService _telegramService;
         
         private string _lastException = string.Empty;
@@ -20,6 +22,11 @@ namespace PotatoBot.Targets
 
         protected async override void Write(LogEventInfo logEvent)
         {
+            if(!Enabled)
+            {
+                return;
+            }
+            
             try
             {
                 if(_lastException == logEvent.Message && _lastExceptionTime.AddMinutes(1) > DateTime.Now)

@@ -13,6 +13,7 @@ namespace PotatoBot.Services
 {
     public class CommandService
     {
+        internal bool Enabled { get; set; } = true;
         internal List<Command> Commands = new();
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
@@ -141,8 +142,14 @@ namespace PotatoBot.Services
                 {
                     return false;
                 }
-
+                
                 var command = GetParameters(text);
+
+                if(!Enabled && command.CommandName != "debug")
+                {
+                    await client.SendTextMessageAsync(message.Chat.Id, "Command processing disabled", replyToMessageId: message.MessageId);
+                    return true;
+                }
 
                 if(!_commands.ContainsKey(command.CommandName))
                 {

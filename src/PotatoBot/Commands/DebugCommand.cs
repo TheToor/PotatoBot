@@ -1,4 +1,5 @@
-﻿using PotatoBot.Model.Commands;
+﻿using NLog.Targets;
+using PotatoBot.Model.Commands;
 using PotatoBot.Model.Settings;
 using PotatoBot.Services;
 using System;
@@ -17,12 +18,14 @@ namespace PotatoBot.Commands
         private readonly TelegramService _telegramService;
         private readonly LogService _logService;
         private readonly BotSettings _botSettings;
+        private readonly CommandService _commandService;
 
-        public DebugCommand(TelegramService telegramService, LogService logService, BotSettings botSettings)
+        public DebugCommand(TelegramService telegramService, LogService logService, BotSettings botSettings, CommandService commandService)
         {
             _telegramService = telegramService;
             _logService = logService;
             _botSettings = botSettings;
+            _commandService = commandService;
         }
 
         public async Task<bool> Execute(TelegramBotClient client, Message message, string[] arguments)
@@ -113,6 +116,31 @@ namespace PotatoBot.Commands
                 case "exception":
                 {
                     throw new Exception("Debug exception");
+                }
+
+                case "toggle":
+                {
+                    if(arguments.Length == 2)
+                    {
+                        switch(arguments[1].ToLower())
+                        {
+                            case "telegram":
+                            {
+                                Targets.TelegramTarget.Enabled = !Targets.TelegramTarget.Enabled;
+                                await client.SendTextMessageAsync(message.Chat!, $"{(Targets.TelegramTarget.Enabled ? "Enabled" : "Disabled")} Telegram notifications");
+                                return true;
+                            }
+
+                            case "commands":
+                            {
+                                _commandService.Enabled = !_commandService.Enabled;
+                                await client.SendTextMessageAsync(message.Chat!, $"{(_commandService.Enabled ? "Enabled" : "Disabled")} commands");
+                                return true;
+                            }
+                        }
+                    }
+                    await client.SendTextMessageAsync(message.Chat!, "Well?! What?!");
+                    break;
                 }
             }
 
