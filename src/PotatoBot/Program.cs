@@ -1,10 +1,8 @@
-﻿using LettuceEncrypt;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NLog.Web;
@@ -59,12 +57,12 @@ namespace PotatoBot
             return new WebHostBuilder()
                 .UseKestrel(kestrel =>
                 {
-                    var appServices = kestrel.ApplicationServices;
-                    kestrel.ConfigureHttpsDefaults(options =>
-                    {
-                        options.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.RequireCertificate;
-                        options.UseLettuceEncrypt(appServices);
-                    });
+                    // var appServices = kestrel.ApplicationServices;
+                    // kestrel.ConfigureHttpsDefaults(options =>
+                    // {
+                    //     options.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.RequireCertificate;
+                    //     options.UseLettuceEncrypt(appServices);
+                    // });
                 })
                 .UseConfiguration(config)
                 .UseDefaultServiceProvider(cfg => { })
@@ -77,9 +75,9 @@ namespace PotatoBot
                 })
                 .ConfigureServices((hostcontext, services) =>
                 {
-                    services
-                        .AddLettuceEncrypt()
-                        .PersistDataToDirectory(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "Cert")), botSettings.Telegram.BotToken);
+                    // services
+                    //     .AddLettuceEncrypt()
+                    //     .PersistDataToDirectory(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "Cert")), botSettings.Telegram.BotToken);
 
                     services.AddSingleton(botSettings);
                     services.AddSingleton<LogService>();
@@ -129,7 +127,7 @@ namespace PotatoBot
                     app.UseMvc();
                     app.UseMvcWithDefaultRoute();
                     app.UseStaticFiles();
-                    app.UseHttpsRedirection();
+                    // app.UseHttpsRedirection();
                 })
                 .UseNLog()
                 .UseUrls(botSettings.Webhook.BindingUrl!)
