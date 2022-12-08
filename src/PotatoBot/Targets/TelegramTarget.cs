@@ -10,7 +10,7 @@ namespace PotatoBot.Targets
     {
         private readonly TelegramService _telegramService;
         
-        private string _lastException = String.Empty;
+        private string _lastException = string.Empty;
         private DateTime _lastExceptionTime = DateTime.MinValue;
 
         public TelegramTarget(TelegramService telegramService)
