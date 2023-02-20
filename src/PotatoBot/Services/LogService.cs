@@ -83,7 +83,7 @@ namespace PotatoBot.Services
 
             LogManager.Configuration = _configuration;
             LogManager.ReconfigExistingLoggers();
-            LogManager.EnableLogging();
+            LogManager.ResumeLogging();
         }
 
         internal void SetTelegramMinLogLevel(LogLevel logLevel)
