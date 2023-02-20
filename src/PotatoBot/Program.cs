@@ -91,7 +91,7 @@ namespace PotatoBot
 
                     services.AddHostedService<TelegramHostedService>();
                     services.AddHostedService<WebhookCacheHostedService>();
-                    services.AddHostedService(serviceProvider => serviceProvider.GetService<WatchListHostedService>());
+                    services.AddHostedService(serviceProvider => serviceProvider.GetService<WatchListHostedService>()!);
 
                     services.AddCors((options) =>
                     {
