@@ -1,4 +1,5 @@
-﻿using NLog.Targets;
+﻿using Microsoft.AspNetCore.Components.Forms;
+using NLog.Targets;
 using PotatoBot.Model.Commands;
 using PotatoBot.Model.Settings;
 using PotatoBot.Services;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using InputFile = Telegram.Bot.Types.InputFile;
 
 namespace PotatoBot.Commands
 {
@@ -61,8 +63,8 @@ namespace PotatoBot.Commands
                     var currentLog = Path.Combine(_logService.LogDirectory, $"PotatoServer-{DateTime.Now.Date.ToString("yyyy-MM-dd")}.log");
                     if(System.IO.File.Exists(currentLog))
                     {
-                        using var file = System.IO.File.Open(currentLog, FileMode.Open);
-                        await client.SendDocumentAsync(message.Chat.Id, new Telegram.Bot.Types.InputFiles.InputOnlineFile(file, "TelegramBot.log"));
+                        await using var file = System.IO.File.Open(currentLog, FileMode.Open);
+                        await client.SendDocumentAsync(message.Chat.Id, InputFile.FromStream(file, "TelegramBot.log"));
                     }
                     else
                     {

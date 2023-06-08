@@ -89,7 +89,7 @@ namespace PotatoBot.Model.Commands.FormatProviders
                 {
                     sentMessage = await client.SendPhotoAsync(
                         chatId: message.Chat.Id,
-                        photo: ISearchFormatProvider.MissingImageUrl,
+                        InputFile.FromString(ISearchFormatProvider.MissingImageUrl),
                         parseMode: ParseMode.Html,
                         caption: messageText,
                         replyMarkup: keyboardMarkup
@@ -101,7 +101,7 @@ namespace PotatoBot.Model.Commands.FormatProviders
                     {
                         sentMessage = await client.SendPhotoAsync(
                             chatId: message.Chat.Id,
-                            photo: page.Items[0].GetPosterUrl(),
+                            InputFile.FromString(page.Items[0].GetPosterUrl()),
                             parseMode: ParseMode.Html,
                             caption: messageText,
                             replyMarkup: keyboardMarkup
@@ -111,7 +111,7 @@ namespace PotatoBot.Model.Commands.FormatProviders
                     {
                         sentMessage = await client.SendPhotoAsync(
                             chatId: message.Chat.Id,
-                            photo: ISearchFormatProvider.MissingImageUrl,
+                            InputFile.FromString(ISearchFormatProvider.MissingImageUrl),
                             parseMode: ParseMode.Html,
                             caption: messageText,
                             replyMarkup: keyboardMarkup
@@ -129,7 +129,7 @@ namespace PotatoBot.Model.Commands.FormatProviders
                     await client.EditMessageMediaAsync(
                         chatId: message.Chat.Id,
                         messageId: message.MessageId,
-                        media: new InputMediaPhoto(new InputMedia(posterUrl ?? ISearchFormatProvider.MissingImageUrl))
+                        media: new InputMediaPhoto(InputFile.FromString(posterUrl ?? ISearchFormatProvider.MissingImageUrl))
                     );
                 }
                 catch(Exception)
@@ -137,7 +137,7 @@ namespace PotatoBot.Model.Commands.FormatProviders
                     await client.EditMessageMediaAsync(
                         chatId: message.Chat.Id,
                         messageId: message.MessageId,
-                        media: new InputMediaPhoto(new InputMedia(ISearchFormatProvider.MissingImageUrl))
+                        media: new InputMediaPhoto(InputFile.FromString(ISearchFormatProvider.MissingImageUrl))
                     );
                 }
 

@@ -159,13 +159,13 @@ namespace PotatoBot.Services
                 foreach(var splittedMessage in messages)
                 {
                     await _statisticsService.Increase(TrackedStatistics.MessagesSent);
-                    await _client!.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
+                    await _client!.SendTextMessageAsync(chatId, splittedMessage, parseMode: parseMode, disableNotification: disableNotification);
                 }
             }
             else
             {
                 await _statisticsService.Increase(TrackedStatistics.MessagesSent);
-                await _client!.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
+                await _client!.SendTextMessageAsync(chatId, message, parseMode: parseMode, disableNotification: disableNotification);
             }
         }
 
@@ -182,13 +182,13 @@ namespace PotatoBot.Services
                 foreach(var splittedMessage in messages)
                 {
                     await _statisticsService.Increase(TrackedStatistics.MessagesSent);
-                    await _alertClient!.SendTextMessageAsync(chatId, splittedMessage, parseMode, disableNotification: disableNotification);
+                    await _alertClient!.SendTextMessageAsync(chatId, splittedMessage, parseMode: parseMode, disableNotification: disableNotification);
                 }
             }
             else
             {
                 await _statisticsService.Increase(TrackedStatistics.MessagesSent);
-                await _alertClient!.SendTextMessageAsync(chatId, message, parseMode, disableNotification: disableNotification);
+                await _alertClient!.SendTextMessageAsync(chatId, message, parseMode: parseMode, disableNotification: disableNotification);
             }
         }
 
@@ -223,7 +223,7 @@ namespace PotatoBot.Services
             foreach(var chat in _users)
             {
                 await _statisticsService.Increase(TrackedStatistics.MessagesSent);
-                await _client!.SendTextMessageAsync(chat, message, ParseMode.Html, disableNotification: silent);
+                await _client!.SendTextMessageAsync(chat, message, parseMode: ParseMode.Html, disableNotification: silent);
             }
         }
 
@@ -241,7 +241,7 @@ namespace PotatoBot.Services
             foreach(var chat in _settings.Telegram.Admins)
             {
                 await _statisticsService.Increase(TrackedStatistics.MessagesSent);
-                await _client!.SendTextMessageAsync(chat, message, ParseMode.Html);
+                await _client!.SendTextMessageAsync(chat, message, parseMode: ParseMode.Html);
             }
         }
 
