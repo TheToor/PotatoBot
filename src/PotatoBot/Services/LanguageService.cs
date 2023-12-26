@@ -9,7 +9,7 @@ namespace PotatoBot.Services
 {
     public class LanguageService
     {
-        private static string _activeLanguagePath => Path.Combine(Directory.GetCurrentDirectory(), "Language", "active.json");
+        private static string _activeLanguagePath => Path.Combine(Directory.GetCurrentDirectory(), "language", "active.json");
 
         private readonly Random _random = new();
         private readonly dynamic _language;
