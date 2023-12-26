@@ -42,7 +42,9 @@ namespace PotatoBot
             }
         }
 
-        private const string SettingsFileName = "settings.json";
+        internal static bool InDocker => Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+
+        private static readonly string _settingsFileName = InDocker ? "/config/settings.json" : "settings.json";
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
         private static IWebHostBuilder CreateHostBuilder()
@@ -150,16 +152,16 @@ namespace PotatoBot
 
         private static BotSettings ReadSettings()
         {
-            _logger.Trace($"Reading Settings from file {SettingsFileName}");
+            _logger.Trace($"Reading Settings from file {_settingsFileName}");
 
-            if(!File.Exists(SettingsFileName))
+            if(!File.Exists(_settingsFileName))
             {
                 var newSettings = new BotSettings();
                 SaveSettings(newSettings);
                 return newSettings;
             }
 
-            var settingsContent = File.ReadAllText(SettingsFileName);
+            var settingsContent = File.ReadAllText(_settingsFileName);
             if(string.IsNullOrEmpty(settingsContent))
             {
                 throw new InvalidDataException("Invalid settings file");
@@ -183,16 +185,16 @@ namespace PotatoBot
 
         internal static bool SaveSettings(BotSettings settings)
         {
-            _logger.Trace($"Saving Settings to file {SettingsFileName}");
+            _logger.Trace($"Saving Settings to file {_settingsFileName}");
 
             try
             {
-                if(File.Exists(SettingsFileName))
+                if(File.Exists(_settingsFileName))
                 {
-                    File.Delete(SettingsFileName);
+                    File.Delete(_settingsFileName);
                 }
 
-                File.WriteAllText(SettingsFileName, JsonConvert.SerializeObject(settings));
+                File.WriteAllText(_settingsFileName, JsonConvert.SerializeObject(settings));
 
                 _logger.Info("Successfully saved settings");
 

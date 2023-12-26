@@ -19,15 +19,13 @@ namespace PotatoBot.Services
             {
                 if(string.IsNullOrEmpty(_logDirectory))
                 {
-                    _logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+                    _logDirectory = Program.InDocker ? "/logs" : Path.Combine(Directory.GetCurrentDirectory(), "Logs");
                 }
                 return _logDirectory;
             }
         }
 
         public string LogFileName { get; } = "log.config";
-
-        public string LogPath => Path.Combine(Directory.GetCurrentDirectory(), LogFileName);
 
         private LoggingConfiguration? _configuration;
 
@@ -42,7 +40,7 @@ namespace PotatoBot.Services
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         }
 
-        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             _logger.Fatal((Exception)e.ExceptionObject, "Unhandeled exception");
         }
