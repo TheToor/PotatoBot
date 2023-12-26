@@ -83,7 +83,10 @@
 			],
 			"Fail": [
 				"I gave my best but failed. {0} was not added",
-				"Blame the programmer. He made me do it. Failed to add {0}"
+				"Blame the programmer. He made me do it. Failed to add {0}",
+				"I must have done something wrong because {0} wasn't even worth adding.",
+				"I put a lot of effort into it, but it was all for nothing since {0} wasn't even worth considering.",
+				"That was really impressive of me, but unfortunately it appears that my efforts were not successful as {0} was not added."
 			]
 		},
 		"Search": {
