@@ -18,7 +18,7 @@ namespace PotatoBot.HostedServices
     {
         public string Name => "WatchList";
 
-        private const string WatchListDatabaseFileName = "watchlist.json";
+        private static string _watchListDatabaseFileName => Program.InDocker ? "/config/watchlist.json" : "watchlist.json";
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -82,12 +82,12 @@ namespace PotatoBot.HostedServices
             {
                 _logger.Trace("Reading watchlist ...");
 
-                if(!File.Exists(WatchListDatabaseFileName))
+                if(!File.Exists(_watchListDatabaseFileName))
                 {
-                    await File.WriteAllTextAsync(WatchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
+                    await File.WriteAllTextAsync(_watchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
                 }
 
-                var watchList = JsonConvert.DeserializeObject<Dictionary<long, Dictionary<string, List<ulong>>>>(File.ReadAllText(WatchListDatabaseFileName));
+                var watchList = JsonConvert.DeserializeObject<Dictionary<long, Dictionary<string, List<ulong>>>>(File.ReadAllText(_watchListDatabaseFileName));
                 if(watchList == null)
                 {
                     // Invalid watchlist so create a new one
@@ -117,11 +117,11 @@ namespace PotatoBot.HostedServices
             try
             {
                 _logger.Trace("Saving watchlist");
-                if(File.Exists(WatchListDatabaseFileName))
+                if(File.Exists(_watchListDatabaseFileName))
                 {
-                    File.Delete(WatchListDatabaseFileName);
+                    File.Delete(_watchListDatabaseFileName);
                 }
-                await File.WriteAllTextAsync(WatchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
+                await File.WriteAllTextAsync(_watchListDatabaseFileName, JsonConvert.SerializeObject(_watchList));
             }
             finally
             {

@@ -12,7 +12,7 @@ namespace PotatoBot.Services
 
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private static readonly string _statisticsFileName = "stats.json";
+        private static string _statisticsFileName => Program.InDocker ? "/config/stats.json" : "stats.json";
 
         private Statistics? _statistics;
 

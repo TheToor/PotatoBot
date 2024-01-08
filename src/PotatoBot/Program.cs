@@ -14,7 +14,7 @@ using System.IO;
 
 namespace PotatoBot
 {
-    internal class Program
+    internal static class Program
     {
         private static string? _namespace;
         internal static string Namespace
