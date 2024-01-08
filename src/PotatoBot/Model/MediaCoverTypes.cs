@@ -8,6 +8,7 @@
         Banner = 2,
         Fanart = 3,
         Screenshot = 4,
-        Headshot = 5
+        Headshot = 5,
+        Clearlogo = 6
     }
 }
